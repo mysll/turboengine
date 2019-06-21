@@ -16,6 +16,8 @@ github.com/lestrrat-go/strftime v0.0.0-20180821113735-8b31f9c59b0f/go.mod h1:RMl
 github.com/mysll/toolkit v0.0.0-20181212114411-d7e9ee9047dd h1:S9xdMxgfwIObe4FT3mJ4Ydt3u0c4fknLCWPG6UtcdPU=
 github.com/mysll/toolkit v0.0.0-20181212114411-d7e9ee9047dd/go.mod h1:dDSfEcNoFtgJILhS7kgw7QltqPuB5f4xxsVM3/2ZnCg=
 github.com/mysll/turboengine v0.0.0-20190529015905-677f53e15742 h1:tsHOYfqXw+GJzPn7uQky4oEKflJwi2dWmHgNjg7BR34=
+github.com/nggenius/ngengine v0.0.0-20190109064020-6b57305fab97 h1:WYlZf3TmTaMdTEyFTK7WbkOyR0RnQi8OMwfDs3no03U=
+github.com/nggenius/ngengine v0.0.0-20190109064020-6b57305fab97/go.mod h1:qOUaHqPo7CWzxcMzdWlZ+I60/TSkZLt05uAmqzaTBqA=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
