@@ -13,7 +13,6 @@ var tpl = `
 package {{.Pkg}}
 
 import(
-	"reflect"
 	"turboengine/common/net/rpc"
 	{{range $k, $v := .Imp}}"{{$k}}"{{end}}
 )
@@ -81,10 +80,8 @@ func New{{.Name}}Consumer(client *rpc.Client, srv string) *{{.Name}} {
 	if srv != "" {
 		mc.srv = srv
 	}
-	m.XXX = mc
-	value := reflect.ValueOf(m)
-	{{range .Methods}}
-	value.Elem().FieldByName("{{.Name}}").Set(reflect.ValueOf(mc.{{.Name}})){{end}}
+	m.XXX = mc	{{range .Methods}}
+	m.{{.Name}}=mc.{{.Name}}{{end}}
 	return m
 }
 `
@@ -122,7 +119,6 @@ func TypeName(t reflect.Type) (pkg string, typ string) {
 
 func Generate(s interface{}, pkg string, path string) {
 	ctype := reflect.TypeOf(s)
-	//cval := reflect.ValueOf(s)
 	count := ctype.Elem().NumField()
 	desc := RpcDesc{}
 	desc.Ver = "V1_0"
