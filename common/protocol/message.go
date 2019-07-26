@@ -4,6 +4,8 @@ import (
 	"sync/atomic"
 )
 
+const MAX_HEADER_LEN = 64
+
 type Message struct {
 	Header []byte
 	Body   []byte
@@ -85,7 +87,7 @@ func NewMessage(sz int) *Message {
 	default:
 		m = &Message{}
 		m.bbuf = make([]byte, 0, sz)
-		m.hbuf = make([]byte, 0, 64)
+		m.hbuf = make([]byte, 0, MAX_HEADER_LEN)
 		m.bsize = sz
 	}
 

@@ -54,11 +54,11 @@ func Set{{.Name}}Provider(svr *rpc.Server, name string, provider I{{.Name}}_RPC_
 
 // client
 type {{$.Name}}_RPC_Go_{{$.Ver}}_Client struct {
-	c   *rpc.Client
+	c   *rpc.ChanClient
 	srv string
 }
 
-func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) Redirect(c *rpc.Client) {
+func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) Redirect(c *rpc.ChanClient) {
 	m.c = c
 }
 
@@ -68,11 +68,11 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) {{.Name}}({{range $k, $v := .ArgTyp
 	{{range $k, $v := .ArgType}}_arg.Arg{{$k}}=arg{{$k}}
 	{{end}}
 	_reply := &{{$.Name}}_RPC_Go_{{$.Ver}}_{{.Name}}_Reply{}
-	err := m.c.Call(m.srv+"_V1_0.{{.Name}}", _arg, _reply)
+	err := m.c.DirectCall(m.srv+"_V1_0.{{.Name}}", _arg, _reply)
 	{{$l := len .ReturnType}}{{if gt $l 1}}return _reply.Arg0, err{{else}}	return err{{end}}
 }
 {{end}}
-func New{{.Name}}Consumer(client *rpc.Client, srv string) *{{.Name}} {
+func New{{.Name}}Consumer(client *rpc.ChanClient, srv string) *{{.Name}} {
 	m := new({{.Name}})
 	mc := new({{$.Name}}_RPC_Go_{{$.Ver}}_Client)
 	mc.c = client
@@ -84,6 +84,59 @@ func New{{.Name}}Consumer(client *rpc.Client, srv string) *{{.Name}} {
 	m.{{.Name}}=mc.{{.Name}}{{end}}
 	return m
 }
+
+// chan client
+type {{$.Name}}_RPC_Go_{{$.Ver}}_ChanClient struct {
+	c   *rpc.ChanClient
+	srv string
+	call *rpc.Call
+}
+
+func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_ChanClient) Redirect(c *rpc.ChanClient) {
+	m.c = c
+}
+
+func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_ChanClient) Done() {
+	m.call.Done <- m.call
+	m.call = nil
+}
+
+{{range .Methods}}
+func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_ChanClient) {{.Name}}({{range $k, $v := .ArgType}}{{if ne $k 0}},{{end}}arg{{$k}} {{$v}}{{end}}) ({{range $k, $v := .ReturnType}}{{if ne $k 0}},{{end}}{{$v}}{{end}}) {
+	if m.call != nil {
+		m.Done()
+	}
+	_arg := &{{$.Name}}_RPC_Go_{{$.Ver}}_{{.Name}}{}
+	{{range $k, $v := .ArgType}}_arg.Arg{{$k}}=arg{{$k}}
+	{{end}}
+	_reply := &{{$.Name}}_RPC_Go_{{$.Ver}}_{{.Name}}_Reply{}
+	m.call = m.c.Call(m.srv+"_V1_0.{{.Name}}", _arg, _reply)
+	err := m.call.Error
+	{{$l := len .ReturnType}}{{if gt $l 1}}return _reply.Arg0, err{{else}}	return err{{end}}
+}
+{{end}}
+
+type {{.Name}}WithDone struct {
+	{{.Name}}
+}
+
+func (c *{{.Name}}WithDone) Done() {
+	c.XXX.(*{{$.Name}}_RPC_Go_{{$.Ver}}_ChanClient).Done()
+}
+
+func NewChan{{.Name}}Consumer(client *rpc.ChanClient, srv string) *{{.Name}}WithDone {
+	consumer := new({{.Name}}WithDone)
+	cc := new({{$.Name}}_RPC_Go_{{$.Ver}}_ChanClient)
+	cc.c = client
+	cc.srv = "{{.Name}}"
+	if srv != "" {
+		cc.srv = srv
+	}
+	consumer.XXX = cc	{{range .Methods}}
+	consumer.{{.Name}}=cc.{{.Name}}{{end}}
+	return consumer
+}
+
 `
 
 type FuncDecl struct {

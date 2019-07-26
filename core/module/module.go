@@ -18,7 +18,7 @@ type module struct {
 	mod      api.ModuleHandler
 	ctx      context.Context
 	async    bool
-	attachId int64
+	attachId uint64
 	close    chan struct{}
 	name     string
 	fps      int

@@ -96,19 +96,46 @@ func Init(conf *Config) {
 	c = conf
 }
 
-// Info logs a message at the info log level.
-func Info(format string, args ...interface{}) {
+// Infof logs a message at the info log level.
+func Infof(format string, args ...interface{}) {
 	h.Log(context.Background(), _infoLevel, KV(_log, fmt.Sprintf(format, args...)))
 }
 
-// Warn logs a message at the warning log level.
-func Warn(format string, args ...interface{}) {
+// Warnf logs a message at the warning log level.
+func Warnf(format string, args ...interface{}) {
 	h.Log(context.Background(), _warnLevel, KV(_log, fmt.Sprintf(format, args...)))
 }
 
-// Error logs a message at the error log level.
-func Error(format string, args ...interface{}) {
+// Errorf logs a message at the error log level.
+func Errorf(format string, args ...interface{}) {
 	h.Log(context.Background(), _errorLevel, KV(_log, fmt.Sprintf(format, args...)))
+}
+
+// Errorf logs a message at the error log level and panic.
+func Fatalf(format string, args ...interface{}) {
+	h.Log(context.Background(), _errorLevel, KV(_log, fmt.Sprintf(format, args...)))
+	panic(fmt.Sprintf(format, args...))
+}
+
+// Infof logs a message at the info log level.
+func Info(args ...interface{}) {
+	h.Log(context.Background(), _infoLevel, KV(_log, fmt.Sprint(args...)))
+}
+
+// Warnf logs a message at the warning log level.
+func Warn(args ...interface{}) {
+	h.Log(context.Background(), _warnLevel, KV(_log, fmt.Sprint(args...)))
+}
+
+// Errorf logs a message at the error log level.
+func Error(args ...interface{}) {
+	h.Log(context.Background(), _errorLevel, KV(_log, fmt.Sprint(args...)))
+}
+
+// Errorf logs a message at the error log level and panic.
+func Fatal(args ...interface{}) {
+	h.Log(context.Background(), _errorLevel, KV(_log, fmt.Sprint(args...)))
+	panic(fmt.Sprint(args...))
 }
 
 // Infov logs a message at the info log level.
@@ -128,14 +155,14 @@ func Errorv(ctx context.Context, args ...D) {
 
 func logw(args []interface{}) []D {
 	if len(args)%2 != 0 {
-		Warn("log: the variadic must be plural, the last one will ignored")
+		Warnf("log: the variadic must be plural, the last one will ignored")
 	}
 	ds := make([]D, 0, len(args)/2)
 	for i := 0; i < len(args)-1; i = i + 2 {
 		if key, ok := args[i].(string); ok {
 			ds = append(ds, KV(key, args[i+1]))
 		} else {
-			Warn("log: key must be string, get %T, ignored", args[i])
+			Warnf("log: key must be string, get %T, ignored", args[i])
 		}
 	}
 	return ds
