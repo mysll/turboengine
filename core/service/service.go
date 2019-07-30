@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 	"turboengine/common/log"
@@ -15,10 +16,20 @@ import (
 	"github.com/mysll/toolkit"
 )
 
+type Dependency struct {
+	Name  string
+	Count int
+}
+
 type Config struct {
-	ID      string
+	ID      uint16
 	Name    string
 	NatsUrl string
+	Depend  []Dependency
+	Expose  bool
+	Addr    string
+	Port    int
+	Args    map[string]string
 }
 
 type attach struct {
@@ -27,6 +38,10 @@ type attach struct {
 }
 
 type service struct {
+	wg      toolkit.WaitGroupWrapper
+	id      uint16
+	mailbox protocol.Mailbox
+	sid     string
 	sync.RWMutex
 	toolkit.WaitGroupWrapper
 	c        *Config
@@ -45,6 +60,9 @@ type service struct {
 	plugin   map[string]api.Plugin
 	lookup   *LookupService
 	event    *event.Event
+	ready    bool
+	uuid     int64
+	tr       Transporter
 }
 
 func New(h api.ServiceHandler, c *Config) api.Service {
@@ -63,7 +81,20 @@ func New(h api.ServiceHandler, c *Config) api.Service {
 		event:    new(event.Event),
 	}
 
+	if s.c != nil {
+		s.id = s.c.ID
+		s.sid = strconv.Itoa(int(c.ID))
+		s.mailbox = protocol.GetServiceMailbox(s.id)
+	}
 	return s
+}
+
+func (s *service) ID() uint16 {
+	return s.id
+}
+
+func (s *service) Mailbox() protocol.Mailbox {
+	return s.mailbox
 }
 
 // call before Start
@@ -76,27 +107,13 @@ func (s *service) AddModule(mod api.Module) {
 	s.mods = append(s.mods, mod)
 }
 
-// async call
-func (s *service) notify(event string, id string) {
-	s.event.AsyncEmit(event, id)
-}
-
-func (s *service) OnServiceChange(event string, id interface{}) {
-	switch event {
-	case EVENT_ADD:
-		log.Info("service add:", id.(string))
-	case EVENT_DEL:
-		log.Info("service del:", id.(string))
-	}
-}
-
 func (s *service) Start() error {
 	ctx := context.Background()
 	if s.running {
 		return fmt.Errorf("service %s already running", s.c.Name)
 	}
 	s.prepare()
-	if err := s.handler.OnPrepare(s); err != nil {
+	if err := s.handler.OnPrepare(s, s.c.Args); err != nil {
 		log.Errorf("prepare %s failed, %s", s.c.Name, err.Error())
 		return err
 	}
@@ -127,8 +144,7 @@ func (s *service) Start() error {
 
 func (s *service) prepare() {
 	s.usePlugin(event.Name, s.event)
-	s.event.AddListener(EVENT_ADD, s.OnServiceChange)
-	s.event.AddListener(EVENT_DEL, s.OnServiceChange)
+	s.addEvent()
 }
 
 func (s *service) init() {
@@ -136,7 +152,7 @@ func (s *service) init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = s.lookup.Register(s.c.ID, s.c.Name, "127.0.0.1", toolkit.RandRange(1, 65535))
+	err = s.lookup.Register(s.sid, s.c.Name, "127.0.0.1", toolkit.RandRange(1, 65535))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -152,6 +168,9 @@ func (s *service) init() {
 		log.Fatal(err)
 	}
 	s.SubNoInvoke(fmt.Sprintf(DEFAULT_REPLY, s.c.ID)) // inner reply
+	if s.c.Expose {
+		s.OpenTransport(s.c.Addr, s.c.Port)
+	}
 }
 
 func (s *service) Attach(fn api.Update) uint64 {
@@ -188,6 +207,10 @@ func (s *service) run() {
 }
 
 func (s *service) destroy() {
+	if s.tr != nil {
+		s.tr.Close()
+	}
+
 	for _, m := range s.mods {
 		m.Close()
 		log.Infof("mod %s stop", m.Name())
@@ -196,7 +219,7 @@ func (s *service) destroy() {
 		p.Shut(s)
 	}
 	s.lookup.SetNotify(nil)
-	s.lookup.Unregister(s.c.ID)
+	s.lookup.Unregister(s.sid)
 	s.lookup.Stop()
 	s.exchange.Close()
 	log.Infof("service %s shut", s.c.Name)
@@ -214,4 +237,8 @@ func (s *service) Shut() {
 		return
 	}
 	s.quit = true
+}
+
+func (s *service) Wait() {
+	s.wg.Wait()
 }

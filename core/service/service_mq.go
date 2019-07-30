@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	DEFAULT_REPLY = "turbo.service.reply#%s"
+	DEFAULT_REPLY = "turbo.service.reply#%d"
 )
 
-func makeBody(typ uint8, id string, session uint64, data []byte) *protocol.Message {
+func makeBody(typ uint8, id uint16, session uint64, data []byte) *protocol.Message {
 	msg := protocol.NewMessage(len(data) + 64)
 	sr := protocol.NewStoreArchiver(msg.Body)
 	sr.Put(typ)
@@ -23,7 +23,7 @@ func makeBody(typ uint8, id string, session uint64, data []byte) *protocol.Messa
 	return msg
 }
 
-func parseBody(m *protocol.Message) (typ uint8, id string, session uint64, data []byte, err error) {
+func parseBody(m *protocol.Message) (typ uint8, id uint16, session uint64, data []byte, err error) {
 	ar := protocol.NewLoadArchiver(m.Body)
 	err = ar.Get(&typ)
 	if err != nil {
@@ -46,7 +46,7 @@ func (s *service) Pub(subject string, data []byte) error {
 	return s.exchange.Pub(subject, msg)
 }
 
-func (s *service) reply(id string, session uint64, data []byte) error {
+func (s *service) reply(id uint16, session uint64, data []byte) error {
 	msg := makeBody(1, s.c.ID, session, data)
 	return s.exchange.Pub(fmt.Sprintf(DEFAULT_REPLY, id), msg)
 }
@@ -142,7 +142,7 @@ func (s *service) handle(subject string, m *protocol.Message) {
 
 }
 
-func (s *service) invoke(subject string, id string, data []byte) *protocol.Message {
+func (s *service) invoke(subject string, id uint16, data []byte) *protocol.Message {
 	if invoke, ok := s.delegate[subject]; ok {
 		reply := invoke(id, data)
 		return reply

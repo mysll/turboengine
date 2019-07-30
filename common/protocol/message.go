@@ -1,97 +1,125 @@
 package protocol
 
-import (
-	"sync/atomic"
-)
+import "sync"
 
 const MAX_HEADER_LEN = 64
 
+// Message encapsulates the messages that we exchange back and forth.  The
+// meaning of the Header and Body fields, and where the splits occur, will
+// vary depending on the protocol.  Note however that any headers applied by
+// transport layers (including TCP/ethernet headers, and SP protocol
+// independent length headers), are *not* included in the Header.
 type Message struct {
+	// Header carries any protocol (SP) specific header.  Applications
+	// should not modify or use this unless they are using Raw mode.
+	// No user data may be placed here.
 	Header []byte
-	Body   []byte
-	hbuf   []byte
-	bbuf   []byte
-	bsize  int
-	refcnt int32
+
+	// Body carries the body of the message.  This can also be thought
+	// of as the message "payload".
+	Body []byte
+
+	bbuf  []byte
+	hbuf  []byte
+	bsize int
+	pool  *sync.Pool
 }
 
 type msgCacheInfo struct {
 	maxbody int
-	cache   chan *Message
+	pool    *sync.Pool
 }
 
-var messageCache = []msgCacheInfo{
-	{maxbody: 64, cache: make(chan *Message, 2048)},   // 128K
-	{maxbody: 128, cache: make(chan *Message, 1024)},  // 128K
-	{maxbody: 256, cache: make(chan *Message, 1024)},  // 256K
-	{maxbody: 512, cache: make(chan *Message, 1024)},  // 512K
-	{maxbody: 1024, cache: make(chan *Message, 1024)}, // 1 MB
-	{maxbody: 2048, cache: make(chan *Message, 512)},  // 1 MB
-	{maxbody: 4096, cache: make(chan *Message, 512)},  // 2 MB
-	{maxbody: 8192, cache: make(chan *Message, 256)},  // 2 MB
-	{maxbody: 16384, cache: make(chan *Message, 128)}, // 2 MB
-	{maxbody: 65536, cache: make(chan *Message, 64)},  // 4 MB
-}
-
-func (m *Message) Free() {
-	var ch chan *Message
-	if v := atomic.AddInt32(&m.refcnt, -1); v > 0 {
-		return
-	}
-	for i := range messageCache {
-		if m.bsize == messageCache[i].maxbody {
-			ch = messageCache[i].cache
-			break
-		}
-	}
-	select {
-	case ch <- m:
-	default:
-	}
-}
-
-func (m *Message) Dup() *Message {
-	atomic.AddInt32(&m.refcnt, 1)
+func newMsg(sz int) *Message {
+	m := &Message{}
+	m.bbuf = make([]byte, 0, sz)
+	m.hbuf = make([]byte, 0, MAX_HEADER_LEN)
+	m.bsize = sz
 	return m
 }
 
-func (m *Message) Copy(copyheader bool) *Message {
-	var msg *Message
-	if len(m.Body) > 0 {
-		msg = NewMessage(len(m.Body))
-
-		msg.Body = append(msg.Body, m.Body...)
-	} else {
-		msg = NewMessage(1)
-	}
-
-	if copyheader {
-		msg.Header = append(msg.Header, m.Header...)
-	}
-
-	return msg
+// We can tweak these!
+var messageCache = []msgCacheInfo{
+	{
+		maxbody: 64,
+		pool: &sync.Pool{
+			New: func() interface{} { return newMsg(64) },
+		},
+	}, {
+		maxbody: 128,
+		pool: &sync.Pool{
+			New: func() interface{} { return newMsg(128) },
+		},
+	}, {
+		maxbody: 256,
+		pool: &sync.Pool{
+			New: func() interface{} { return newMsg(256) },
+		},
+	}, {
+		maxbody: 512,
+		pool: &sync.Pool{
+			New: func() interface{} { return newMsg(512) },
+		},
+	}, {
+		maxbody: 1024,
+		pool: &sync.Pool{
+			New: func() interface{} { return newMsg(1024) },
+		},
+	}, {
+		maxbody: 4096,
+		pool: &sync.Pool{
+			New: func() interface{} { return newMsg(4096) },
+		},
+	}, {
+		maxbody: 8192,
+		pool: &sync.Pool{
+			New: func() interface{} { return newMsg(8192) },
+		},
+	}, {
+		maxbody: 65536,
+		pool: &sync.Pool{
+			New: func() interface{} { return newMsg(65536) },
+		},
+	},
 }
 
+// Free releases the message to the pool from which it was allocated.
+// While this is not strictly necessary thanks to GC, doing so allows
+// for the resources to be recycled without engaging GC.  This can have
+// rather substantial benefits for performance.
+func (m *Message) Free() {
+	for i := range messageCache {
+		if m.bsize == messageCache[i].maxbody {
+			messageCache[i].pool.Put(m)
+			return
+		}
+	}
+}
+
+// Dup creates a "duplicate" message.
+// Reference counting was found to be error prone, so we have elected
+// to simply make a full copy of the message for now.
+func (m *Message) Dup() *Message {
+	dup := NewMessage(len(m.Body))
+	dup.Body = append(dup.Body, m.Body...)
+	dup.Header = append(dup.Header, m.Header...)
+	return dup
+}
+
+// NewMessage is the supported way to obtain a new Message.  This makes
+// use of a "cache" which greatly reduces the load on the garbage collector.
 func NewMessage(sz int) *Message {
 	var m *Message
-	var ch chan *Message
 	for i := range messageCache {
-		if sz <= messageCache[i].maxbody {
-			ch = messageCache[i].cache
-			sz = messageCache[i].maxbody
+		if sz < messageCache[i].maxbody {
+			m = messageCache[i].pool.Get().(*Message)
 			break
 		}
 	}
-	select {
-	case m = <-ch:
-	default:
-		m = &Message{}
-		m.bbuf = make([]byte, 0, sz)
-		m.hbuf = make([]byte, 0, MAX_HEADER_LEN)
-		m.bsize = sz
+	if m == nil {
+		m = newMsg(sz)
 	}
 
-	m.refcnt = 1
 	m.Body = m.bbuf
 	m.Header = m.hbuf
 	return m

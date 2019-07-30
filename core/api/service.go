@@ -6,6 +6,8 @@ import (
 	"turboengine/common/utils"
 )
 
+var MAX_SID = 0xFFFF
+
 type Plugin interface {
 	Prepare(Service)
 	Shut(Service)
@@ -20,10 +22,12 @@ type Call struct {
 	Err      error
 }
 
-type InvokeFn func(string, []byte) *protocol.Message
+type InvokeFn func(uint16, []byte) *protocol.Message
 type Update func(*utils.Time)
 
 type Service interface {
+	ID() uint16
+	Mailbox() protocol.Mailbox
 	AddModule(Module)
 	Start() error
 	Close()
@@ -38,10 +42,12 @@ type Service interface {
 	UnPlugin(name string)
 	Plugin(name string) interface{}
 	CallPlugin(plugin string, cmd string, args ...interface{}) (interface{}, error)
+	Wait()
 }
 
 type ServiceHandler interface {
-	OnPrepare(Service) error
+	OnPrepare(Service, map[string]string) error
 	OnStart() error
 	OnShut() bool
+	OnDependReady()
 }

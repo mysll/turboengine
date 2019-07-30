@@ -2,6 +2,7 @@ package event
 
 import (
 	"container/list"
+	"sync"
 	"turboengine/common/log"
 	"turboengine/common/utils"
 	"turboengine/core/api"
@@ -18,9 +19,10 @@ type EventData struct {
 }
 
 type Event struct {
+	sync.Mutex
 	srv     api.Service
 	id      uint64
-	events  chan *EventData
+	pending *list.List
 	invokes map[string]*list.List
 	serial  uint64
 }
@@ -34,8 +36,8 @@ type Listener struct {
 
 func (e *Event) Prepare(srv api.Service) {
 	e.srv = srv
-	e.id = e.srv.Attach(e.AsyncInvoke)
-	e.events = make(chan *EventData, 32)
+	e.id = e.srv.Attach(e.roundInvoke)
+	e.pending = list.New()
 	e.invokes = make(map[string]*list.List)
 	e.serial = 1
 }
@@ -51,11 +53,13 @@ func (e *Event) Handle(cmd string, args ...interface{}) interface{} {
 		}
 	}()
 	switch cmd {
-	case "addListener":
+	case "AddListener":
 		return e.AddListener(args[0].(string), args[1].(Callback))
-	case "emit":
+	case "RemoveListener":
+		e.RemoveListener(args[0].(string), args[1].(uint64))
+	case "Emit":
 		e.Emit(args[0].(string), args[1])
-	case "asyncemit":
+	case "AsyncEmit":
 		e.AsyncEmit(args[0].(string), args[1])
 	}
 
@@ -76,6 +80,18 @@ func (e *Event) AddListener(event string, fn Callback) uint64 {
 	return serial
 }
 
+func (e *Event) RemoveListener(event string, id uint64) {
+	if l, ok := e.invokes[event]; ok {
+		for ele := l.Front(); ele != nil; ele = ele.Next() {
+			if ele.Value.(*Listener).id == id {
+				l.Remove(ele)
+				return
+			}
+		}
+	}
+}
+
+// sync invoke
 func (e *Event) Emit(event string, data interface{}) {
 	evt := &EventData{
 		Name: event,
@@ -89,21 +105,25 @@ func (e *Event) AsyncEmit(event string, data interface{}) {
 		Name: event,
 		Data: data,
 	}
-	select {
-	case e.events <- evt:
-	default:
-	}
+	e.Lock()
+	e.pending.PushBack(evt)
+	e.Unlock()
 }
 
-func (e *Event) AsyncInvoke(t *utils.Time) {
-	for {
-		select {
-		case event := <-e.events:
-			e.Invoke(event)
-		default:
-			return
-		}
+// service update
+func (e *Event) roundInvoke(t *utils.Time) {
+	if e.pending.Len() == 0 {
+		return
 	}
+	e.Lock()
+	ele := e.pending.Front()
+	for ele != nil {
+		cur := ele
+		ele = ele.Next()
+		e.Invoke(cur.Value.(*EventData))
+		e.pending.Remove(cur)
+	}
+	e.Unlock()
 }
 
 func (e *Event) Invoke(data *EventData) {

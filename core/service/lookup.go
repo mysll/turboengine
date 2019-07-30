@@ -79,7 +79,7 @@ func (sd *LookupService) Stop() {
 	sd.cancelFunc()
 }
 
-func (sd *LookupService) Register(id, name string, addr string, port int) error {
+func (sd *LookupService) Register(id string, name string, addr string, port int) error {
 	registration := new(consulapi.AgentServiceRegistration)
 	registration.ID = id
 	registration.Name = name
@@ -150,6 +150,30 @@ func (sd *LookupService) Lookup(id string) *ServiceInfo {
 	}
 	sd.RUnlock()
 	return nil
+}
+
+func (sd *LookupService) AmountByName(name string) int {
+	i := 0
+	sd.RLock()
+	for _, s := range sd.service {
+		if s.Name == name {
+			i++
+		}
+	}
+	sd.RUnlock()
+	return i
+}
+
+func (sd *LookupService) LookupByName(name string) []*ServiceInfo {
+	var s []*ServiceInfo
+	sd.RLock()
+	for _, svr := range sd.service {
+		if svr.Name == name {
+			s = append(s, svr)
+		}
+	}
+	sd.RUnlock()
+	return s
 }
 
 func (sd *LookupService) Exist(id string) bool {

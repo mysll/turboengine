@@ -17,21 +17,43 @@ func (e *Echo) OnStart() error {
 }
 
 func Srv1() {
-	s := New(&Echo{}, &Config{ID: "100", Name: "echo", NatsUrl: "nats://0.0.0.0:4222"})
+	s := New(&Echo{}, &Config{
+		ID:      100,
+		Name:    "echo",
+		NatsUrl: "nats://0.0.0.0:4222",
+		Depend: []Dependency{
+			Dependency{
+				Name:  "echo",
+				Count: 1,
+			},
+		},
+		Expose: true,
+		Addr:   "0.0.0.0",
+		Port:   0,
+	})
 	go s.Start()
 	time.Sleep(time.Second)
-	s.Sub("test", func(id string, data []byte) *protocol.Message {
+	s.Sub("test", func(id uint16, data []byte) *protocol.Message {
 		log.Info("call test from:", id, ", content:", string(data))
 		m := protocol.NewMessage(len(data))
 		m.Body = append(m.Body, data...)
 		return m
 	})
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 15)
 	s.Close()
+	s.Wait()
 }
 
 func Srv2() {
-	s := New(&Echo{}, &Config{ID: "101", Name: "echo", NatsUrl: "nats://0.0.0.0:4222"})
+	s := New(&Echo{}, &Config{ID: 101,
+		Name:    "echo",
+		NatsUrl: "nats://0.0.0.0:4222",
+		Depend: []Dependency{
+			Dependency{
+				Name:  "echo",
+				Count: 1,
+			},
+		}})
 	go s.Start()
 	time.Sleep(time.Second * 2)
 	c, err := s.PubWithTimeout("test", []byte("hello world"), time.Second)
@@ -43,9 +65,10 @@ func Srv2() {
 		log.Info("reply", cb.Err, string(data))
 	}
 
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 15)
 
 	s.Close()
+	s.Wait()
 }
 
 func TestNewService(t *testing.T) {
