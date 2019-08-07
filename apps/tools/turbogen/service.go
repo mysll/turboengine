@@ -57,13 +57,15 @@ var reg = make(map[string]interface{})
 
 var server_rpc_test = `package proto
 import(
+	"reflect"
 	"testing"
 	"turboengine/apps/tools/turbogen"
 )
 
 func TestCreate(t *testing.T) {
 	for _, v := range reg {
-		turbogen.Generate(v, "rpc", "../rpc")
+		typ := reflect.TypeOf(v)
+		turbogen.Generate(v, typ.Elem().PkgPath(), "rpc", "../rpc")
 	}
 }
 
