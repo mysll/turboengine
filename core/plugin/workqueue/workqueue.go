@@ -28,6 +28,10 @@ func (w *WorkQueue) Prepare(srv api.Service) {
 	}
 }
 
+func (w *WorkQueue) Run() {
+
+}
+
 func (w *WorkQueue) Shut(api.Service) {
 	for i := 0; i < MAX_GO_ROUTINE; i++ {
 		close(w.jobs[i])

@@ -1,11 +1,13 @@
 package service
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"runtime"
 	"strings"
 	"turboengine/common/log"
+	"turboengine/common/protocol"
 )
 
 var transport = make(map[string]Transporter)
@@ -30,12 +32,15 @@ type ConnHandler interface {
 }
 
 type Transporter interface {
-	ListenAndServ(addr string, port int, handler ConnHandler)
+	ListenAndServe(addr string, port int, handler ConnHandler)
+	Open()
 	Close()
 }
 
 type TcpConn struct {
-	conn net.Conn
+	conn   net.Conn
+	reader *bufio.Reader
+	writer *bufio.Writer
 }
 
 func (c *TcpConn) Addr() string {
@@ -43,11 +48,11 @@ func (c *TcpConn) Addr() string {
 }
 
 func (c *TcpConn) Read(p []byte) (n int, err error) {
-	return c.conn.Read(p)
+	return c.reader.Read(p)
 }
 
 func (c *TcpConn) Write(p []byte) (n int, err error) {
-	return c.conn.Write(p)
+	return c.writer.Write(p)
 }
 
 func (c *TcpConn) Close() {
@@ -55,10 +60,17 @@ func (c *TcpConn) Close() {
 }
 
 type TcpTransport struct {
-	l net.Listener
+	l     net.Listener
+	open  bool
+	ready chan bool
 }
 
-func (t *TcpTransport) ListenAndServ(addr string, port int, handler ConnHandler) {
+func (t *TcpTransport) Open() {
+	t.open = true
+	t.ready <- true
+}
+
+func (t *TcpTransport) ListenAndServe(addr string, port int, handler ConnHandler) {
 	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", addr, port))
 	if err != nil {
 		panic(err)
@@ -68,6 +80,13 @@ func (t *TcpTransport) ListenAndServ(addr string, port int, handler ConnHandler)
 	log.Info("open transport at ", l.Addr())
 
 	for {
+		if !t.open {
+			_, ok := <-t.ready
+			if !ok { // close
+				break
+			}
+		}
+
 		conn, err := l.Accept()
 		if err != nil {
 			if nerr, ok := err.(net.Error); ok && nerr.Temporary() {
@@ -80,7 +99,11 @@ func (t *TcpTransport) ListenAndServ(addr string, port int, handler ConnHandler)
 			}
 			break
 		}
-		go handler.Handle(&TcpConn{conn: conn})
+		go handler.Handle(&TcpConn{
+			conn:   conn,
+			reader: bufio.NewReaderSize(conn, protocol.MAX_BUF_LEN),
+			writer: bufio.NewWriterSize(conn, protocol.MAX_BUF_LEN),
+		})
 	}
 	log.Info("close transport")
 }
@@ -88,6 +111,7 @@ func (t *TcpTransport) ListenAndServ(addr string, port int, handler ConnHandler)
 func (t *TcpTransport) Close() {
 	if t.l != nil {
 		t.l.Close()
+		close(t.ready)
 	}
 }
 
@@ -102,10 +126,12 @@ func (s *service) UseTransport(typ string) {
 
 func (s *service) OpenTransport(addr string, port int) {
 	if s.tr == nil {
-		s.tr = &TcpTransport{}
+		s.tr = &TcpTransport{
+			ready: make(chan bool, 1),
+		}
 	}
 
 	s.wg.Wrap(func() {
-		s.tr.ListenAndServ(addr, port, &NetHandle{svr: s})
+		s.tr.ListenAndServe(addr, port, &NetHandle{svr: s})
 	})
 }

@@ -1,14 +1,15 @@
 package protocol
 
 func PackArgs(args ...interface{}) *Message {
-	m := NewMessage(1024)
-	ar := NewStoreArchiver(m.Body)
+	ar := NewAutoExtendArchive(128)
 	for _, arg := range args {
-		ar.Put(arg)
+		err := ar.Put(arg)
+		if err != nil {
+			return nil
+		}
 	}
 
-	m.Body = m.Body[:ar.Len()]
-	return m
+	return ar.Message()
 }
 
 func UnPackArgs(msg *Message, args ...interface{}) error {

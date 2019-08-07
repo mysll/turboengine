@@ -1,6 +1,8 @@
 package protocol
 
-import "sync"
+import (
+	"sync"
+)
 
 const MAX_HEADER_LEN = 64
 
@@ -111,7 +113,7 @@ func (m *Message) Dup() *Message {
 func NewMessage(sz int) *Message {
 	var m *Message
 	for i := range messageCache {
-		if sz < messageCache[i].maxbody {
+		if sz <= messageCache[i].maxbody {
 			m = messageCache[i].pool.Get().(*Message)
 			break
 		}

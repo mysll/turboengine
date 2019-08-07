@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"testing"
 	"time"
 	"turboengine/common/log"
@@ -33,13 +34,13 @@ func Srv1() {
 	})
 	go s.Start()
 	time.Sleep(time.Second)
-	s.Sub("test", func(id uint16, data []byte) *protocol.Message {
+	s.Sub("test", func(id uint16, data []byte) (*protocol.Message, error) {
 		log.Info("call test from:", id, ", content:", string(data))
 		m := protocol.NewMessage(len(data))
 		m.Body = append(m.Body, data...)
-		return m
+		return m, fmt.Errorf("error")
 	})
-	time.Sleep(time.Second * 15)
+	time.Sleep(time.Second * 10)
 	s.Close()
 	s.Wait()
 }
@@ -61,11 +62,11 @@ func Srv2() {
 		panic(err)
 	}
 
-	c.Callback = func(cb *api.Call, data []byte) {
-		log.Info("reply", cb.Err, string(data))
+	c.Callback = func(call *api.Call) {
+		log.Info("reply:", call.Err, string(call.Data))
 	}
 
-	time.Sleep(time.Second * 15)
+	time.Sleep(time.Second * 10)
 
 	s.Close()
 	s.Wait()

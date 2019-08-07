@@ -21,17 +21,6 @@ type Dependency struct {
 	Count int
 }
 
-type Config struct {
-	ID      uint16
-	Name    string
-	NatsUrl string
-	Depend  []Dependency
-	Expose  bool
-	Addr    string
-	Port    int
-	Args    map[string]string
-}
-
 type attach struct {
 	id uint64
 	fn api.Update
@@ -40,6 +29,7 @@ type attach struct {
 type service struct {
 	wg      toolkit.WaitGroupWrapper
 	id      uint16
+	name    string
 	mailbox protocol.Mailbox
 	sid     string
 	sync.RWMutex
@@ -63,6 +53,9 @@ type service struct {
 	ready    bool
 	uuid     int64
 	tr       Transporter
+	connid   uint64
+	connPool *ConnPool
+	closing  bool
 }
 
 func New(h api.ServiceHandler, c *Config) api.Service {
@@ -72,7 +65,7 @@ func New(h api.ServiceHandler, c *Config) api.Service {
 		attachs:  make([]attach, 0, 8),
 		attachId: 1,
 		mods:     make([]api.Module, 0, 8),
-		inMsg:    make(chan *protocol.Message, 256),
+		inMsg:    make(chan *protocol.Message, 512),
 		pending:  make(map[uint64]*api.Call),
 		session:  1,
 		delegate: make(map[string]api.InvokeFn),
@@ -83,6 +76,7 @@ func New(h api.ServiceHandler, c *Config) api.Service {
 
 	if s.c != nil {
 		s.id = s.c.ID
+		s.name = s.c.Name
 		s.sid = strconv.Itoa(int(c.ID))
 		s.mailbox = protocol.GetServiceMailbox(s.id)
 	}
@@ -91,6 +85,10 @@ func New(h api.ServiceHandler, c *Config) api.Service {
 
 func (s *service) ID() uint16 {
 	return s.id
+}
+
+func (s *service) Name() string {
+	return s.name
 }
 
 func (s *service) Mailbox() protocol.Mailbox {
@@ -137,8 +135,10 @@ func (s *service) Start() error {
 		log.Errorf("start %s failed, %s", s.c.Name, err.Error())
 		return err
 	}
-	s.run()
-	s.destroy()
+	s.wg.Wrap(func() {
+		s.run()
+		s.destroy()
+	})
 	return nil
 }
 
@@ -152,7 +152,7 @@ func (s *service) init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = s.lookup.Register(s.sid, s.c.Name, "127.0.0.1", toolkit.RandRange(1, 65535))
+	err = s.lookup.Register(s.sid, s.name, "127.0.0.1", toolkit.RandRange(1, 65535))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -168,11 +168,20 @@ func (s *service) init() {
 		log.Fatal(err)
 	}
 	s.SubNoInvoke(fmt.Sprintf(DEFAULT_REPLY, s.c.ID)) // inner reply
+	s.SubNoInvoke(SERVICE_SHUT)
+	s.SubNoInvoke(SERVICE_SHUT_ALL)
 	if s.c.Expose {
+		s.connPool = &ConnPool{
+			svr:     s,
+			clients: make(map[uint64]*Node),
+		}
 		s.OpenTransport(s.c.Addr, s.c.Port)
 	}
 }
 
+func (s *service) shutInvoke(*api.Call) {
+
+}
 func (s *service) Attach(fn api.Update) uint64 {
 	id := s.attachId
 	s.attachId++
@@ -194,8 +203,15 @@ func (s *service) Deatch(id uint64) {
 
 func (s *service) run() {
 	s.running = true
-	log.Infof("service %s start", s.c.Name)
-	s.time = utils.NewTime(10)
+	log.Infof("service %s started", s.c.Name)
+	fps := 10
+	if s.c.FPS != 0 {
+		fps = s.c.FPS
+	}
+	s.time = utils.NewTime(fps)
+	for _, p := range s.plugin {
+		p.Run()
+	}
 	for !s.quit {
 		s.time.Update()
 		s.input() // message queue a round trip
@@ -207,29 +223,42 @@ func (s *service) run() {
 }
 
 func (s *service) destroy() {
+	// close transport
 	if s.tr != nil {
 		s.tr.Close()
 	}
-
+	// close all connections
+	if s.connPool != nil {
+		s.connPool.quit = true
+		s.connPool.CloseAll()
+	}
+	// close module
 	for _, m := range s.mods {
 		m.Close()
 		log.Infof("mod %s stop", m.Name())
 	}
+	// close plugin
 	for _, p := range s.plugin {
 		p.Shut(s)
 	}
+	// close consul
 	s.lookup.SetNotify(nil)
 	s.lookup.Unregister(s.sid)
 	s.lookup.Stop()
+	// close message queue
 	s.exchange.Close()
 	log.Infof("service %s shut", s.c.Name)
 }
 
 func (s *service) Close() {
+	if s.closing {
+		return
+	}
 	if s.handler.OnShut() {
 		s.Shut()
 		log.Infof("service %s close", s.c.Name)
 	}
+	s.closing = true
 }
 
 func (s *service) Shut() {
@@ -241,4 +270,17 @@ func (s *service) Shut() {
 
 func (s *service) Wait() {
 	s.wg.Wait()
+}
+
+func (s *service) Ready() {
+	if s.tr != nil {
+		s.tr.Open()
+	}
+}
+
+func (s *service) addEvent() {
+	s.event.AddListener(EVENT_ADD, s.onServiceChange)
+	s.event.AddListener(EVENT_DEL, s.onServiceChange)
+	s.event.AddListener(EVENT_CONNECTED, s.onConnEvent)
+	s.event.AddListener(EVENT_DISCONNECTED, s.onConnEvent)
 }

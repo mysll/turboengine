@@ -56,6 +56,7 @@ func (m *module) Name() string {
 
 func (m *module) Init(srv api.Service) error {
 	m.srv = srv
+	m.mod.OnPrepare(srv)
 	return nil
 }
 
@@ -101,6 +102,7 @@ func (m *module) Update(t *utils.Time) {
 }
 
 func (m *module) Close() {
+	m.mod.OnStop()
 	if m.attachId > 0 {
 		m.srv.Deatch(m.attachId)
 	}

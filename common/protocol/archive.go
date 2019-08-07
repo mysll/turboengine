@@ -134,12 +134,12 @@ func (ar *StoreArchive) PutObject(obj interface{}) error {
 	return enc.Encode(obj)
 }
 
-// PutData 写入字节数据，格式为：2字节长度+数据,最大0xFFFF
+// PutData 写入字节数据，格式为：4字节长度+数据,最大0xFFFFFFFF
 func (ar *StoreArchive) PutData(data []byte) error {
-	if len(data) > 0xFFFF {
+	if len(data) > 0xFFFFFFFF {
 		return errors.New("data size too big")
 	}
-	err := ar.Put(uint16(len(data)))
+	err := ar.Put(uint32(len(data)))
 	if err != nil {
 		return err
 	}
@@ -149,12 +149,14 @@ func (ar *StoreArchive) PutData(data []byte) error {
 
 // 输出字节流
 type LoadArchive struct {
+	bytes  []byte
 	reader *bytes.Reader
 }
 
 func NewLoadArchiver(data []byte) *LoadArchive {
 	ar := &LoadArchive{}
 	ar.reader = bytes.NewReader(data)
+	ar.bytes = data
 	return ar
 }
 
@@ -307,8 +309,8 @@ func (ar *LoadArchive) GetObject(val interface{}) error {
 
 // GetData 读带前缀长度的字节流
 func (ar *LoadArchive) GetData() (data []byte, err error) {
-	var l uint16
-	l, err = ar.GetUint16()
+	var l uint32
+	l, err = ar.GetUint32()
 	if err != nil {
 		return nil, err
 	}
@@ -318,4 +320,22 @@ func (ar *LoadArchive) GetData() (data []byte, err error) {
 	data = make([]byte, int(l))
 	_, err = ar.reader.Read(data)
 	return data, err
+}
+
+func (ar *LoadArchive) GetDataNonCopy() (data []byte, err error) {
+	var l uint32
+	l, err = ar.GetUint32()
+	if err != nil {
+		return nil, err
+	}
+	if l == 0 {
+		return []byte{}, nil
+	}
+	curpos, _ := ar.reader.Seek(0, io.SeekCurrent)
+	data = ar.bytes[int(curpos) : int(curpos)+int(l)]
+	_, err = ar.reader.Seek(int64(l), io.SeekCurrent)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }

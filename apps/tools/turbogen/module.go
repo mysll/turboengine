@@ -28,13 +28,22 @@ type {{.Name}} struct{
 	module.Module
 }
 
+func (m *{{.Name}}) Name() string{
+	return "{{.Name}}"
+}
+
 func (m *{{.Name}}) OnPrepare(s api.Service) error {
 	m.Module.OnPrepare(s)
+	// load module resource
+	// load module resource end
+
 	return nil
 }
 
 func (m *{{.Name}}) OnStart(ctx context.Context) error {
 	m.Module.OnStart(ctx)
+	// subscribe subject
+	// subscribe subject end
 	return nil
 }
 
@@ -67,6 +76,16 @@ func createModule(pkg, module, auth, path string) {
 		}
 	}
 
+	if ok, _ := toolkit.PathExists(outfile); ok {
+		fmt.Print(outfile, " file already exists, overwite it?[y/n]:")
+		var confirm string
+		fmt.Scanln(&confirm)
+		if strings.ToLower(confirm) != "y" {
+			fmt.Println("abort")
+			return
+		}
+
+	}
 	f, err := os.Create(outfile)
 	if err != nil {
 		panic(err)
@@ -84,6 +103,7 @@ func createModule(pkg, module, auth, path string) {
 
 	cmd := exec.Command("gofmt", "--w", outfile)
 	cmd.Run()
+	fmt.Println("File created successfully! location: ", outfile)
 }
 
 func CreateModule(c *cli.Context) error {

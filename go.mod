@@ -20,8 +20,10 @@ require (
 	github.com/nsf/termbox-go v0.0.0-20190624072549-eeb6cd0a1762 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/sirupsen/logrus v1.4.2
+	github.com/stathat/consistent v1.0.0
 	github.com/urfave/cli v1.20.0
 	github.com/yireyun/go-queue v0.0.0-20180809062148-5e6897360dac
 	golang.org/x/net v0.0.0-20190522155817-f3200d17e092
 	gopkg.in/gizak/termui.v1 v1.0.0-20151021151108-e62b5929642a // indirect
+	stathat.com/c/consistent v1.0.0 // indirect
 )

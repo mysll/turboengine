@@ -80,6 +80,9 @@ func (p *Exchange) Pub(subject string, msg *protocol.Message) error {
 	if p.closing {
 		return ERR_CLOSED
 	}
+	if !p.conn.IsConnected() {
+		return ERR_NATS_DISCONNECTED
+	}
 	msg.Header = msg.Header[:0]
 	msg.Header = append(msg.Header, []byte(subject)...)
 	select {
@@ -131,7 +134,6 @@ L:
 		case m := <-p.sendCh:
 			err := p.conn.Publish(string(m.Header), m.Body)
 			log.Info("send:", string(m.Header))
-			m.Free()
 			if err != nil && !p.closing {
 				for i := 0; i < 3; i++ {
 					time.Sleep(time.Second)
@@ -142,6 +144,7 @@ L:
 					log.Errorf("send message failed %s, retry after 1s", err.Error())
 				}
 			}
+			m.Free()
 			if p.closing {
 				break L
 			}

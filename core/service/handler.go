@@ -66,3 +66,19 @@ func (s *Service) OnShut() bool {
 func (s *Service) OnDependReady() {
 
 }
+
+func (s *Service) OnServiceAvailable(id uint16) {
+
+}
+
+func (s *Service) OnServiceOffline(id uint16) {
+
+}
+
+func (s *Service) OnConnected(session uint64) {
+
+}
+
+func (s *Service) OnDisconnected(session uint64) {
+
+}

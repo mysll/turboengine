@@ -3,16 +3,23 @@ package service
 import (
 	"context"
 	"fmt"
+	"sort"
+	"strconv"
 	"sync"
 	"time"
 	"turboengine/common/log"
+	"turboengine/common/protocol"
+	"turboengine/core/api"
 
 	consulapi "github.com/hashicorp/consul/api"
+	"github.com/mysll/toolkit"
+
+	"github.com/stathat/consistent"
 )
 
 const (
 	SERVICE_TAG = "turbo.service"
-	SERVICE_TTL = time.Second * 2 // TTL
+	SERVICE_TTL = time.Second * 5 // TTL
 	DEREG_TIME  = time.Second * 10
 )
 
@@ -21,13 +28,24 @@ const (
 	EVENT_DEL = "service_del"
 )
 
+type services []*ServiceInfo
+
+func (s services) Len() int {
+	return len(s)
+}
+
+func (s services) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s services) Less(i, j int) bool { return s[i].NID < s[j].NID }
+
 type NotifyFn func(event string, id string)
 
 type ServiceInfo struct {
 	ID   string
+	NID  uint16
 	Name string
 	Addr string
 	Port int
+	Load int // load balance
 }
 
 func (s *ServiceInfo) dirty(service *consulapi.AgentService) bool {
@@ -50,6 +68,7 @@ type LookupService struct {
 	cancelFunc context.CancelFunc
 	ctx        context.Context
 	notify     NotifyFn
+	lastSel    int
 }
 
 func NewLookupService(config *consulapi.Config) *LookupService {
@@ -94,7 +113,7 @@ func (sd *LookupService) Register(id string, name string, addr string, port int)
 	err := sd.client.Agent().ServiceRegister(registration)
 
 	if err != nil {
-		return fmt.Errorf("register server error : %s", err.Error())
+		return fmt.Errorf("register service error : %s", err.Error())
 	}
 	sd.localServ[id] = &ServiceInfo{
 		ID:   id,
@@ -102,6 +121,8 @@ func (sd *LookupService) Register(id string, name string, addr string, port int)
 		Addr: addr,
 		Port: port,
 	}
+
+	log.Info("register succeed, id:", id)
 	return nil
 }
 
@@ -165,7 +186,7 @@ func (sd *LookupService) AmountByName(name string) int {
 }
 
 func (sd *LookupService) LookupByName(name string) []*ServiceInfo {
-	var s []*ServiceInfo
+	var s services
 	sd.RLock()
 	for _, svr := range sd.service {
 		if svr.Name == name {
@@ -173,7 +194,16 @@ func (sd *LookupService) LookupByName(name string) []*ServiceInfo {
 		}
 	}
 	sd.RUnlock()
+	sort.Sort(s)
 	return s
+}
+
+func (sd *LookupService) UpdateLoad(id string, load int) {
+	sd.Lock()
+	if s, ok := sd.service[id]; ok {
+		s.Load = load
+	}
+	sd.Unlock()
 }
 
 func (sd *LookupService) Exist(id string) bool {
@@ -230,8 +260,13 @@ func (sd *LookupService) discoverServer(healthyOnly bool) {
 				}
 			}
 
+			nid, err := strconv.Atoi(entry.Service.ID)
+			if err != nil {
+				panic(err)
+			}
 			addSet[entry.Service.ID] = &ServiceInfo{ // 新增加
 				ID:   entry.Service.ID,
+				NID:  uint16(nid),
 				Name: entry.Service.Service,
 				Addr: entry.Service.Address,
 				Port: entry.Service.Port,
@@ -251,13 +286,13 @@ func (sd *LookupService) discoverServer(healthyOnly bool) {
 
 		// notify
 		for id := range oldSet {
-			if sd.notify != nil {
+			if id != "0" && sd.notify != nil {
 				sd.notify(EVENT_DEL, id)
 			}
 		}
 
 		for id := range addSet {
-			if sd.notify != nil {
+			if id != "0" && sd.notify != nil {
 				sd.notify(EVENT_ADD, id)
 			}
 		}
@@ -281,4 +316,68 @@ L:
 		}
 	}
 
+}
+
+func (s *service) LookupById(id uint16) protocol.Mailbox {
+	si := s.lookup.Lookup(strconv.Itoa(int(id)))
+	if si == nil {
+		return 0
+	}
+
+	return protocol.NewMailbox(id, api.MB_TYPE_SERVICE, 0)
+}
+
+func (s *service) LookupByName(name string) []protocol.Mailbox {
+	var ret []protocol.Mailbox
+	ss := s.lookup.LookupByName(name)
+	for _, s := range ss {
+		ret = append(ret, protocol.NewMailbox(s.NID, api.MB_TYPE_SERVICE, 0))
+	}
+	return ret
+}
+
+func (s *service) SelectService(name string, balance int, hash string) protocol.Mailbox {
+	ss := s.lookup.LookupByName(name)
+	count := len(ss)
+	if count == 0 {
+		return 0
+	}
+	if count == 1 {
+		return protocol.NewMailbox(ss[0].NID, api.MB_TYPE_SERVICE, 0)
+	}
+	var id uint16
+	switch balance {
+	case api.LOAD_BALANCE_RAND:
+		id = ss[toolkit.RandRange(0, len(ss))].NID
+	case api.LOAD_BALANCE_ROUNDROBIN:
+		s.lookup.lastSel++
+		id = ss[s.lookup.lastSel%len(ss)].NID
+	case api.LOAD_BALANCE_LEASTACTIVE:
+		l := ss[0].Load
+		sel := 0
+		for i := 1; i < count; i++ {
+			if l > ss[i].Load {
+				l = ss[i].Load
+				sel = i
+			}
+		}
+		id = ss[sel].NID
+	case api.LOAD_BALANCE_HASH:
+		c := consistent.New()
+		for _, s := range ss {
+			c.Add(s.ID)
+		}
+		sid, err := c.Get(hash)
+		if err != nil {
+			panic(err)
+		}
+
+		nid, err := strconv.Atoi(sid)
+		if err != nil {
+			panic(err)
+		}
+		id = uint16(nid)
+	}
+
+	return protocol.NewMailbox(id, api.MB_TYPE_SERVICE, 0)
 }

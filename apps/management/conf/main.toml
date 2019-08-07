@@ -1,0 +1,20 @@
+# service id
+ID = 0
+# service name
+Name = "Monitor"
+# nats agent url
+NatsUrl = "nats://0.0.0.0:4222"
+# if expose is true, it's a outgoing service.
+Expose = false
+# Addr = ""
+# Port = 0
+FPS = 30
+
+# depend other service
+# [[Depend]]
+# Name = ""
+# Count = 1
+
+# custom args
+[Args]
+# Key = "value"

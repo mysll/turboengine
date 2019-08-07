@@ -1,24 +1,30 @@
 package service
 
-import "turboengine/common/log"
+import (
+	"strconv"
+	"turboengine/common/log"
+)
 
 func (s *service) onServiceChange(event string, id interface{}) {
+	nid, _ := strconv.Atoi(id.(string))
 	switch event {
 	case EVENT_ADD:
-		s.serviceValid(id.(string))
+		if id != s.sid {
+			log.Infof("service %s avaliable", id)
+			s.serviceValid(id.(string))
+			s.handler.OnServiceAvailable(uint16(nid))
+		}
 	case EVENT_DEL:
-		log.Info("service del:", id.(string))
+		if id != s.sid {
+			log.Infof("service %s offline", id)
+		}
+		s.handler.OnServiceOffline(uint16(nid))
 	}
 }
 
 // async call
 func (s *service) notify(event string, id string) {
 	s.event.AsyncEmit(event, id)
-}
-
-func (s *service) addEvent() {
-	s.event.AddListener(EVENT_ADD, s.onServiceChange)
-	s.event.AddListener(EVENT_DEL, s.onServiceChange)
 }
 
 func (s *service) serviceValid(id string) {
@@ -40,7 +46,5 @@ func (s *service) serviceValid(id string) {
 	}
 
 	s.ready = true
-
-	log.Info("service ready")
 	s.handler.OnDependReady()
 }

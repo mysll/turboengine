@@ -1,5 +1,0 @@
-Host = "register"
-Stdout = true
-Dir = "../log"
-MaxLogFile = 2
-RotateSize = 1024

@@ -2,13 +2,12 @@ package protocol_test
 
 import (
 	"testing"
-
-	"github.com/nggenius/ngengine/utils"
+	"turboengine/common/protocol"
 )
 
 func TestLoadArchive(t *testing.T) {
 	buf := make([]byte, 0, 1024)
-	store := utils.NewStoreArchiver(buf)
+	store := protocol.NewStoreArchiver(buf)
 	v1 := int8(1)
 	v2 := int16(2)
 	v3 := int32(3)
@@ -48,7 +47,7 @@ func TestLoadArchive(t *testing.T) {
 	var x5 float32
 	var x6 float64
 
-	load := utils.NewLoadArchiver(store.Data())
+	load := protocol.NewLoadArchiver(store.Data())
 	if err := load.Get(&x1); err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -97,5 +96,58 @@ func TestLoadArchive(t *testing.T) {
 	load.Get(&xstr)
 	if xstr != str {
 		t.Fatalf("not match")
+	}
+}
+
+func TestLoadArchive_GetDataNonCopy(t *testing.T) {
+	buf := make([]byte, 0, 1024)
+	store := protocol.NewStoreArchiver(buf)
+	store.Put(int32(1))
+	store.PutData([]byte{0, 1, 2, 3, 4, 5, 6})
+	store.Put(int64(2))
+
+	load := protocol.NewLoadArchiver(store.Data())
+	var i int32
+	var j int64
+	load.Get(&i)
+	if i != 1 {
+		t.Fatal("not equal")
+	}
+	bytes, err := load.GetDataNonCopy()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for k, v := range bytes {
+		if k != int(v) {
+			t.Fatal("not equal")
+		}
+	}
+	load.Get(&j)
+	if j != 2 {
+		t.Fatal("not equal")
+	}
+}
+
+func TestAutoExtendArchive_Put(t *testing.T) {
+	a := protocol.NewAutoExtendArchive(64)
+	buf := make([]byte, 60)
+	a.Put(buf)
+	a.Put(int64(1))
+	a.Put("hello")
+	a.Put(int64(3))
+	a.Put(int64(4))
+
+	msg := a.Message()
+	load := protocol.NewLoadArchiver(msg.Body)
+	load.GetData()
+	var i, k, l int64
+	var j string
+	load.Get(&i)
+	load.Get(&j)
+	load.Get(&k)
+	load.Get(&l)
+	if i != 1 || j != "hello" || k != 3 || l != 4 && len(msg.Body) != 64+24+7 {
+		t.Fatal("not equal")
 	}
 }

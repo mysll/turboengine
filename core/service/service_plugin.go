@@ -2,19 +2,15 @@ package service
 
 import (
 	"fmt"
+	"turboengine/common/log"
 	"turboengine/core/api"
 	"turboengine/core/plugin"
 )
 
 func (s *service) UsePlugin(name string) error {
-	if _, ok := s.plugin[name]; ok {
-		return nil
-	}
-
 	p := plugin.NewPlugin(name)
 	if p != nil {
-		p.Prepare(s)
-		s.plugin[name] = p
+		s.usePlugin(name, p)
 		return nil
 	}
 
@@ -27,6 +23,7 @@ func (s *service) usePlugin(name string, p api.Plugin) {
 	}
 	p.Prepare(s)
 	s.plugin[name] = p
+	log.Info("use plugin ", name)
 }
 
 func (s *service) UnPlugin(name string) {

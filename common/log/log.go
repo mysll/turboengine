@@ -74,7 +74,7 @@ func Init(conf *Config) {
 		conf = &Config{
 			Family: "default",
 			Stdout: true,
-			Dir:    "../logs",
+			Dir:    "./logs",
 			V:      0,
 		}
 	}

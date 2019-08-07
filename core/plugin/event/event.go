@@ -46,6 +46,10 @@ func (e *Event) Shut(api.Service) {
 	e.srv.Deatch(e.id)
 }
 
+func (e *Event) Run() {
+
+}
+
 func (e *Event) Handle(cmd string, args ...interface{}) interface{} {
 	defer func() {
 		if x := recover(); x != nil {
