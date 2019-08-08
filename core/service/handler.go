@@ -2,6 +2,7 @@ package service
 
 import (
 	"strconv"
+	"turboengine/common/protocol"
 	"turboengine/core/api"
 )
 
@@ -80,5 +81,9 @@ func (s *Service) OnConnected(session uint64) {
 }
 
 func (s *Service) OnDisconnected(session uint64) {
+
+}
+
+func (s *Service) OnMessage(*protocol.ProtoMsg) {
 
 }

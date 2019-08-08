@@ -2,16 +2,18 @@ package workqueue
 
 import (
 	"turboengine/core/api"
+	"turboengine/core/plugin"
 )
 
 const (
-	NAME           = "workqueue"
+	Name           = "WorkQueue"
 	MAX_GO_ROUTINE = 10
 	MAX_QUEUE      = 100
 )
 
 type Task interface {
 	Run()
+	Complete()
 }
 
 type WorkQueue struct {
@@ -24,12 +26,13 @@ func (w *WorkQueue) Prepare(srv api.Service) {
 	w.jobs = make([]chan Task, MAX_GO_ROUTINE)
 	for i := 0; i < MAX_GO_ROUTINE; i++ {
 		w.jobs[i] = make(chan Task, MAX_QUEUE)
-		go w.Work(w.jobs[i])
 	}
 }
 
 func (w *WorkQueue) Run() {
-
+	for i := 0; i < MAX_GO_ROUTINE; i++ {
+		go w.Work(w.jobs[i])
+	}
 }
 
 func (w *WorkQueue) Shut(api.Service) {
@@ -50,5 +53,10 @@ func (w *WorkQueue) Schedule(filt int, task Task) {
 func (w *WorkQueue) Work(queue chan Task) {
 	for t := range queue {
 		t.Run()
+		t.Complete()
 	}
+}
+
+func init() {
+	plugin.Register(Name, &WorkQueue{})
 }

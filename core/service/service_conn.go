@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"sync"
 	"turboengine/common/log"
 	"turboengine/common/protocol"
@@ -10,6 +11,11 @@ import (
 var (
 	EVENT_CONNECTED    = "event_connected"
 	EVENT_DISCONNECTED = "event_disconnected"
+)
+
+var (
+	encoder protocol.ProtoEncoder
+	decoder protocol.ProtoDecoder
 )
 
 type NetHandle struct {
@@ -24,7 +30,7 @@ func (h *NetHandle) Handle(conn Conn) {
 		return
 	}
 	go n.send()
-	n.input()
+	n.input(h.svr.connPool.inmsg)
 	h.svr.event.AsyncEmit(EVENT_DISCONNECTED, n.session)
 	h.svr.connPool.RemoveNode(n.session, true)
 }
@@ -33,28 +39,64 @@ type Node struct {
 	conn      Conn
 	session   uint64
 	mailbox   protocol.Mailbox
-	sendQueue chan *protocol.Message
+	sendQueue chan *protocol.ProtoMsg
 	closed    bool
 }
 
-func (n *Node) input() {
+func (n *Node) input(inmsg chan *protocol.ProtoMsg) {
 	buff := make([]byte, 0, protocol.MAX_BUF_LEN)
 	for {
-		_, err := protocol.ReadMsg(n.conn, buff[:0])
+		data, err := protocol.ReadMsg(n.conn, buff[:0])
 		if err != nil {
+			log.Error(err)
 			break
 		}
+		if decoder == nil {
+			panic("decode is nil")
+		}
+		msg, err := decoder.Decode(data)
+		if err != nil {
+			log.Error("decode msg failed,", err)
+			n.Close()
+			break
+		}
+		if n.closed {
+			break
+		}
+		msg.Src = n.mailbox
+		inmsg <- msg
+
 	}
 }
 
 func (n *Node) send() {
 	for m := range n.sendQueue {
-		if err := protocol.WriteMsg(n.conn, m.Body); err != nil {
-			m.Free()
+		if encoder == nil {
+			panic("encode is nil")
+		}
+		msg, err := encoder.Encode(m)
+		if err != nil {
+			log.Error("encode msg failed,", err)
+			n.Close()
 			break
 		}
-		m.Free()
+		if err := protocol.WriteMsg(n.conn, msg.Body); err != nil {
+			log.Error("encode msg failed,", err)
+			n.Close()
+			msg.Free()
+			break
+		}
+		msg.Free()
 	}
+}
+
+func (n *Node) Send(m *protocol.ProtoMsg) error {
+	select {
+	case n.sendQueue <- m:
+	default:
+		return ERR_MSG_TOO_MANY
+	}
+	return nil
 }
 
 func (n *Node) Close() {
@@ -71,6 +113,7 @@ type ConnPool struct {
 	clients map[uint64]*Node
 	session uint64
 	quit    bool
+	inmsg   chan *protocol.ProtoMsg
 }
 
 func (c *ConnPool) FindNode(session uint64) *Node {
@@ -103,7 +146,7 @@ func (c *ConnPool) NewNode(conn Conn) *Node {
 		conn:      conn,
 		mailbox:   protocol.NewMailbox(c.svr.id, api.MB_TYPE_CONN, c.session),
 		session:   c.session,
-		sendQueue: make(chan *protocol.Message, 64),
+		sendQueue: make(chan *protocol.ProtoMsg, 128),
 	}
 	c.clients[n.session] = n
 	log.Info("new session:", n.session, ",addr:", conn.Addr())
@@ -139,6 +182,10 @@ func (c *ConnPool) CloseAll() {
 	c.Unlock()
 }
 
+func (c *ConnPool) Inmsg() chan *protocol.ProtoMsg {
+	return c.inmsg
+}
+
 func (s *service) onConnEvent(event string, args interface{}) {
 	session := args.(uint64)
 	switch event {
@@ -146,5 +193,37 @@ func (s *service) onConnEvent(event string, args interface{}) {
 		s.handler.OnConnected(session)
 	case EVENT_DISCONNECTED:
 		s.handler.OnDisconnected(session)
+	}
+}
+
+func (s *service) SetProtoEncoder(enc protocol.ProtoEncoder) {
+	encoder = enc
+}
+
+func (s *service) SetProtoDecoder(dec protocol.ProtoDecoder) {
+	decoder = dec
+}
+
+func (s *service) SendToClient(dest protocol.Mailbox, msg *protocol.ProtoMsg) error {
+	if msg == nil {
+		return fmt.Errorf("msg is nil")
+	}
+
+	node := s.connPool.FindNode(dest.Id())
+	if node == nil {
+		return fmt.Errorf("client not found, session:%d", dest.Id())
+	}
+
+	return node.Send(msg)
+}
+
+func (s *service) receive() {
+	for {
+		select {
+		case m := <-s.connPool.inmsg:
+			s.handler.OnMessage(m)
+		default:
+			return
+		}
 	}
 }

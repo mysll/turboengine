@@ -8,15 +8,17 @@ import (
 )
 
 type Config struct {
-	ID      uint16
-	Name    string
-	NatsUrl string
-	Depend  []Dependency
-	Expose  bool
-	Addr    string
-	Port    int
-	FPS     int
-	Args    map[string]string
+	ID        uint16
+	Name      string
+	NatsUrl   string
+	Depend    []Dependency
+	Expose    bool
+	Addr      string
+	Port      int
+	FPS       int
+	Debug     bool
+	DebugPort int
+	Args      map[string]string
 }
 
 func (c *Config) LoadFromJson(f string) error {

@@ -1,12 +1,19 @@
 package main
 
 import (
+	"flag"
 	"turboengine/apps/management/monitor"
 	"turboengine/common/log"
 	"turboengine/core/service"
 )
 
+var (
+	config = flag.String("c", "./conf/main.toml", "config path")
+)
+
 func main() {
+	flag.Parse()
+
 	log.Init(&log.Config{
 		Family: "default",
 		Stdout: false,
@@ -16,10 +23,10 @@ func main() {
 	defer log.Close()
 
 	cfg := new(service.Config)
-	if err := cfg.LoadFromToml("./conf/main.toml"); err != nil {
+	if err := cfg.LoadFromToml(*config); err != nil {
 		panic(err)
 	}
 	monitor := service.New(new(monitor.Monitor), cfg)
 	monitor.Start()
-	monitor.Wait()
+	monitor.Await()
 }

@@ -66,8 +66,10 @@ type TcpTransport struct {
 }
 
 func (t *TcpTransport) Open() {
-	t.open = true
-	t.ready <- true
+	if !t.open {
+		t.open = true
+		t.ready <- true
+	}
 }
 
 func (t *TcpTransport) ListenAndServe(addr string, port int, handler ConnHandler) {
@@ -77,14 +79,20 @@ func (t *TcpTransport) ListenAndServe(addr string, port int, handler ConnHandler
 	}
 
 	t.l = l
-	log.Info("open transport at ", l.Addr())
+	log.Info("transport listen on ", l.Addr())
+
+	if t.open {
+		log.Info("transport waiting for connection")
+	}
 
 	for {
 		if !t.open {
+			log.Info("waiting for open")
 			_, ok := <-t.ready
 			if !ok { // close
 				break
 			}
+			log.Info("transport waiting for connection")
 		}
 
 		conn, err := l.Accept()
@@ -105,7 +113,7 @@ func (t *TcpTransport) ListenAndServe(addr string, port int, handler ConnHandler
 			writer: bufio.NewWriterSize(conn, protocol.MAX_BUF_LEN),
 		})
 	}
-	log.Info("close transport")
+	log.Info("transport closed")
 }
 
 func (t *TcpTransport) Close() {
@@ -124,7 +132,7 @@ func (s *service) UseTransport(typ string) {
 	panic("transport not found " + typ)
 }
 
-func (s *service) OpenTransport(addr string, port int) {
+func (s *service) createTransport(addr string, port int) {
 	if s.tr == nil {
 		s.tr = &TcpTransport{
 			ready: make(chan bool, 1),
@@ -134,4 +142,17 @@ func (s *service) OpenTransport(addr string, port int) {
 	s.wg.Wrap(func() {
 		s.tr.ListenAndServe(addr, port, &NetHandle{svr: s})
 	})
+}
+
+func (s *service) OpenTransport() {
+	if s.tr != nil {
+		s.tr.Open()
+	}
+}
+
+func (s *service) CloseTransport() {
+	if s.tr != nil {
+		s.tr.Close()
+		s.tr = nil
+	}
 }

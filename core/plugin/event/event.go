@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	Name = "event"
+	Name = "Event"
 )
 
 type EventData struct {

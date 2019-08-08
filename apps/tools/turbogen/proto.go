@@ -1,6 +1,7 @@
 package turbogen
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	"text/template"
 
 	"github.com/mysll/toolkit"
+	"github.com/urfave/cli"
 )
 
 var tpl = `
@@ -52,16 +54,17 @@ func (p *{{$.Name}}_RPC_Go_{{$.Ver}}) {{.Name}}(id uint16, data []byte) (ret *pr
 	if err != nil {
 		return
 	}{{end}}
-	{{end}}{{end}}
+	{{end}}
 	ret = sr.Message()
+	{{end}}
 	return
 }
 {{end}}
-func Set{{.Name}}Provider(svr coreapi.Service, provider I{{.Name}}_RPC_Go_{{.Ver}}) error {
+func Set{{.Name}}Provider(svr coreapi.Service, prefix string, provider I{{.Name}}_RPC_Go_{{.Ver}}) error {
 	m := new({{.Name}}_RPC_Go_{{.Ver}})
 	m.handler = provider
 	{{range .Methods}}
-	if err := svr.Sub(fmt.Sprintf("%d.{{$.Name}}.{{.Name}}",svr.ID()), m.{{.Name}}); err != nil {
+	if err := svr.Sub(fmt.Sprintf("%s%d.{{$.Name}}.{{.Name}}", prefix, svr.ID()), m.{{.Name}}); err != nil {
 		return err
 	}{{end}}
 	return nil
@@ -70,6 +73,7 @@ func Set{{.Name}}Provider(svr coreapi.Service, provider I{{.Name}}_RPC_Go_{{.Ver
 // client
 type {{$.Name}}_RPC_Go_{{$.Ver}}_Client struct {
 	svr coreapi.Service
+	prefix string
 	timeout time.Duration
 }
 
@@ -87,7 +91,7 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) {{.Name}}({{range $k, $v := .ArgTyp
 	}
 	{{end}}
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%d.{{$.Name}}.{{.Name}}",m.svr.ID()), msg.Body, m.timeout)
+	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d.{{$.Name}}.{{.Name}}",m.prefix, m.svr.ID()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
@@ -98,6 +102,7 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) {{.Name}}({{range $k, $v := .ArgTyp
 		err = call.Err
 		return
 	}
+	{{$l := len .ReturnType}}{{if gt $l 1}}
 	for {
 		ar := protocol.NewLoadArchiver(call.Data)
 		{{range $k, $v := .ReturnType}}{{if ne $v "error"}}
@@ -106,7 +111,7 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) {{.Name}}({{range $k, $v := .ArgTyp
 			break
 		} {{end}} {{end}}
 		break
-	}
+	}{{end}}
 
 	if call.Msg != nil {
 		call.Msg.Free()
@@ -116,10 +121,11 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) {{.Name}}({{range $k, $v := .ArgTyp
 }
 {{end}}
 
-func New{{.Name}}Consumer(svr coreapi.Service, timeout time.Duration) *proto.{{.Name}} {
+func New{{.Name}}Consumer(svr coreapi.Service, prefix string, timeout time.Duration) *proto.{{.Name}} {
 	m := new(proto.{{.Name}})
 	mc := new({{$.Name}}_RPC_Go_{{$.Ver}}_Client)
 	mc.svr = svr
+	mc.prefix = prefix
 	mc.timeout = timeout
 	m.XXX = mc	{{range .Methods}}
 	m.{{.Name}}=mc.{{.Name}}{{end}}
@@ -140,6 +146,7 @@ type I{{$.Name}}_RPC_Go_{{$.Ver}}_Handler interface {
 
 type {{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle struct {
 	svr     coreapi.Service
+	prefix  string
 	timeout time.Duration
 	handler I{{$.Name}}_RPC_Go_{{$.Ver}}_Handler
 }
@@ -153,7 +160,7 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle) {{.Name}}({{range $k, $v := 
 	}
 	{{end}}
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%d.{{$.Name}}.{{.Name}}",m.svr.ID()), msg.Body, m.timeout)
+	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d.{{$.Name}}.{{.Name}}",m.prefix, m.svr.ID()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
@@ -163,13 +170,14 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle) {{.Name}}({{range $k, $v := 
 }
 
 func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle) On{{.Name}}(call *coreapi.Call) {
-	var reply {{$.Name}}_RPC_Go_{{$.Ver}}_{{.Name}}_Reply
+	{{$l := len .ReturnType}}{{if gt $l 1}}var reply {{$.Name}}_RPC_Go_{{$.Ver}}_{{.Name}}_Reply{{end}}
 	var err error
 	err = call.Err
 	if err != nil {
 		m.handler.On{{.Name}}({{range $k, $v := .ReturnType}}{{if ne $v "error"}}reply.Arg{{$k}},{{end}}{{end}}err)
 		return
 	}
+	{{if gt $l 1}}
 	for {
 		ar := protocol.NewLoadArchiver(call.Data)
 		{{range $k, $v := .ReturnType}}{{if ne $v "error"}}
@@ -178,16 +186,17 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle) On{{.Name}}(call *coreapi.Ca
 			break
 		} {{end}} {{end}}
 		break
-	}
+	}{{end}}
 	m.handler.On{{.Name}}({{range $k, $v := .ReturnType}}{{if ne $v "error"}}reply.Arg{{$k}},{{end}}{{end}}err)
 }
 
 {{end}}
 
-func New{{.Name}}ConsumerWithHandle(svr coreapi.Service, timeout time.Duration, handler I{{$.Name}}_RPC_Go_{{$.Ver}}_Handler) *proto.{{.Name}} {
+func New{{.Name}}ConsumerWithHandle(svr coreapi.Service, prefix string, timeout time.Duration, handler I{{$.Name}}_RPC_Go_{{$.Ver}}_Handler) *proto.{{.Name}} {
 	m := new(proto.{{.Name}})
 	mc := new({{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle)
 	mc.svr = svr
+	mc.prefix = prefix
 	mc.timeout = timeout
 	mc.handler = handler
 	m.XXX = mc	{{range .Methods}}
@@ -294,4 +303,45 @@ func Generate(s interface{}, pkgpath string, pkg string, path string) {
 
 	cmd := exec.Command("gofmt", "--w", outfile)
 	cmd.Run()
+}
+
+var tpl_proto = `package {{.Pkg}}
+
+type {{.Name}} struct {
+	Ver   string {{.Tag}}
+	XXX   interface{}
+	// custom method begin
+
+	// custom method end
+}
+
+func init() {
+	reg["{{.Name}}"] = new({{.Name}})
+}
+`
+
+func CreateProto(c *cli.Context) error {
+	path := c.String("path")
+	if path == "" {
+		fmt.Println("miss output path, use --path set output path ")
+		return fmt.Errorf("miss output path, use --path set output path ")
+	}
+
+	fmt.Print("package name:")
+	var pkg string
+	fmt.Scanln(&pkg)
+	fmt.Print("proto name:")
+	var name string
+	fmt.Scanln(&name)
+	fmt.Print("auth:")
+	var auth string
+	fmt.Scanln(&auth)
+
+	makeFile(tpl_proto, "proto", path, strings.ToLower(name), map[string]interface{}{
+		"Name": name,
+		"Pkg":  pkg,
+		"Tag":  "`version:\"1.0.0\"`",
+	})
+	return nil
+
 }

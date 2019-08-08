@@ -42,6 +42,18 @@ func main() {
 						},
 					},
 				},
+				{
+					Name:   "proto",
+					Usage:  "create proto",
+					Action: turbogen.CreateProto,
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "path,p",
+							Value: "./",
+							Usage: "output path",
+						},
+					},
+				},
 			},
 		},
 	}

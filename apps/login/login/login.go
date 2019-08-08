@@ -1,19 +1,19 @@
-package monitor
+package login
 
 import (
 	coreapi "turboengine/core/api"
 	"turboengine/core/service"
 )
 
-// Service: 	Monitor
+// Service: 	Login
 // Auth: 	 	sll
-// Data:	  	2019-08-07 09:34:16
+// Data:	  	2019-08-08 19:03:37
 // Desc:
-type Monitor struct {
+type Login struct {
 	service.Service
 }
 
-func (s *Monitor) OnPrepare(srv coreapi.Service, args map[string]string) error {
+func (s *Login) OnPrepare(srv coreapi.Service, args map[string]string) error {
 	s.Service.OnPrepare(srv, args)
 	// use plugin
 	// use plugin end
@@ -24,15 +24,14 @@ func (s *Monitor) OnPrepare(srv coreapi.Service, args map[string]string) error {
 	return nil
 }
 
-func (s *Monitor) OnStart() error {
-	go run(s.Ctx.Service())
+func (s *Login) OnStart() error {
 	return nil
 }
 
-func (s *Monitor) OnDependReady() {
+func (s *Login) OnDependReady() {
 	s.Ctx.Service().Ready()
 }
 
-func (s *Monitor) OnShut() bool {
+func (s *Login) OnShut() bool {
 	return true // If you want to close manually return false
 }

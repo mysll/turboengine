@@ -49,6 +49,7 @@ type Service interface {
 	Start() error
 	Close()
 	Shut()
+	Ready()
 	Attach(fn Update) uint64
 	Deatch(id uint64)
 	Pub(subject string, data []byte) error
@@ -59,10 +60,15 @@ type Service interface {
 	UnPlugin(name string)
 	Plugin(name string) interface{}
 	CallPlugin(plugin string, cmd string, args ...interface{}) (interface{}, error)
-	Wait()
+	Await()
 	LookupById(id uint16) protocol.Mailbox
 	LookupByName(name string) []protocol.Mailbox
 	SelectService(name string, balance int, hash string) protocol.Mailbox
+	SetProtoEncoder(enc protocol.ProtoEncoder)
+	SetProtoDecoder(dec protocol.ProtoDecoder)
+	SendToClient(dest protocol.Mailbox, msg *protocol.ProtoMsg) error
+	OpenTransport()
+	CloseTransport()
 }
 
 type ServiceHandler interface {
@@ -74,4 +80,5 @@ type ServiceHandler interface {
 	OnServiceOffline(id uint16)
 	OnConnected(session uint64)
 	OnDisconnected(session uint64)
+	OnMessage(*protocol.ProtoMsg)
 }

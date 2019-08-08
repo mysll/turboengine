@@ -44,6 +44,7 @@ func (s *{{.Name}}) OnStart() error {
 }
 
 func (s *{{.Name}}) OnDependReady() {
+	s.Ctx.Service().Ready()
 }
 
 func (s *{{.Name}}) OnShut() bool {
@@ -73,22 +74,28 @@ func TestCreate(t *testing.T) {
 
 var server_main = `package main
 import (
+	"flag
 	"turboengine/common/log"
 	"turboengine/core/service"
 	"./{{.Pkg}}"
 )
 
+var (
+	config = flag.String("c", "./conf/{{tolower .Name}}.toml", "config path")
+)
+
 func main() {
+	flag.Parse()
 	log.Init(nil)
 	defer log.Close()
 
 	cfg := new(service.Config)
-	if err := cfg.LoadFromToml("./conf/main.toml"); err != nil {
+	if err := cfg.LoadFromToml(*config); err != nil {
 		panic(err)
 	}
 	{{tolower .Name}} := service.New(new({{.Pkg}}.{{.Name}}), cfg)
 	{{tolower .Name}}.Start()
-	{{tolower .Name}}.Wait()
+	{{tolower .Name}}.Await()
 }
 `
 
@@ -152,17 +159,17 @@ Addr = "0.0.0.0"
 Port = 0
 FPS = 30
 
-# depend other service
+# depend other services
 # [[Depend]]
 # Name = ""
 # Count = 1
 
 # custom args
-[Args]
+# [Args]
 # Key = "value"
 `, name)
 
-	if err := ioutil.WriteFile(path+"/main.toml", []byte(tpl), 0777); err != nil {
+	if err := ioutil.WriteFile(fmt.Sprintf("%s/%s.toml", path, strings.ToLower(name)), []byte(tpl), 0777); err != nil {
 		panic(err)
 	}
 }
@@ -197,6 +204,14 @@ func createService(pkg, name, auth, path string) {
 	mod := path + "/mod"
 	if ok, _ := toolkit.PathExists(mod); !ok {
 		err := os.MkdirAll(mod, 0777)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	internal := path + "/internal"
+	if ok, _ := toolkit.PathExists(internal); !ok {
+		err := os.MkdirAll(internal, 0777)
 		if err != nil {
 			panic(err)
 		}

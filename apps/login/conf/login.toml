@@ -1,8 +1,8 @@
 
 # service id
-ID = 1
+ID = 2
 # service name
-Name = "Gate"
+Name = "Login"
 # nats agent url
 NatsUrl = "nats://0.0.0.0:4222"
 # if expose is true, it's a outgoing service.
@@ -10,12 +10,13 @@ Expose = false
 Addr = "0.0.0.0"
 Port = 0
 FPS = 30
+Debug = true
 
-# depend other service
+# depend other services
 # [[Depend]]
 # Name = ""
 # Count = 1
 
 # custom args
-[Args]
+# [Args]
 # Key = "value"

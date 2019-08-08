@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/http"
 	"strconv"
 	"sync"
 	"time"
@@ -11,6 +13,8 @@ import (
 	"turboengine/common/utils"
 	"turboengine/core/api"
 	"turboengine/core/plugin/event"
+
+	_ "net/http/pprof"
 
 	consulapi "github.com/hashicorp/consul/api"
 	"github.com/mysll/toolkit"
@@ -135,6 +139,14 @@ func (s *service) Start() error {
 		log.Errorf("start %s failed, %s", s.c.Name, err.Error())
 		return err
 	}
+	if s.c.Debug {
+		l, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", s.c.DebugPort))
+		if err != nil {
+			panic("debug error:" + err.Error())
+		}
+		go http.Serve(l, nil)
+		log.Info("debug server start at ", l.Addr())
+	}
 	s.wg.Wrap(func() {
 		s.run()
 		s.destroy()
@@ -175,7 +187,7 @@ func (s *service) init() {
 			svr:     s,
 			clients: make(map[uint64]*Node),
 		}
-		s.OpenTransport(s.c.Addr, s.c.Port)
+		s.createTransport(s.c.Addr, s.c.Port)
 	}
 }
 
@@ -212,9 +224,15 @@ func (s *service) run() {
 	for _, p := range s.plugin {
 		p.Run()
 	}
+	if len(s.c.Depend) == 0 {
+		s.handler.OnDependReady()
+	}
 	for !s.quit {
 		s.time.Update()
 		s.input() // message queue a round trip
+		if s.c.Expose {
+			s.receive() // process client message
+		}
 		for _, f := range s.attachs {
 			f.fn(s.time)
 		}
@@ -223,26 +241,32 @@ func (s *service) run() {
 }
 
 func (s *service) destroy() {
-	// close transport
-	if s.tr != nil {
-		s.tr.Close()
+	if s.c.Expose {
+		// close transport
+		s.CloseTransport()
+		log.Info("kick all connections")
+		// close all connections
+		if s.connPool != nil {
+			s.connPool.quit = true
+			s.connPool.CloseAll()
+		}
 	}
-	// close all connections
-	if s.connPool != nil {
-		s.connPool.quit = true
-		s.connPool.CloseAll()
-	}
+
+	log.Info("stop modules")
 	// close module
 	for _, m := range s.mods {
 		m.Close()
-		log.Infof("mod %s stop", m.Name())
+		log.Infof("mod %s stopped", m.Name())
 	}
+
 	// close plugin
-	for _, p := range s.plugin {
+	for k, p := range s.plugin {
+		log.Infof("unplug %s plugin", k)
 		p.Shut(s)
 	}
 	// close consul
 	s.lookup.SetNotify(nil)
+	log.Info("unregister service")
 	s.lookup.Unregister(s.sid)
 	s.lookup.Stop()
 	// close message queue
@@ -268,14 +292,15 @@ func (s *service) Shut() {
 	s.quit = true
 }
 
-func (s *service) Wait() {
+func (s *service) Await() {
 	s.wg.Wait()
 }
 
 func (s *service) Ready() {
-	if s.tr != nil {
-		s.tr.Open()
+	if s.ready {
+		return
 	}
+	s.ready = true
 }
 
 func (s *service) addEvent() {

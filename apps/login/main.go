@@ -2,13 +2,13 @@ package main
 
 import (
 	"flag"
-	"turboengine/apps/gate/gate"
+	"turboengine/apps/login/login"
 	"turboengine/common/log"
 	"turboengine/core/service"
 )
 
 var (
-	config = flag.String("c", "./conf/gate.toml", "config path")
+	config = flag.String("c", "./conf/login.toml", "config path")
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 	if err := cfg.LoadFromToml(*config); err != nil {
 		panic(err)
 	}
-	gate := service.New(new(gate.Gate), cfg)
-	gate.Start()
-	gate.Await()
+	login := service.New(new(login.Login), cfg)
+	login.Start()
+	login.Await()
 }
