@@ -5,6 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Attach to Process",
+            "type": "go",
+            "request": "attach",
+            "mode": "local",
+            "trace":"verbose",
+            "processId": 10992
+        },
+        {
             "name": "Launch",
             "type": "go",
             "request": "launch",

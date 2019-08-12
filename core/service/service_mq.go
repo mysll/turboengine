@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"sync/atomic"
 	"time"
 	"turboengine/common/log"
 	"turboengine/common/protocol"
@@ -10,9 +11,10 @@ import (
 )
 
 const (
-	DEFAULT_REPLY    = "turbo.service.reply#%d"
-	SERVICE_SHUT     = "turbo.service.shut"
-	SERVICE_SHUT_ALL = "turbo.service.shut_all"
+	DEFAULT_REPLY               = "turbo.service.reply#%d"
+	SERVICE_SHUT                = "turbo.service.shut"
+	SERVICE_SHUT_ALL            = "turbo.service.shut_all"
+	PRE_ROUND_MAX_PROCESS_COUNT = 100
 )
 
 func makeBody(typ uint8, id uint16, session uint64, data []byte) *protocol.Message {
@@ -86,8 +88,7 @@ func (s *service) replyError(id uint16, session uint64, err error) error {
 }
 
 func (s *service) PubWithTimeout(subject string, data []byte, timeout time.Duration) (*api.Call, error) {
-	session := s.session
-	s.session++
+	session := atomic.AddUint64(&s.session, 1)
 	msg := makeBody(0, s.c.ID, session, data)
 	err := s.exchange.Pub(subject, msg)
 	if err != nil {
@@ -100,7 +101,9 @@ func (s *service) PubWithTimeout(subject string, data []byte, timeout time.Durat
 		DeadLine: time.Now().Add(timeout),
 	}
 
+	s.lockCall.Lock()
 	s.pending[session] = call
+	s.lockCall.Unlock()
 	return call, nil
 }
 
@@ -151,7 +154,7 @@ func (s *service) innerHandle(subject string, m *protocol.Message) bool {
 
 func (s *service) input() { // run on main goroutine
 L:
-	for {
+	for i := 0; i < PRE_ROUND_MAX_PROCESS_COUNT; i++ {
 		select {
 		case m := <-s.inMsg:
 			subject := string(m.Header)
@@ -165,20 +168,29 @@ L:
 
 	// check timeout
 	n := time.Now()
-	for id, call := range s.pending {
-		if call.DeadLine.Sub(n) <= 0 {
-			call.Err = ERR_TIMEOUT
-			call.Data = nil
+	count := 0
+	s.lockCall.RLock()
+	count = len(s.pending)
+	s.lockCall.RUnlock()
+	if count > 0 {
+		tmp := s.pending
+		s.lockCall.Lock()
+		s.pending = make(map[uint64]*api.Call)
+		s.lockCall.Unlock()
+		for _, call := range tmp {
+			if call.DeadLine.Sub(n) <= 0 {
+				call.Err = ERR_TIMEOUT
+				call.Data = nil
 
-			if call.Done != nil {
-				call.Done <- call
-			} else if call.Callback != nil {
-				call.Callback(call)
+				if call.Done != nil {
+					call.Done <- call
+				} else if call.Callback != nil {
+					call.Callback(call)
+				}
 			}
-
-			delete(s.pending, id)
 		}
 	}
+
 }
 
 func (s *service) handle(subject string, m *protocol.Message) {
@@ -228,7 +240,10 @@ func (s *service) invoke(subject string, id uint16, data []byte) (*protocol.Mess
 }
 
 func (s *service) callback(session uint64, msg *protocol.Message, data []byte) {
-	if call, ok := s.pending[session]; ok {
+	s.lockCall.RLock()
+	call, ok := s.pending[session]
+	s.lockCall.RUnlock()
+	if ok {
 		call.Data = data
 
 		if call.Done != nil {
@@ -239,12 +254,18 @@ func (s *service) callback(session uint64, msg *protocol.Message, data []byte) {
 			msg.Free()
 		}
 
+		s.lockCall.Lock()
 		delete(s.pending, session) // delete
+		s.lockCall.Unlock()
 	}
 }
 
 func (s *service) callbackError(session uint64, err error) {
-	if call, ok := s.pending[session]; ok {
+	s.lockCall.RLock()
+	call, ok := s.pending[session]
+	s.lockCall.RUnlock()
+
+	if ok {
 		call.Err = err
 		call.Data = nil
 
@@ -253,7 +274,8 @@ func (s *service) callbackError(session uint64, err error) {
 		} else if call.Callback != nil {
 			call.Callback(call)
 		}
-
+		s.lockCall.Lock()
 		delete(s.pending, session) // delete
+		s.lockCall.Unlock()
 	}
 }

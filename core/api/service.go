@@ -18,6 +18,11 @@ const (
 	LOAD_BALANCE_HASH
 )
 
+const (
+	INTEREST_NONE = iota
+	INTEREST_CONNECTION_EVENT
+)
+
 var MAX_SID = 0xFFFF
 
 type Plugin interface {

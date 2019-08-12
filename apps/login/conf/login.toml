@@ -9,7 +9,7 @@ NatsUrl = "nats://0.0.0.0:4222"
 Expose = false
 Addr = "0.0.0.0"
 Port = 0
-FPS = 30
+FPS = 0
 Debug = true
 
 # depend other services

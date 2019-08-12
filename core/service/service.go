@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -31,13 +32,13 @@ type attach struct {
 }
 
 type service struct {
+	sync.RWMutex
 	wg      toolkit.WaitGroupWrapper
 	id      uint16
 	name    string
 	mailbox protocol.Mailbox
 	sid     string
-	sync.RWMutex
-	toolkit.WaitGroupWrapper
+
 	c        *Config
 	handler  api.ServiceHandler
 	running  bool
@@ -48,6 +49,7 @@ type service struct {
 	mods     []api.Module
 	exchange *Exchange
 	inMsg    chan *protocol.Message // receive message from message queue
+	lockCall sync.RWMutex           // protect pending
 	pending  map[uint64]*api.Call   // pending call
 	session  uint64                 // used for pending
 	delegate map[string]api.InvokeFn
@@ -71,7 +73,7 @@ func New(h api.ServiceHandler, c *Config) api.Service {
 		mods:     make([]api.Module, 0, 8),
 		inMsg:    make(chan *protocol.Message, 512),
 		pending:  make(map[uint64]*api.Call),
-		session:  1,
+		session:  0,
 		delegate: make(map[string]api.InvokeFn),
 		plugin:   make(map[string]api.Plugin),
 		lookup:   NewLookupService(consulapi.DefaultConfig()),
@@ -147,6 +149,11 @@ func (s *service) Start() error {
 		go http.Serve(l, nil)
 		log.Info("debug server start at ", l.Addr())
 	}
+	err := s.lookup.Register(s.sid, s.name, "127.0.0.1", s.c.DebugPort)
+	if err != nil {
+		log.Fatal(err)
+	}
+	s.lookup.Start()
 	s.wg.Wrap(func() {
 		s.run()
 		s.destroy()
@@ -160,11 +167,7 @@ func (s *service) prepare() {
 }
 
 func (s *service) init() {
-	err := s.lookup.Start()
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = s.lookup.Register(s.sid, s.name, "127.0.0.1", toolkit.RandRange(1, 65535))
+	err := s.lookup.Init()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -183,10 +186,7 @@ func (s *service) init() {
 	s.SubNoInvoke(SERVICE_SHUT)
 	s.SubNoInvoke(SERVICE_SHUT_ALL)
 	if s.c.Expose {
-		s.connPool = &ConnPool{
-			svr:     s,
-			clients: make(map[uint64]*Node),
-		}
+		s.connPool = NewConnPool(s)
 		s.createTransport(s.c.Addr, s.c.Port)
 	}
 }
@@ -194,6 +194,7 @@ func (s *service) init() {
 func (s *service) shutInvoke(*api.Call) {
 
 }
+
 func (s *service) Attach(fn api.Update) uint64 {
 	id := s.attachId
 	s.attachId++
@@ -215,6 +216,7 @@ func (s *service) Deatch(id uint64) {
 
 func (s *service) run() {
 	s.running = true
+
 	log.Infof("service %s started", s.c.Name)
 	fps := 10
 	if s.c.FPS != 0 {
@@ -227,6 +229,7 @@ func (s *service) run() {
 	if len(s.c.Depend) == 0 {
 		s.handler.OnDependReady()
 	}
+
 	for !s.quit {
 		s.time.Update()
 		s.input() // message queue a round trip
@@ -236,7 +239,11 @@ func (s *service) run() {
 		for _, f := range s.attachs {
 			f.fn(s.time)
 		}
-		time.Sleep(s.time.NextFrame())
+		if s.c.FPS > 0 {
+			time.Sleep(s.time.NextFrame())
+		} else {
+			time.Sleep(time.Millisecond)
+		}
 	}
 }
 
@@ -308,4 +315,12 @@ func (s *service) addEvent() {
 	s.event.AddListener(EVENT_DEL, s.onServiceChange)
 	s.event.AddListener(EVENT_CONNECTED, s.onConnEvent)
 	s.event.AddListener(EVENT_DISCONNECTED, s.onConnEvent)
+}
+
+func Capture() {
+	f, err := os.OpenFile("./panic.log", os.O_CREATE|os.O_TRUNC|os.O_RDWR, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+	redirectStderr(f)
 }

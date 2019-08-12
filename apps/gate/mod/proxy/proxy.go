@@ -2,11 +2,15 @@ package proxy
 
 import (
 	"context"
-	"turboengine/apps/gate/internal/proto"
+	"turboengine/apps/gate/api/proto"
+	"turboengine/common/log"
 	"turboengine/common/protocol"
 	"turboengine/common/utils"
 	"turboengine/core/api"
 	"turboengine/core/module"
+	"turboengine/core/plugin/workqueue"
+
+	"github.com/mysll/toolkit"
 )
 
 // Module: 		Proxy
@@ -15,6 +19,7 @@ import (
 // Desc:
 type Proxy struct {
 	module.Module
+	workqueue *workqueue.WorkQueue
 }
 
 func (m *Proxy) Name() string {
@@ -24,8 +29,8 @@ func (m *Proxy) Name() string {
 func (m *Proxy) OnPrepare(s api.Service) error {
 	m.Module.OnPrepare(s)
 	// load module resource
-	s.SetProtoEncoder(&proto.JsonEncoder{})
-	s.SetProtoDecoder(&proto.JsonDecoder{})
+	s.SetProtoEncoder(protocol.NewJsonEncoder())
+	s.SetProtoDecoder(protocol.NewJsonDecoder())
 	// load module resource end
 
 	return nil
@@ -33,6 +38,7 @@ func (m *Proxy) OnPrepare(s api.Service) error {
 
 func (m *Proxy) OnStart(ctx context.Context) error {
 	m.Module.OnStart(ctx)
+	m.workqueue = m.Srv.Plugin(workqueue.Name).(*workqueue.WorkQueue)
 	// subscribe subject
 	// subscribe subject end
 	return nil
@@ -46,6 +52,26 @@ func (m *Proxy) OnStop() error {
 	return nil
 }
 
-func (m *Proxy) OnMessage(msg *protocol.ProtoMsg) {
+func (m *Proxy) OnConnected(session uint64) {
+	log.Info("new client")
+}
 
+func (m *Proxy) OnDisconnected(session uint64) {
+	log.Info("remove client")
+}
+
+func (m *Proxy) OnMessage(msg *protocol.ProtoMsg) {
+	log.Infof("recv msg %d, from %s", msg.Id, msg.Src)
+	switch msg.Id {
+	case proto.LOGIN:
+		login := msg.Data.(*proto.Login)
+		task := &Login{l: login, proxy: m, m: msg}
+		if !m.Schedule(login.User, task) {
+			task.SendResult(false)
+		}
+	}
+}
+
+func (m *Proxy) Schedule(key string, task workqueue.Task) bool {
+	return m.workqueue.Schedule(int(toolkit.DJBHash(key)), task)
 }

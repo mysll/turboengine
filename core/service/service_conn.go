@@ -2,10 +2,18 @@ package service
 
 import (
 	"fmt"
+	"io"
+	"strings"
 	"sync"
 	"turboengine/common/log"
 	"turboengine/common/protocol"
 	"turboengine/core/api"
+)
+
+const (
+	PRE_ROUND_IN_MSG_MAX_PROCESS_COUNT = 128
+	IN_MSG_LIST_MAX_COUNT              = 128
+	NODE_SEND_MSG_COUNT                = 128
 )
 
 var (
@@ -48,7 +56,9 @@ func (n *Node) input(inmsg chan *protocol.ProtoMsg) {
 	for {
 		data, err := protocol.ReadMsg(n.conn, buff[:0])
 		if err != nil {
-			log.Error(err)
+			if err != io.EOF && !strings.Contains(err.Error(), "closed by the remote host") {
+				log.Error(err)
+			}
 			break
 		}
 		if decoder == nil {
@@ -65,7 +75,6 @@ func (n *Node) input(inmsg chan *protocol.ProtoMsg) {
 		}
 		msg.Src = n.mailbox
 		inmsg <- msg
-
 	}
 }
 
@@ -80,17 +89,33 @@ func (n *Node) send() {
 			n.Close()
 			break
 		}
-		if err := protocol.WriteMsg(n.conn, msg.Body); err != nil {
-			log.Error("encode msg failed,", err)
+		if err = protocol.WriteMsg(n.conn, msg.Body); err != nil {
+			if !strings.Contains(err.Error(), "closed by the remote host") {
+				log.Error("write msg failed,", err)
+			}
 			n.Close()
 			msg.Free()
 			break
 		}
+
+		if err = n.conn.Flush(); err != nil {
+			if !strings.Contains(err.Error(), "closed by the remote host") {
+				log.Error("flush msg failed,", err)
+			}
+			n.Close()
+			msg.Free()
+			break
+		}
+
+		log.Infof("send message to %s, size: %d", n.conn.Addr(), len(msg.Body))
 		msg.Free()
 	}
 }
 
 func (n *Node) Send(m *protocol.ProtoMsg) error {
+	if n.closed {
+		return ERR_CLOSED
+	}
 	select {
 	case n.sendQueue <- m:
 	default:
@@ -101,9 +126,9 @@ func (n *Node) Send(m *protocol.ProtoMsg) error {
 
 func (n *Node) Close() {
 	if !n.closed {
+		n.closed = true
 		close(n.sendQueue)
 		n.conn.Close()
-		n.closed = true
 	}
 }
 
@@ -114,6 +139,15 @@ type ConnPool struct {
 	session uint64
 	quit    bool
 	inmsg   chan *protocol.ProtoMsg
+}
+
+func NewConnPool(s *service) *ConnPool {
+	p := &ConnPool{
+		svr:     s,
+		inmsg:   make(chan *protocol.ProtoMsg, IN_MSG_LIST_MAX_COUNT),
+		clients: make(map[uint64]*Node),
+	}
+	return p
 }
 
 func (c *ConnPool) FindNode(session uint64) *Node {
@@ -146,7 +180,7 @@ func (c *ConnPool) NewNode(conn Conn) *Node {
 		conn:      conn,
 		mailbox:   protocol.NewMailbox(c.svr.id, api.MB_TYPE_CONN, c.session),
 		session:   c.session,
-		sendQueue: make(chan *protocol.ProtoMsg, 128),
+		sendQueue: make(chan *protocol.ProtoMsg, NODE_SEND_MSG_COUNT),
 	}
 	c.clients[n.session] = n
 	log.Info("new session:", n.session, ",addr:", conn.Addr())
@@ -191,8 +225,18 @@ func (s *service) onConnEvent(event string, args interface{}) {
 	switch event {
 	case EVENT_CONNECTED:
 		s.handler.OnConnected(session)
+		for _, m := range s.mods {
+			if m.Interest(api.INTEREST_CONNECTION_EVENT) {
+				m.Handler().OnConnected(session)
+			}
+		}
 	case EVENT_DISCONNECTED:
 		s.handler.OnDisconnected(session)
+		for _, m := range s.mods {
+			if m.Interest(api.INTEREST_CONNECTION_EVENT) {
+				m.Handler().OnDisconnected(session)
+			}
+		}
 	}
 }
 
@@ -214,14 +258,20 @@ func (s *service) SendToClient(dest protocol.Mailbox, msg *protocol.ProtoMsg) er
 		return fmt.Errorf("client not found, session:%d", dest.Id())
 	}
 
+	log.Infof("send msg to client, msg:%d, to: %s", msg.Id, dest)
 	return node.Send(msg)
 }
 
 func (s *service) receive() {
-	for {
+	for i := 0; i < PRE_ROUND_IN_MSG_MAX_PROCESS_COUNT; i++ { // max loop PRE_ROUND_IN_MSG_MAX_PROCESS_COUNT
 		select {
-		case m := <-s.connPool.inmsg:
-			s.handler.OnMessage(m)
+		case msg := <-s.connPool.inmsg:
+			s.handler.OnMessage(msg)
+			for _, m := range s.mods {
+				if m.Interest(api.INTEREST_CONNECTION_EVENT) {
+					m.Handler().OnMessage(msg)
+				}
+			}
 		default:
 			return
 		}

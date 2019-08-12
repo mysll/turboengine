@@ -74,11 +74,12 @@ func Set{{.Name}}Provider(svr coreapi.Service, prefix string, provider I{{.Name}
 type {{$.Name}}_RPC_Go_{{$.Ver}}_Client struct {
 	svr coreapi.Service
 	prefix string
+	dest    protocol.Mailbox
 	timeout time.Duration
 }
 
-func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) Redirect(svr coreapi.Service) {
-	m.svr = svr
+func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) Redirect(dest protocol.Mailbox) {
+	m.dest = dest
 }
 
 {{range .Methods}}
@@ -91,7 +92,7 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) {{.Name}}({{range $k, $v := .ArgTyp
 	}
 	{{end}}
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d.{{$.Name}}.{{.Name}}",m.prefix, m.svr.ID()), msg.Body, m.timeout)
+	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d.{{$.Name}}.{{.Name}}",m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
@@ -121,10 +122,11 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) {{.Name}}({{range $k, $v := .ArgTyp
 }
 {{end}}
 
-func New{{.Name}}Consumer(svr coreapi.Service, prefix string, timeout time.Duration) *proto.{{.Name}} {
+func New{{.Name}}Consumer(svr coreapi.Service, prefix string, dest protocol.Mailbox, timeout time.Duration) *proto.{{.Name}} {
 	m := new(proto.{{.Name}})
 	mc := new({{$.Name}}_RPC_Go_{{$.Ver}}_Client)
 	mc.svr = svr
+	mc.dest = dest
 	mc.prefix = prefix
 	mc.timeout = timeout
 	m.XXX = mc	{{range .Methods}}
@@ -147,8 +149,13 @@ type I{{$.Name}}_RPC_Go_{{$.Ver}}_Handler interface {
 type {{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle struct {
 	svr     coreapi.Service
 	prefix  string
+	dest    protocol.Mailbox
 	timeout time.Duration
 	handler I{{$.Name}}_RPC_Go_{{$.Ver}}_Handler
+}
+
+func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle) Redirect(dest protocol.Mailbox) {
+	m.dest = dest
 }
 
 {{range .Methods}}
@@ -160,7 +167,7 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle) {{.Name}}({{range $k, $v := 
 	}
 	{{end}}
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d.{{$.Name}}.{{.Name}}",m.prefix, m.svr.ID()), msg.Body, m.timeout)
+	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d.{{$.Name}}.{{.Name}}",m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
@@ -192,10 +199,11 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle) On{{.Name}}(call *coreapi.Ca
 
 {{end}}
 
-func New{{.Name}}ConsumerWithHandle(svr coreapi.Service, prefix string, timeout time.Duration, handler I{{$.Name}}_RPC_Go_{{$.Ver}}_Handler) *proto.{{.Name}} {
+func New{{.Name}}ConsumerWithHandle(svr coreapi.Service, prefix string, dest protocol.Mailbox, timeout time.Duration, handler I{{$.Name}}_RPC_Go_{{$.Ver}}_Handler) *proto.{{.Name}} {
 	m := new(proto.{{.Name}})
 	mc := new({{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle)
 	mc.svr = svr
+	mc.dest = dest
 	mc.prefix = prefix
 	mc.timeout = timeout
 	mc.handler = handler

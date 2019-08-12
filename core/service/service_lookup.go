@@ -80,7 +80,7 @@ func NewLookupService(config *consulapi.Config) *LookupService {
 	return sd
 }
 
-func (sd *LookupService) Start() error {
+func (sd *LookupService) Init() error {
 	c, err := consulapi.NewClient(sd.config)
 	if err != nil {
 		return nil
@@ -88,9 +88,12 @@ func (sd *LookupService) Start() error {
 	sd.client = c
 
 	sd.ctx, sd.cancelFunc = context.WithCancel(context.Background())
+	return nil
+}
+
+func (sd *LookupService) Start() {
 	go sd.discover(sd.ctx, true)
 	go sd.updateTTL(sd.ctx)
-	return nil
 }
 
 func (sd *LookupService) Stop() {

@@ -24,6 +24,7 @@ type Conn interface {
 	Addr() string
 	Read(p []byte) (n int, err error)
 	Write(p []byte) (n int, err error)
+	Flush() error
 	Close()
 }
 
@@ -53,6 +54,10 @@ func (c *TcpConn) Read(p []byte) (n int, err error) {
 
 func (c *TcpConn) Write(p []byte) (n int, err error) {
 	return c.writer.Write(p)
+}
+
+func (c *TcpConn) Flush() error {
+	return c.writer.Flush()
 }
 
 func (c *TcpConn) Close() {
@@ -98,12 +103,12 @@ func (t *TcpTransport) ListenAndServe(addr string, port int, handler ConnHandler
 		conn, err := l.Accept()
 		if err != nil {
 			if nerr, ok := err.(net.Error); ok && nerr.Temporary() {
-				log.Warnf("NOTICE: temporary Accept() failure - %s", err)
+				log.Warnf("temporary Accept() failure - %s", err)
 				runtime.Gosched()
 				continue
 			}
 			if !strings.Contains(err.Error(), "use of closed network connection") {
-				log.Errorf("ERROR: listener.Accept() - %s", err)
+				log.Errorf("listener.Accept() - %s", err)
 			}
 			break
 		}

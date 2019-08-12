@@ -1,7 +1,10 @@
 package login
 
 import (
+	"turboengine/apps/login/mod/login"
+	"turboengine/core/api"
 	coreapi "turboengine/core/api"
+	"turboengine/core/module"
 	"turboengine/core/service"
 )
 
@@ -11,6 +14,7 @@ import (
 // Desc:
 type Login struct {
 	service.Service
+	login api.Module
 }
 
 func (s *Login) OnPrepare(srv coreapi.Service, args map[string]string) error {
@@ -19,6 +23,8 @@ func (s *Login) OnPrepare(srv coreapi.Service, args map[string]string) error {
 	// use plugin end
 
 	// add module
+	s.login = module.New(&login.Login{}, false)
+	srv.AddModule(s.login)
 	// add module end
 
 	return nil

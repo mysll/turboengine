@@ -27,7 +27,7 @@ func ReadMsg(r io.Reader, buff []byte) (msgbody []byte, err error) {
 		return
 	}
 
-	if size > uint32(len(buff)) {
+	if size > uint32(cap(buff)) {
 		err = errors.New(fmt.Sprintf("message size exceed, package size: %d, buffer cap: %d", size, cap(buff)))
 		return
 	}

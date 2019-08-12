@@ -27,7 +27,24 @@ func (a *AutoExtendArchive) Put(val interface{}) error {
 	return err
 }
 
+func (a *AutoExtendArchive) Append(data []byte) error {
+	_, err := a.sr.Write(data)
+	if err == io.EOF {
+		msg := NewMessage(cap(a.msg.Body) * 2)
+		sr := NewStoreArchiver(msg.Body)
+		sr.Write(a.sr.Data())
+		a.sr = sr
+		a.msg = msg
+		_, err = a.sr.Write(data)
+	}
+	return err
+}
+
 func (a *AutoExtendArchive) Message() *Message {
 	a.msg.Body = a.msg.Body[:a.sr.Len()]
 	return a.msg
+}
+
+func (a *AutoExtendArchive) Free() {
+	a.msg.Free()
 }

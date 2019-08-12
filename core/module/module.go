@@ -22,6 +22,7 @@ type module struct {
 	close    chan struct{}
 	name     string
 	fps      int
+	interest int
 }
 
 func New(h api.ModuleHandler, async bool) api.Module {
@@ -48,6 +49,22 @@ func NewWithConfig(h api.ModuleHandler, c Config) api.Module {
 		m.fps = c.FPS
 	}
 	return m
+}
+
+func (m *module) Handler() api.ModuleHandler {
+	return m.mod
+}
+
+func (m *module) SetInterest(i int) {
+	m.interest |= i
+}
+
+func (m *module) ClearInterest(i int) {
+	m.interest &= ^i
+}
+
+func (m *module) Interest(i int) bool {
+	return (m.interest & i) != 0
 }
 
 func (m *module) Name() string {

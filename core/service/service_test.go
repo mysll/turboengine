@@ -42,7 +42,7 @@ func Srv1() {
 	})
 	time.Sleep(time.Second * 10)
 	s.Close()
-	s.Wait()
+	s.Await()
 }
 
 func Srv2() {
@@ -69,7 +69,7 @@ func Srv2() {
 	time.Sleep(time.Second * 10)
 
 	s.Close()
-	s.Wait()
+	s.Await()
 }
 
 func TestNewService(t *testing.T) {

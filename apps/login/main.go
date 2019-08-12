@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"os"
 	"turboengine/apps/login/login"
 	"turboengine/common/log"
 	"turboengine/core/service"
@@ -16,6 +17,7 @@ func main() {
 	log.Init(nil)
 	defer log.Close()
 
+	log.Info("pid:", os.Getpid())
 	cfg := new(service.Config)
 	if err := cfg.LoadFromToml(*config); err != nil {
 		panic(err)

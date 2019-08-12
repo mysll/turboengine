@@ -2,6 +2,7 @@ package module
 
 import (
 	"context"
+	"turboengine/common/protocol"
 	"turboengine/common/utils"
 	"turboengine/core/api"
 )
@@ -27,4 +28,16 @@ func (m *Module) OnUpdate(*utils.Time) {
 
 func (m *Module) OnStop() error {
 	return nil
+}
+
+func (m *Module) OnConnected(session uint64) {
+
+}
+
+func (m *Module) OnDisconnected(session uint64) {
+
+}
+
+func (m *Module) OnMessage(msg *protocol.ProtoMsg) {
+
 }

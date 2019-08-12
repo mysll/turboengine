@@ -9,7 +9,9 @@ NatsUrl = "nats://0.0.0.0:4222"
 Expose = true
 Addr = "0.0.0.0"
 Port = 2001
-FPS = 30
+FPS = 0
+Debug = true
+DebugPort = 4000
 
 # depend other service
 [[Depend]]
