@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -52,9 +53,8 @@ type Node struct {
 }
 
 func (n *Node) input(inmsg chan *protocol.ProtoMsg) {
-	buff := make([]byte, 0, protocol.MAX_BUF_LEN)
 	for {
-		data, err := protocol.ReadMsg(n.conn, buff[:0])
+		data, err := protocol.ReadMsg(n.conn, protocol.MAX_MSG_LEN)
 		if err != nil {
 			if err != io.EOF && !strings.Contains(err.Error(), "closed by the remote host") {
 				log.Error(err)
@@ -64,7 +64,8 @@ func (n *Node) input(inmsg chan *protocol.ProtoMsg) {
 		if decoder == nil {
 			panic("decode is nil")
 		}
-		msg, err := decoder.Decode(data)
+		msg, err := decoder.Decode(data.Body)
+		data.Free()
 		if err != nil {
 			log.Error("decode msg failed,", err)
 			n.Close()
@@ -78,24 +79,62 @@ func (n *Node) input(inmsg chan *protocol.ProtoMsg) {
 	}
 }
 
-func (n *Node) send() {
-	for m := range n.sendQueue {
-		if encoder == nil {
-			panic("encode is nil")
+func (n *Node) write(m *protocol.ProtoMsg) error {
+	if encoder == nil {
+		panic("encode is nil")
+	}
+	msg, err := encoder.Encode(m)
+	if err != nil {
+		log.Error("encode msg failed,", err)
+		n.Close()
+		return err
+	}
+	if err = protocol.WriteMsg(n.conn, msg.Body); err != nil {
+		if !strings.Contains(err.Error(), "closed by the remote host") {
+			log.Error("write msg failed,", err)
 		}
-		msg, err := encoder.Encode(m)
-		if err != nil {
-			log.Error("encode msg failed,", err)
-			n.Close()
-			break
-		}
-		if err = protocol.WriteMsg(n.conn, msg.Body); err != nil {
-			if !strings.Contains(err.Error(), "closed by the remote host") {
-				log.Error("write msg failed,", err)
+		n.Close()
+		msg.Free()
+		return err
+	}
+	msg.Free()
+	return nil
+}
+
+func (n *Node) batchWrite() (err error) {
+	for {
+		select {
+		case m, ok := <-n.sendQueue:
+			if !ok {
+				return errors.New("closed")
 			}
-			n.Close()
-			msg.Free()
-			break
+			err = n.write(m)
+			if err != nil {
+				return err
+			}
+		default:
+			return
+		}
+	}
+}
+
+func (n *Node) send() {
+	var err error
+L:
+	for {
+		select {
+		case m, ok := <-n.sendQueue:
+			if !ok {
+				break L
+			}
+			err = n.write(m)
+			if err != nil {
+				break L
+			}
+			err = n.batchWrite()
+			if err != nil {
+				break L
+			}
 		}
 
 		if err = n.conn.Flush(); err != nil {
@@ -103,12 +142,8 @@ func (n *Node) send() {
 				log.Error("flush msg failed,", err)
 			}
 			n.Close()
-			msg.Free()
 			break
 		}
-
-		log.Infof("send message to %s, size: %d", n.conn.Addr(), len(msg.Body))
-		msg.Free()
 	}
 }
 

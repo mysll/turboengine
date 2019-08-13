@@ -168,16 +168,17 @@ L:
 
 	// check timeout
 	n := time.Now()
-	count := 0
-	s.lockCall.RLock()
-	count = len(s.pending)
-	s.lockCall.RUnlock()
-	if count > 0 {
-		tmp := s.pending
-		s.lockCall.Lock()
-		s.pending = make(map[uint64]*api.Call)
-		s.lockCall.Unlock()
-		for _, call := range tmp {
+	s.lockCall.Lock()
+	var timeout []*api.Call
+	for id, call := range s.pending {
+		if call.DeadLine.Sub(n) <= 0 {
+			timeout = append(timeout, call)
+			delete(s.pending, id)
+		}
+	}
+	s.lockCall.Unlock()
+	if len(timeout) > 0 {
+		for _, call := range timeout {
 			if call.DeadLine.Sub(n) <= 0 {
 				call.Err = ERR_TIMEOUT
 				call.Data = nil

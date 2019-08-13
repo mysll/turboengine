@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/BurntSushi/toml v0.3.1
+	github.com/Workiva/go-datastructures v1.0.50
 	github.com/go-akka/configuration v0.0.0-20190109144621-439b15a79294 // indirect
 	github.com/gogap/config v0.0.0-20180418140818-a1522129698c // indirect
 	github.com/gogap/logrus_mate v1.1.0

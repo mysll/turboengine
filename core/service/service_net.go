@@ -3,11 +3,12 @@ package service
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"runtime"
 	"strings"
+	"sync"
 	"turboengine/common/log"
-	"turboengine/common/protocol"
 )
 
 var transport = make(map[string]Transporter)
@@ -49,18 +50,39 @@ func (c *TcpConn) Addr() string {
 }
 
 func (c *TcpConn) Read(p []byte) (n int, err error) {
-	return c.reader.Read(p)
+	if c.reader != nil {
+		return c.reader.Read(p)
+	}
+	err = fmt.Errorf("reader is nil")
+	return
 }
 
 func (c *TcpConn) Write(p []byte) (n int, err error) {
-	return c.writer.Write(p)
+	if c.writer != nil {
+		return c.writer.Write(p)
+	}
+	err = fmt.Errorf("writer is nil")
+	return
 }
 
 func (c *TcpConn) Flush() error {
-	return c.writer.Flush()
+	if c.writer != nil {
+		return c.writer.Flush()
+	}
+
+	return fmt.Errorf("writer is nil")
 }
 
 func (c *TcpConn) Close() {
+	if c.reader != nil {
+		putBufioReader(c.reader)
+		c.reader = nil
+	}
+	if c.writer != nil {
+		c.writer.Flush()
+		putBufioWriter(c.writer)
+		c.writer = nil
+	}
 	c.conn.Close()
 }
 
@@ -75,6 +97,39 @@ func (t *TcpTransport) Open() {
 		t.open = true
 		t.ready <- true
 	}
+}
+
+var (
+	bufioReaderPool sync.Pool
+	bufioWriterPool sync.Pool
+)
+
+func newBufioReader(r io.Reader) *bufio.Reader {
+	if v := bufioReaderPool.Get(); v != nil {
+		br := v.(*bufio.Reader)
+		br.Reset(r)
+		return br
+	}
+	return bufio.NewReader(r)
+}
+
+func putBufioReader(br *bufio.Reader) {
+	br.Reset(nil)
+	bufioReaderPool.Put(br)
+}
+
+func newBufioWriter(w io.Writer, size int) *bufio.Writer {
+	if v := bufioWriterPool.Get(); v != nil {
+		bw := v.(*bufio.Writer)
+		bw.Reset(w)
+		return bw
+	}
+	return bufio.NewWriterSize(w, size)
+}
+
+func putBufioWriter(bw *bufio.Writer) {
+	bw.Reset(nil)
+	bufioWriterPool.Put(bw)
 }
 
 func (t *TcpTransport) ListenAndServe(addr string, port int, handler ConnHandler) {
@@ -112,10 +167,11 @@ func (t *TcpTransport) ListenAndServe(addr string, port int, handler ConnHandler
 			}
 			break
 		}
+
 		go handler.Handle(&TcpConn{
 			conn:   conn,
-			reader: bufio.NewReaderSize(conn, protocol.MAX_BUF_LEN),
-			writer: bufio.NewWriterSize(conn, protocol.MAX_BUF_LEN),
+			reader: newBufioReader(conn),
+			writer: newBufioWriter(conn, 4<<10),
 		})
 	}
 	log.Info("transport closed")

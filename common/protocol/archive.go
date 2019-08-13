@@ -102,6 +102,10 @@ func (ar *StoreArchive) Put(val interface{}) error {
 		return binary.Write(ar, binary.LittleEndian, int32(*t))
 	case *uint:
 		return binary.Write(ar, binary.LittleEndian, uint32(*t))
+	case bool:
+		return binary.Write(ar, binary.LittleEndian, bool(t))
+	case *bool:
+		return binary.Write(ar, binary.LittleEndian, bool(*t))
 	case string:
 		return ar.PutString(t)
 	case *string:
@@ -188,13 +192,13 @@ func (ar *LoadArchive) Read(p []byte) (n int, err error) {
 
 // Get 读取任意类型的数据
 func (ar *LoadArchive) Get(val interface{}) (err error) {
-	dpv := reflect.ValueOf(val)
-	if dpv.Kind() != reflect.Ptr {
-		return errors.New("destination not a pointer")
-	}
-	if dpv.IsNil() {
-		return errors.New("destination pointer is nil")
-	}
+	// dpv := reflect.ValueOf(val)
+	// if dpv.Kind() != reflect.Ptr {
+	// 	return errors.New("destination not a pointer")
+	// }
+	// if dpv.IsNil() {
+	// 	return errors.New("destination pointer is nil")
+	// }
 
 	if m, ok := val.(Unmarshaler); ok {
 		return m.UnmarshalArchive(ar.reader)
@@ -218,6 +222,14 @@ func (ar *LoadArchive) Get(val interface{}) (err error) {
 			return err
 		}
 		*(val.(*uint)) = uint(out)
+		return nil
+	case *bool:
+		var out bool
+		err = binary.Read(ar.reader, binary.LittleEndian, &out)
+		if err != nil {
+			return err
+		}
+		*(val.(*bool)) = out
 		return nil
 	case *string:
 		inst := val.(*string)

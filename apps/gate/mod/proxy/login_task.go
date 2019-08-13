@@ -23,6 +23,7 @@ func (l *Login) Run() {
 		return
 	}
 	login := rpc.NewLoginConsumer(l.proxy.Srv, "", dest, time.Second*3)
+	log.Info("request login")
 	res, err := login.Login(l.l.User, l.l.Pass)
 	if err != nil {
 		log.Error(err)

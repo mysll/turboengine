@@ -40,12 +40,13 @@ func (s services) Less(i, j int) bool { return s[i].NID < s[j].NID }
 type NotifyFn func(event string, id string)
 
 type ServiceInfo struct {
-	ID   string
-	NID  uint16
-	Name string
-	Addr string
-	Port int
-	Load int // load balance
+	update string
+	ID     string
+	NID    uint16
+	Name   string
+	Addr   string
+	Port   int
+	Load   int // load balance
 }
 
 func (s *ServiceInfo) dirty(service *consulapi.AgentService) bool {
@@ -119,10 +120,11 @@ func (sd *LookupService) Register(id string, name string, addr string, port int)
 		return fmt.Errorf("register service error : %s", err.Error())
 	}
 	sd.localServ[id] = &ServiceInfo{
-		ID:   id,
-		Name: name,
-		Addr: addr,
-		Port: port,
+		update: "service:" + id,
+		ID:     id,
+		Name:   name,
+		Addr:   addr,
+		Port:   port,
 	}
 
 	log.Info("register succeed, id:", id)
@@ -308,8 +310,8 @@ L:
 	for {
 		select {
 		case <-t.C:
-			for k, _ := range sd.localServ {
-				err := sd.client.Agent().UpdateTTL("service:"+k, "", consulapi.HealthPassing)
+			for _, s := range sd.localServ {
+				err := sd.client.Agent().UpdateTTL(s.update, "", consulapi.HealthPassing)
 				if err != nil {
 					log.Error(err)
 				}

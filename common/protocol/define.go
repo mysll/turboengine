@@ -1,6 +1,5 @@
 package protocol
 
-
-const(
-	MAX_BUF_LEN = 1024*1024
+const (
+	MAX_MSG_LEN = 16 << 10 // 16k
 )

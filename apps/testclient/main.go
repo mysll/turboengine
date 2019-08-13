@@ -18,22 +18,24 @@ func Test() {
 		atomic.AddInt64(&failed, 1)
 		return
 	}
+	defer c.Close()
 	if !c.Login(fmt.Sprintf("sll%d", toolkit.RandRange(0, 10000)), "123") {
 		atomic.AddInt64(&failed, 1)
 		return
 	}
 	if !c.WaitLogin() {
 		atomic.AddInt64(&failed, 1)
+		fmt.Println("failed")
 	}
 }
 
 func main() {
 	wg := sync.WaitGroup{}
 	st := time.Now()
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 1000; i++ {
 		wg.Add(1)
 		go func() {
-			time.Sleep(time.Millisecond * time.Duration(toolkit.RandRange(1, 100)))
+			time.Sleep(time.Millisecond * time.Duration(toolkit.RandRange(1, 1000)))
 			Test()
 			wg.Done()
 		}()

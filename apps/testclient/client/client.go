@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 	"net"
+	"strings"
 	"time"
 	"turboengine/apps/gate/api/proto"
 	"turboengine/common/protocol"
@@ -36,6 +37,11 @@ func (c *Client) Connect(addr string, port int) bool {
 	return true
 }
 
+func (c *Client) Close() {
+	c.conn.Close()
+	c.conn = nil
+}
+
 func (c *Client) Send(msg *protocol.Message) bool {
 	if err := protocol.WriteMsg(c.conn, msg.Body); err != nil {
 		msg.Free()
@@ -47,14 +53,17 @@ func (c *Client) Send(msg *protocol.Message) bool {
 }
 
 func (c *Client) read() {
-	buff := make([]byte, protocol.MAX_BUF_LEN)
 	for {
-		body, err := protocol.ReadMsg(c.conn, buff)
+		body, err := protocol.ReadMsg(c.conn, protocol.MAX_MSG_LEN)
 		if err != nil {
-			fmt.Println(err)
+			if !strings.Contains(err.Error(), "use of closed network connection") {
+				fmt.Println(err)
+			}
+
 			break
 		}
-		c.onMessage(body)
+		c.onMessage(body.Body)
+		body.Free()
 	}
 }
 
@@ -87,7 +96,7 @@ func (c *Client) Login(user, pass string) bool {
 }
 
 func (c *Client) WaitLogin() bool {
-	t := time.NewTicker(time.Second * 5)
+	t := time.NewTicker(time.Second * 30)
 	select {
 	case res := <-c.login:
 		return res
