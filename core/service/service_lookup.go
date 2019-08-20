@@ -9,17 +9,16 @@ import (
 	"time"
 	"turboengine/common/log"
 	"turboengine/common/protocol"
+	"turboengine/common/utils"
 	"turboengine/core/api"
 
 	consulapi "github.com/hashicorp/consul/api"
 	"github.com/mysll/toolkit"
-
-	"github.com/stathat/consistent"
 )
 
 const (
 	SERVICE_TAG = "turbo.service"
-	SERVICE_TTL = time.Second * 5 // TTL
+	SERVICE_TTL = time.Second * 2 // TTL
 	DEREG_TIME  = time.Second * 10
 )
 
@@ -102,6 +101,10 @@ func (sd *LookupService) Stop() {
 	sd.cancelFunc()
 }
 
+func (sd *LookupService) Client() *consulapi.Client {
+	return sd.client
+}
+
 func (sd *LookupService) Register(id string, name string, addr string, port int) error {
 	registration := new(consulapi.AgentServiceRegistration)
 	registration.ID = id
@@ -143,29 +146,6 @@ func (sd *LookupService) Unregister(serviceId string) {
 		sd.client.Agent().ServiceDeregister(s.ID)
 		delete(sd.localServ, serviceId)
 	}
-}
-
-func (sd *LookupService) StoreKV(key string, value []byte) error {
-	kv := &consulapi.KVPair{
-		Key:   key,
-		Flags: 0,
-		Value: value,
-	}
-	_, err := sd.client.KV().Put(kv, nil)
-	return err
-}
-
-func (sd *LookupService) GetKey(key string) ([]byte, error) {
-	kv, _, err := sd.client.KV().Get(key, nil)
-	if err != nil {
-		return nil, err
-	}
-	return kv.Value, err
-}
-
-func (sd *LookupService) DelKey(key string) error {
-	_, err := sd.client.KV().Delete(key, nil)
-	return err
 }
 
 func (sd *LookupService) Lookup(id string) *ServiceInfo {
@@ -305,7 +285,7 @@ func (sd *LookupService) discoverServer(healthyOnly bool) {
 }
 
 func (sd *LookupService) updateTTL(ctx context.Context) {
-	t := time.NewTicker(time.Second)
+	t := time.NewTicker(SERVICE_TTL / 2)
 L:
 	for {
 		select {
@@ -331,12 +311,22 @@ func (s *service) onServiceChange(event string, id interface{}) {
 			log.Infof("service %s avaliable", id)
 			s.serviceValid(id.(string))
 			s.handler.OnServiceAvailable(uint16(nid))
+			for _, m := range s.mods {
+				if m.Interest(api.INTEREST_SERVICE_EVENT) {
+					m.Handler().OnServiceAvailable(uint16(nid))
+				}
+			}
 		}
 	case EVENT_DEL:
 		if id != s.sid {
 			log.Infof("service %s offline", id)
 		}
 		s.handler.OnServiceOffline(uint16(nid))
+		for _, m := range s.mods {
+			if m.Interest(api.INTEREST_SERVICE_EVENT) {
+				m.Handler().OnServiceOffline(uint16(nid))
+			}
+		}
 	}
 }
 
@@ -396,10 +386,10 @@ func (s *service) SelectService(name string, balance int, hash string) protocol.
 	var id uint16
 	switch balance {
 	case api.LOAD_BALANCE_RAND:
-		id = ss[toolkit.RandRange(0, len(ss))].NID
+		id = ss[toolkit.RandRange(0, count)].NID
 	case api.LOAD_BALANCE_ROUNDROBIN:
 		s.lookup.lastSel++
-		id = ss[s.lookup.lastSel%len(ss)].NID
+		id = ss[s.lookup.lastSel%count].NID
 	case api.LOAD_BALANCE_LEASTACTIVE:
 		l := ss[0].Load
 		sel := 0
@@ -411,20 +401,8 @@ func (s *service) SelectService(name string, balance int, hash string) protocol.
 		}
 		id = ss[sel].NID
 	case api.LOAD_BALANCE_HASH:
-		c := consistent.New()
-		for _, s := range ss {
-			c.Add(s.ID)
-		}
-		sid, err := c.Get(hash)
-		if err != nil {
-			panic(err)
-		}
-
-		nid, err := strconv.Atoi(sid)
-		if err != nil {
-			panic(err)
-		}
-		id = uint16(nid)
+		sel := utils.Hash64(hash)
+		id = ss[sel%uint64(count)].NID
 	}
 
 	return protocol.NewMailbox(id, api.MB_TYPE_SERVICE, 0)

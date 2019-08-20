@@ -13,7 +13,9 @@ import (
 	"turboengine/common/protocol"
 	"turboengine/common/utils"
 	"turboengine/core/api"
+	"turboengine/core/plugin/config"
 	"turboengine/core/plugin/event"
+	"turboengine/core/plugin/lock"
 
 	_ "net/http/pprof"
 
@@ -39,45 +41,49 @@ type service struct {
 	mailbox protocol.Mailbox
 	sid     string
 
-	c        *Config
-	handler  api.ServiceHandler
-	running  bool
-	quit     bool
-	time     *utils.Time
-	attachs  []attach
-	attachId uint64 // used for attachs
-	mods     []api.Module
-	exchange *Exchange
-	inMsg    chan *protocol.Message // receive message from message queue
-	lockCall sync.RWMutex           // protect pending
-	pending  map[uint64]*api.Call   // pending call
-	session  uint64                 // used for pending
-	delegate map[string]api.InvokeFn
-	plugin   map[string]api.Plugin
-	lookup   *LookupService
-	event    *event.Event
-	ready    bool
-	uuid     int64
-	tr       Transporter
-	connid   uint64
-	connPool *ConnPool
-	closing  bool
+	c         *Config
+	handler   api.ServiceHandler
+	running   bool
+	quit      bool
+	time      *utils.Time
+	attachs   []attach
+	attachId  uint64 // used for attachs
+	mods      []api.Module
+	exchange  *Exchange
+	inMsg     chan *protocol.Message // receive message from message queue
+	lockCall  sync.RWMutex           // protect pending
+	pending   map[uint64]*api.Call   // pending call
+	session   uint64                 // used for pending
+	delegate  map[string]api.InvokeFn
+	plugin    map[string]api.Plugin
+	lookup    *LookupService
+	event     *event.Event
+	dislocker *lock.DisLocker
+	config    *config.Configuration
+	ready     bool
+	uuid      int64
+	tr        Transporter
+	connid    uint64
+	connPool  *ConnPool
+	closing   bool
 }
 
 func New(h api.ServiceHandler, c *Config) api.Service {
 	s := &service{
-		c:        c,
-		handler:  h,
-		attachs:  make([]attach, 0, 8),
-		attachId: 1,
-		mods:     make([]api.Module, 0, 8),
-		inMsg:    make(chan *protocol.Message, 512),
-		pending:  make(map[uint64]*api.Call),
-		session:  0,
-		delegate: make(map[string]api.InvokeFn),
-		plugin:   make(map[string]api.Plugin),
-		lookup:   NewLookupService(consulapi.DefaultConfig()),
-		event:    new(event.Event),
+		c:         c,
+		handler:   h,
+		attachs:   make([]attach, 0, 8),
+		attachId:  1,
+		mods:      make([]api.Module, 0, 8),
+		inMsg:     make(chan *protocol.Message, 512),
+		pending:   make(map[uint64]*api.Call),
+		session:   0,
+		delegate:  make(map[string]api.InvokeFn),
+		plugin:    make(map[string]api.Plugin),
+		lookup:    NewLookupService(consulapi.DefaultConfig()),
+		event:     new(event.Event),
+		dislocker: new(lock.DisLocker),
+		config:    new(config.Configuration),
 	}
 
 	if s.c != nil {
@@ -112,6 +118,7 @@ func (s *service) AddModule(mod api.Module) {
 }
 
 func (s *service) Start() error {
+	toolkit.RandSeed()
 	ctx := context.Background()
 	if s.running {
 		return fmt.Errorf("service %s already running", s.c.Name)
@@ -172,6 +179,8 @@ func (s *service) init() {
 		log.Fatal(err)
 	}
 	s.lookup.SetNotify(s.notify)
+	s.usePlugin(lock.Name, s.dislocker, s.lookup.Client())
+	s.usePlugin(config.Name, s.config, s.lookup.Client())
 	p, err := NewExchange(s.inMsg)
 	if err != nil {
 		log.Fatal(err)
@@ -215,8 +224,6 @@ func (s *service) Deatch(id uint64) {
 }
 
 func (s *service) run() {
-	s.running = true
-
 	log.Infof("service %s started", s.c.Name)
 	fps := 10
 	if s.c.FPS != 0 {
@@ -229,6 +236,8 @@ func (s *service) run() {
 	if len(s.c.Depend) == 0 {
 		s.handler.OnDependReady()
 	}
+
+	s.running = true
 
 	for !s.quit {
 		s.time.Update()
@@ -308,6 +317,9 @@ func (s *service) Ready() {
 		return
 	}
 	s.ready = true
+	for _, m := range s.mods {
+		m.Handler().OnReady()
+	}
 }
 
 func (s *service) addEvent() {

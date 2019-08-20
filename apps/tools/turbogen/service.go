@@ -74,7 +74,7 @@ func TestCreate(t *testing.T) {
 
 var server_main = `package main
 import (
-	"flag
+	"flag"
 	"turboengine/common/log"
 	"turboengine/core/service"
 	"./{{.Pkg}}"

@@ -34,7 +34,7 @@ type Listener struct {
 	fn Callback
 }
 
-func (e *Event) Prepare(srv api.Service) {
+func (e *Event) Prepare(srv api.Service, args ...interface{}) {
 	e.srv = srv
 	e.id = e.srv.Attach(e.roundInvoke)
 	e.pending = list.New()

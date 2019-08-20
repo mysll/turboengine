@@ -21,15 +21,21 @@ const (
 const (
 	INTEREST_NONE = iota
 	INTEREST_CONNECTION_EVENT
+	INTEREST_SERVICE_EVENT
 )
 
 var MAX_SID = 0xFFFF
 
 type Plugin interface {
-	Prepare(Service)
+	Prepare(srv Service, args ...interface{})
 	Run()
 	Shut(Service)
 	Handle(cmd string, args ...interface{}) interface{}
+}
+
+type Locker interface {
+	Lock()
+	Unlock()
 }
 
 type Call struct {
@@ -61,7 +67,7 @@ type Service interface {
 	PubWithTimeout(subject string, data []byte, timeout time.Duration) (*Call, error)
 	Sub(subject string, invoke InvokeFn) error
 	SubNoInvoke(subject string) error
-	UsePlugin(name string) error
+	UsePlugin(name string, args ...interface{}) error
 	UnPlugin(name string)
 	Plugin(name string) interface{}
 	CallPlugin(plugin string, cmd string, args ...interface{}) (interface{}, error)

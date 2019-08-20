@@ -50,7 +50,7 @@ func SetLoginProvider(svr coreapi.Service, prefix string, provider ILogin_RPC_Go
 	m := new(Login_RPC_Go_V1_0_0)
 	m.handler = provider
 
-	if err := svr.Sub(fmt.Sprintf("%s%d.Login.Login", prefix, svr.ID()), m.Login); err != nil {
+	if err := svr.Sub(fmt.Sprintf("%s%d:Login.Login", prefix, svr.ID()), m.Login); err != nil {
 		return err
 	}
 	return nil
@@ -81,7 +81,7 @@ func (m *Login_RPC_Go_V1_0_0_Client) Login(arg0 string, arg1 string) (reply0 boo
 	}
 
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d.Login.Login", m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
+	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d:Login.Login", m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
@@ -154,7 +154,7 @@ func (m *Login_RPC_Go_V1_0_0_Client_Handle) Login(arg0 string, arg1 string) (rep
 	}
 
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d.Login.Login", m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
+	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d:Login.Login", m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return

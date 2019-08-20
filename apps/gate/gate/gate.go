@@ -21,6 +21,8 @@ type Gate struct {
 func (s *Gate) OnPrepare(srv coreapi.Service, args map[string]string) error {
 	s.Service.OnPrepare(srv, args)
 	// use plugin
+	workqueue.MAX_GO_ROUTINE = 32
+	workqueue.MAX_QUEUE = 512
 	srv.UsePlugin(workqueue.Name)
 	// use plugin end
 

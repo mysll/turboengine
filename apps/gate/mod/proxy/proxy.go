@@ -8,9 +8,8 @@ import (
 	"turboengine/common/utils"
 	"turboengine/core/api"
 	"turboengine/core/module"
+	"turboengine/core/plugin/lock"
 	"turboengine/core/plugin/workqueue"
-
-	"github.com/mysll/toolkit"
 )
 
 // Module: 		Proxy
@@ -20,6 +19,7 @@ import (
 type Proxy struct {
 	module.Module
 	workqueue *workqueue.WorkQueue
+	dislock   *lock.DisLocker
 }
 
 func (m *Proxy) Name() string {
@@ -39,6 +39,8 @@ func (m *Proxy) OnPrepare(s api.Service) error {
 func (m *Proxy) OnStart(ctx context.Context) error {
 	m.Module.OnStart(ctx)
 	m.workqueue = m.Srv.Plugin(workqueue.Name).(*workqueue.WorkQueue)
+	m.dislock = m.Srv.Plugin(lock.Name).(*lock.DisLocker)
+
 	// subscribe subject
 	// subscribe subject end
 	return nil
@@ -73,5 +75,5 @@ func (m *Proxy) OnMessage(msg *protocol.ProtoMsg) {
 }
 
 func (m *Proxy) Schedule(key string, task workqueue.Task) bool {
-	return m.workqueue.Schedule(int(toolkit.DJBHash(key)), task)
+	return m.workqueue.Schedule(utils.Hash64(key), task)
 }

@@ -63,10 +63,10 @@ func SetEchoProvider(svr coreapi.Service, prefix string, provider IEcho_RPC_Go_V
 	m := new(Echo_RPC_Go_V1_0_0)
 	m.handler = provider
 
-	if err := svr.Sub(fmt.Sprintf("%s%d.Echo.Print", prefix, svr.ID()), m.Print); err != nil {
+	if err := svr.Sub(fmt.Sprintf("%s%d:Echo.Print", prefix, svr.ID()), m.Print); err != nil {
 		return err
 	}
-	if err := svr.Sub(fmt.Sprintf("%s%d.Echo.Echo", prefix, svr.ID()), m.Echo); err != nil {
+	if err := svr.Sub(fmt.Sprintf("%s%d:Echo.Echo", prefix, svr.ID()), m.Echo); err != nil {
 		return err
 	}
 	return nil
@@ -76,11 +76,12 @@ func SetEchoProvider(svr coreapi.Service, prefix string, provider IEcho_RPC_Go_V
 type Echo_RPC_Go_V1_0_0_Client struct {
 	svr     coreapi.Service
 	prefix  string
+	dest    protocol.Mailbox
 	timeout time.Duration
 }
 
-func (m *Echo_RPC_Go_V1_0_0_Client) Redirect(svr coreapi.Service) {
-	m.svr = svr
+func (m *Echo_RPC_Go_V1_0_0_Client) Redirect(dest protocol.Mailbox) {
+	m.dest = dest
 }
 
 // Print must call in a new goroutine, if call in service's goroutine, it will be dead lock
@@ -92,7 +93,7 @@ func (m *Echo_RPC_Go_V1_0_0_Client) Print(arg0 string) (err error) {
 	}
 
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d.Echo.Print", m.prefix, m.svr.ID()), msg.Body, m.timeout)
+	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d:Echo.Print", m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
@@ -120,7 +121,7 @@ func (m *Echo_RPC_Go_V1_0_0_Client) Echo(arg0 string) (reply0 string, err error)
 	}
 
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d.Echo.Echo", m.prefix, m.svr.ID()), msg.Body, m.timeout)
+	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d:Echo.Echo", m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
@@ -149,10 +150,11 @@ func (m *Echo_RPC_Go_V1_0_0_Client) Echo(arg0 string) (reply0 string, err error)
 	return
 }
 
-func NewEchoConsumer(svr coreapi.Service, prefix string, timeout time.Duration) *proto.Echo {
+func NewEchoConsumer(svr coreapi.Service, prefix string, dest protocol.Mailbox, timeout time.Duration) *proto.Echo {
 	m := new(proto.Echo)
 	mc := new(Echo_RPC_Go_V1_0_0_Client)
 	mc.svr = svr
+	mc.dest = dest
 	mc.prefix = prefix
 	mc.timeout = timeout
 	m.XXX = mc
@@ -176,8 +178,13 @@ type IEcho_RPC_Go_V1_0_0_Handler interface {
 type Echo_RPC_Go_V1_0_0_Client_Handle struct {
 	svr     coreapi.Service
 	prefix  string
+	dest    protocol.Mailbox
 	timeout time.Duration
 	handler IEcho_RPC_Go_V1_0_0_Handler
+}
+
+func (m *Echo_RPC_Go_V1_0_0_Client_Handle) Redirect(dest protocol.Mailbox) {
+	m.dest = dest
 }
 
 func (m *Echo_RPC_Go_V1_0_0_Client_Handle) Print(arg0 string) (err error) {
@@ -188,7 +195,7 @@ func (m *Echo_RPC_Go_V1_0_0_Client_Handle) Print(arg0 string) (err error) {
 	}
 
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d.Echo.Print", m.prefix, m.svr.ID()), msg.Body, m.timeout)
+	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d:Echo.Print", m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
@@ -217,7 +224,7 @@ func (m *Echo_RPC_Go_V1_0_0_Client_Handle) Echo(arg0 string) (reply0 string, err
 	}
 
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d.Echo.Echo", m.prefix, m.svr.ID()), msg.Body, m.timeout)
+	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d:Echo.Echo", m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
@@ -247,10 +254,11 @@ func (m *Echo_RPC_Go_V1_0_0_Client_Handle) OnEcho(call *coreapi.Call) {
 	m.handler.OnEcho(reply.Arg0, err)
 }
 
-func NewEchoConsumerWithHandle(svr coreapi.Service, prefix string, timeout time.Duration, handler IEcho_RPC_Go_V1_0_0_Handler) *proto.Echo {
+func NewEchoConsumerWithHandle(svr coreapi.Service, prefix string, dest protocol.Mailbox, timeout time.Duration, handler IEcho_RPC_Go_V1_0_0_Handler) *proto.Echo {
 	m := new(proto.Echo)
 	mc := new(Echo_RPC_Go_V1_0_0_Client_Handle)
 	mc.svr = svr
+	mc.dest = dest
 	mc.prefix = prefix
 	mc.timeout = timeout
 	mc.handler = handler

@@ -32,7 +32,7 @@ func Test() {
 func main() {
 	wg := sync.WaitGroup{}
 	st := time.Now()
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 5000; i++ {
 		wg.Add(1)
 		go func() {
 			time.Sleep(time.Millisecond * time.Duration(toolkit.RandRange(1, 1000)))

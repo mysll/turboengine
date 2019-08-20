@@ -8,6 +8,7 @@ import (
 )
 
 type Config struct {
+	Dev       bool
 	ID        uint16
 	Name      string
 	NatsUrl   string

@@ -64,7 +64,7 @@ func Set{{.Name}}Provider(svr coreapi.Service, prefix string, provider I{{.Name}
 	m := new({{.Name}}_RPC_Go_{{.Ver}})
 	m.handler = provider
 	{{range .Methods}}
-	if err := svr.Sub(fmt.Sprintf("%s%d.{{$.Name}}.{{.Name}}", prefix, svr.ID()), m.{{.Name}}); err != nil {
+	if err := svr.Sub(fmt.Sprintf("%s%d:{{$.Name}}.{{.Name}}", prefix, svr.ID()), m.{{.Name}}); err != nil {
 		return err
 	}{{end}}
 	return nil
@@ -92,7 +92,7 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) {{.Name}}({{range $k, $v := .ArgTyp
 	}
 	{{end}}
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d.{{$.Name}}.{{.Name}}",m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
+	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d:{{$.Name}}.{{.Name}}",m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
@@ -167,7 +167,7 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle) {{.Name}}({{range $k, $v := 
 	}
 	{{end}}
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d.{{$.Name}}.{{.Name}}",m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
+	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d:{{$.Name}}.{{.Name}}",m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return

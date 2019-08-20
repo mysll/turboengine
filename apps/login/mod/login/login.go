@@ -6,6 +6,7 @@ import (
 	"turboengine/common/utils"
 	"turboengine/core/api"
 	"turboengine/core/module"
+	"turboengine/core/plugin/lock"
 )
 
 // Module: 		Login
@@ -14,6 +15,7 @@ import (
 // Desc:
 type Login struct {
 	module.Module
+	dislock *lock.DisLocker
 }
 
 func (m *Login) Name() string {
@@ -30,6 +32,7 @@ func (m *Login) OnPrepare(s api.Service) error {
 
 func (m *Login) OnStart(ctx context.Context) error {
 	m.Module.OnStart(ctx)
+	m.dislock = m.Srv.Plugin(lock.Name).(*lock.DisLocker)
 	// subscribe subject
 	rpc.SetLoginProvider(m.Srv, "", &LoginServer{})
 	// subscribe subject end

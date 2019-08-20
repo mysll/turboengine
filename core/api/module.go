@@ -26,4 +26,7 @@ type ModuleHandler interface {
 	OnConnected(session uint64)
 	OnDisconnected(session uint64)
 	OnMessage(*protocol.ProtoMsg)
+	OnServiceAvailable(id uint16)
+	OnServiceOffline(id uint16)
+	OnReady()
 }

@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	DEFAULT_REPLY               = "turbo.service.reply#%d"
-	SERVICE_SHUT                = "turbo.service.shut"
-	SERVICE_SHUT_ALL            = "turbo.service.shut_all"
+	DEFAULT_REPLY               = "%d:#.reply"
+	SERVICE_SHUT                = "#.shut"
+	SERVICE_SHUT_ALL            = "#.shut_all"
 	PRE_ROUND_MAX_PROCESS_COUNT = 100
 )
 

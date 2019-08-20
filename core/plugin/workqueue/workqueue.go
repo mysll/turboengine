@@ -7,10 +7,10 @@ import (
 	"turboengine/core/plugin"
 )
 
-const (
+var (
 	Name           = "WorkQueue"
 	MAX_GO_ROUTINE = 16
-	MAX_QUEUE      = 1024
+	MAX_QUEUE      = 128
 )
 
 type Task interface {
@@ -24,12 +24,17 @@ type WorkQueue struct {
 	complete chan Task
 	attachid uint64
 	closing  bool
+	hashmask uint64
 }
 
-func (w *WorkQueue) Prepare(srv api.Service) {
+func (w *WorkQueue) Prepare(srv api.Service, args ...interface{}) {
 	w.srv = srv
+	if !utils.IsPowerOfTwo(MAX_GO_ROUTINE) {
+		panic("MAX_GO_ROUTINE must be power of two ")
+	}
+	w.hashmask = uint64(MAX_GO_ROUTINE - 1)
 	w.jobs = make([]chan Task, MAX_GO_ROUTINE)
-	w.complete = make(chan Task, 512)
+	w.complete = make(chan Task, MAX_QUEUE*2)
 	w.attachid = srv.Attach(w.invokeComplete)
 	for i := 0; i < MAX_GO_ROUTINE; i++ {
 		w.jobs[i] = make(chan Task, MAX_QUEUE)
@@ -55,13 +60,13 @@ func (w *WorkQueue) Handle(cmd string, args ...interface{}) interface{} {
 	return nil
 }
 
-func (w *WorkQueue) Schedule(filt int, task Task) bool {
+func (w *WorkQueue) Schedule(hashkey uint64, task Task) bool {
 	if w.closing {
 		return false
 	}
-	idx := int(uint(filt) % uint(len(w.jobs)))
+
 	select {
-	case w.jobs[idx] <- task:
+	case w.jobs[hashkey&w.hashmask] <- task:
 		return true
 	default:
 		log.Error("too much jobs")

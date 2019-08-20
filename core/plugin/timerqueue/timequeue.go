@@ -51,7 +51,7 @@ type TimerQueue struct {
 	deleting      map[int64]struct{}
 }
 
-func (tq *TimerQueue) Prepare(srv api.Service) {
+func (tq *TimerQueue) Prepare(srv api.Service, args ...interface{}) {
 	tq.srv = srv
 	tq.pendingTimers = list.New()
 	tq.deleting = make(map[int64]struct{})

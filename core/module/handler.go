@@ -41,3 +41,15 @@ func (m *Module) OnDisconnected(session uint64) {
 func (m *Module) OnMessage(msg *protocol.ProtoMsg) {
 
 }
+
+func (m *Module) OnServiceAvailable(id uint16) {
+
+}
+
+func (m *Module) OnServiceOffline(id uint16) {
+
+}
+
+func (m *Module) OnReady() {
+
+}

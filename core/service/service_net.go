@@ -141,20 +141,15 @@ func (t *TcpTransport) ListenAndServe(addr string, port int, handler ConnHandler
 	t.l = l
 	log.Info("transport listen on ", l.Addr())
 
-	if t.open {
-		log.Info("transport waiting for connection")
-	}
-
-	for {
-		if !t.open {
-			log.Info("waiting for open")
-			_, ok := <-t.ready
-			if !ok { // close
-				break
-			}
-			log.Info("transport waiting for connection")
+	if !t.open {
+		log.Info("waiting for open")
+		_, ok := <-t.ready
+		if !ok { // close
+			return
 		}
-
+	}
+	log.Info("transport waiting for connection")
+	for {
 		conn, err := l.Accept()
 		if err != nil {
 			if nerr, ok := err.(net.Error); ok && nerr.Temporary() {
