@@ -2,10 +2,14 @@ package clusteredcache
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
 	"time"
+	"turboengine/common/log"
 	"turboengine/common/protocol"
 	"turboengine/core/api"
 	"turboengine/core/plugin/clusteredcache/bytecache"
+	"turboengine/core/plugin/config"
 	"turboengine/core/plugin/election"
 	"turboengine/core/plugin/event"
 	"turboengine/core/plugin/lock"
@@ -20,6 +24,7 @@ type ClusteredCache struct {
 	election   *election.Election
 	event      *event.Event
 	dislocker  *lock.DisLocker
+	cfg        *config.Configuration
 	leader     bool
 	domain     string
 	version    int
@@ -27,6 +32,7 @@ type ClusteredCache struct {
 	canLeader  bool
 	cache      *bytecache.Cache
 	beginTx    bool
+	domainVer  string
 }
 
 func (c *ClusteredCache) Prepare(srv api.Service, args ...interface{}) {
@@ -37,10 +43,12 @@ func (c *ClusteredCache) Prepare(srv api.Service, args ...interface{}) {
 	c.election = srv.Plugin(election.Name).(*election.Election)
 	c.event = srv.Plugin(event.Name).(*event.Event)
 	c.dislocker = srv.Plugin(lock.Name).(*lock.DisLocker)
+	c.cfg = srv.Plugin(config.Name).(*config.Configuration)
 	if len(args) == 0 {
 		panic("args is nil")
 	}
 	c.domain = args[0].(string)
+	c.domainVer = c.domain + ":version"
 	if len(args) == 2 {
 		c.canLeader = args[1].(bool)
 	}
@@ -66,6 +74,17 @@ func (c *ClusteredCache) Handle(cmd string, args ...interface{}) interface{} {
 
 func (c *ClusteredCache) elected(event string, data interface{}) {
 	c.leader = true
+	ver, err := c.cfg.GetKey(c.domainVer)
+	if err != nil {
+		log.Error(err)
+	}
+
+	verNum, _ := strconv.Atoi(string(ver))
+	if c.version < verNum {
+		log.Error("clustered cache has lost data, remote version ", verNum, ", local version ", c.version)
+	}
+
+	c.cfg.StoreKV(c.domainVer, []byte(fmt.Sprintf("%d", c.version)))
 }
 
 func (c *ClusteredCache) follow(event string, data interface{}) {
@@ -93,6 +112,20 @@ type Tx struct {
 }
 
 func (t *Tx) Ok(ch <-chan struct{}, l lock.Locker) {
+	defer l.Unlock()
+	ver, err := t.c.cfg.GetKey(t.c.domainVer)
+	if err != nil {
+		t.f(false)
+		log.Error(err)
+		return
+	}
+	verNum, _ := strconv.Atoi(string(ver))
+	if t.c.version != verNum {
+		t.f(false)
+		log.Error("version not match, remote version ", verNum, ", local version ", t.c.version)
+		return
+	}
+
 	t.c.beginTx = true
 	t.f(true)
 	t.c.beginTx = false
