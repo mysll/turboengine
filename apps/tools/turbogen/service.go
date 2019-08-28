@@ -93,9 +93,9 @@ func main() {
 	if err := cfg.LoadFromToml(*config); err != nil {
 		panic(err)
 	}
-	{{tolower .Name}} := service.New(new({{.Pkg}}.{{.Name}}), cfg)
-	{{tolower .Name}}.Start()
-	{{tolower .Name}}.Await()
+	srv := service.New(new({{.Pkg}}.{{.Name}}), cfg)
+	srv.Start()
+	srv.Await()
 }
 `
 

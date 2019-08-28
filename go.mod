@@ -17,7 +17,6 @@ require (
 	github.com/nats-io/nats-server/v2 v2.0.2 // indirect
 	github.com/nats-io/nats-top v0.3.2 // indirect
 	github.com/nats-io/nats.go v1.8.1
-	github.com/nggenius/ngengine v0.0.0-20190109064020-6b57305fab97
 	github.com/nsf/termbox-go v0.0.0-20190624072549-eeb6cd0a1762 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/sirupsen/logrus v1.4.2
