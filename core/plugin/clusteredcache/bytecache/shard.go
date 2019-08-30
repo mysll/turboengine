@@ -3,6 +3,8 @@ package bytecache
 import (
 	"fmt"
 	"sync"
+	"turboengine/common/log"
+	"turboengine/common/protocol"
 )
 
 var (
@@ -73,6 +75,7 @@ func (s *shard) Clear() {
 	s.caps = 0
 	s.count = 0
 	s.tail = 0
+	s.entries.Reset()
 }
 
 func (s *shard) Set(key string, hashkey uint64, value []byte) error {
@@ -266,4 +269,36 @@ func (s *shard) output() {
 		}
 	}
 	fmt.Println("===================================")
+}
+
+func (s *shard) pack(ar *protocol.AutoExtendArchive) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	for _, v := range s.items {
+		if v == nil {
+			continue
+		}
+		s.packItem(ar, v)
+		obj := v.next
+		for obj != nil {
+			s.packItem(ar, obj)
+			obj = obj.next
+		}
+	}
+}
+
+func (s *shard) packItem(ar *protocol.AutoExtendArchive, obj *entry) error {
+	data, err := s.entries.Get(obj.index)
+	if err != nil {
+		return err
+	}
+	err = ar.Put(v.key)
+	if err != nil {
+		return err
+	}
+	err = ar.Put(data)
+	if err != nil {
+		return err
+	}
+	return nil
 }

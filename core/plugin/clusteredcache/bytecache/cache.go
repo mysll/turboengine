@@ -2,6 +2,7 @@ package bytecache
 
 import (
 	"hash/fnv"
+	"turboengine/common/protocol"
 	"turboengine/common/utils"
 )
 
@@ -60,4 +61,12 @@ func (c *Cache) Clear() {
 	for _, s := range c.shards {
 		s.Clear()
 	}
+}
+
+func (c *Cache) Pack() *protocol.Message {
+	ar := protocol.NewAutoExtendArchive(256)
+	for _, s := range c.shards {
+		s.pack(ar)
+	}
+	return ar.Message()
 }

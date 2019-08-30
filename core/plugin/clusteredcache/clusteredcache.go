@@ -19,16 +19,22 @@ var (
 	Name = "ClusteredCache"
 )
 
+const (
+	OP_NONE = iota
+	OP_SET
+	OP_DEL
+)
+
 type ClusteredCache struct {
 	srv        api.Service
 	election   *election.Election
 	event      *event.Event
-	dislocker  *lock.DisLocker
+	disLocker  *lock.DisLocker
 	cfg        *config.Configuration
 	leader     bool
 	domain     string
 	version    int
-	leaderinfo election.LeaderInfo
+	leaderInfo election.LeaderInfo
 	canLeader  bool
 	cache      *bytecache.Cache
 	beginTx    bool
@@ -42,7 +48,7 @@ func (c *ClusteredCache) Prepare(srv api.Service, args ...interface{}) {
 	}
 	c.election = srv.Plugin(election.Name).(*election.Election)
 	c.event = srv.Plugin(event.Name).(*event.Event)
-	c.dislocker = srv.Plugin(lock.Name).(*lock.DisLocker)
+	c.disLocker = srv.Plugin(lock.Name).(*lock.DisLocker)
 	c.cfg = srv.Plugin(config.Name).(*config.Configuration)
 	if len(args) == 0 {
 		panic("args is nil")
@@ -84,59 +90,31 @@ func (c *ClusteredCache) elected(event string, data interface{}) {
 		log.Error("clustered cache has lost data, remote version ", verNum, ", local version ", c.version)
 	}
 
-	c.cfg.StoreKV(c.domainVer, []byte(fmt.Sprintf("%d", c.version)))
+	if err = c.cfg.StoreKV(c.domainVer, []byte(fmt.Sprintf("%d", c.version))); err != nil {
+		log.Error(err)
+	}
 }
 
 func (c *ClusteredCache) follow(event string, data interface{}) {
 	c.leader = false
-	c.leaderinfo = data.(election.LeaderInfo)
+	c.leaderInfo = data.(election.LeaderInfo)
 }
 
 func (c *ClusteredCache) Set(key string, value interface{}) error {
+	oldVer := c.version
 	if c.leader {
-		c.version++
 		ar := protocol.NewAutoExtendArchive(32)
 		if err := ar.Put(value); err != nil {
 			return err
 		}
-		err := c.cache.Set(key, ar.Message().Body)
+		data := ar.Message().Body
+		err := c.cache.Set(key, data)
+		c.version++
+		c.notify(oldVer, c.version, OP_SET, key, data)
 		ar.Free()
 		return err
 	}
 	return nil
-}
-
-type Tx struct {
-	f func(bool)
-	c *ClusteredCache
-}
-
-func (t *Tx) Ok(ch <-chan struct{}, l lock.Locker) {
-	defer l.Unlock()
-	ver, err := t.c.cfg.GetKey(t.c.domainVer)
-	if err != nil {
-		t.f(false)
-		log.Error(err)
-		return
-	}
-	verNum, _ := strconv.Atoi(string(ver))
-	if t.c.version != verNum {
-		t.f(false)
-		log.Error("version not match, remote version ", verNum, ", local version ", t.c.version)
-		return
-	}
-
-	t.c.beginTx = true
-	t.f(true)
-	t.c.beginTx = false
-}
-
-func (t *Tx) Fail(error) {
-	t.f(false)
-}
-
-func (c *ClusteredCache) Tx(f func(bool)) {
-	c.dislocker.AcquireLock("lock/"+c.domain, &Tx{c: c, f: f}, time.Second*2)
 }
 
 func (c *ClusteredCache) Get(key string) []byte {
@@ -154,10 +132,51 @@ func (c *ClusteredCache) GetWithValue(key string, value interface{}) error {
 }
 
 func (c *ClusteredCache) Del(key string) {
+	oldVer := c.version
 	if c.leader {
-		c.version++
 		if c.cache.Del(key) {
-
+			c.version++
+			c.notify(oldVer, c.version, OP_DEL, key, nil)
 		}
+	}
+}
+
+func (c *ClusteredCache) notify(oldVer, ver int, op int, key string, val []byte) {
+
+}
+
+type Tx struct {
+	f func(bool)
+	c *ClusteredCache
+}
+
+func (t *Tx) Ok(ch <-chan struct{}, l lock.Locker) {
+	defer l.Unlock()
+	//ver, err := t.c.cfg.GetKey(t.c.domainVer)
+	//if err != nil {
+	//	t.f(false)
+	//	log.Error(err)
+	//	return
+	//}
+	//verNum, _ := strconv.Atoi(string(ver))
+	//if t.c.version != verNum {
+	//	t.f(false)
+	//	log.Error("version not match, remote version ", verNum, ", local version ", t.c.version)
+	//	return
+	//}
+
+	t.c.beginTx = true
+	t.f(true)
+	t.c.beginTx = false
+}
+
+func (t *Tx) Fail(error) {
+	t.f(false)
+}
+
+func (c *ClusteredCache) Tx(f func(bool)) {
+	err := c.disLocker.AcquireLock("lock/"+c.domain, &Tx{c: c, f: f}, time.Second*2)
+	if err != nil {
+		f(false)
 	}
 }
