@@ -10,10 +10,6 @@ import (
 	"turboengine/core/plugin/event"
 )
 
-var (
-	leaderKey = "global/leader/info"
-)
-
 // Module: 		GlobalData
 // Auth: 	 	sll
 // Data:	  	2019-08-14 17:08:18

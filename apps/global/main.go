@@ -20,7 +20,9 @@ func main() {
 	if err := cfg.LoadFromToml(*config); err != nil {
 		panic(err)
 	}
-	global := service.New(new(global.Global), cfg)
-	global.Start()
-	global.Await()
+	srv := service.New(new(global.Global), cfg)
+	if err := srv.Start(); err != nil {
+		panic(err)
+	}
+	srv.Await()
 }
