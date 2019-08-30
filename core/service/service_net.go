@@ -181,7 +181,7 @@ func (t *TcpTransport) Close() {
 
 func (s *service) UseTransport(typ string) {
 	if tr, ok := transport[typ]; ok {
-		s.tr = tr
+		s.transport = tr
 		return
 	}
 
@@ -189,26 +189,26 @@ func (s *service) UseTransport(typ string) {
 }
 
 func (s *service) createTransport(addr string, port int) {
-	if s.tr == nil {
-		s.tr = &TcpTransport{
+	if s.transport == nil {
+		s.transport = &TcpTransport{
 			ready: make(chan bool, 1),
 		}
 	}
 
 	s.wg.Wrap(func() {
-		s.tr.ListenAndServe(addr, port, &NetHandle{svr: s})
+		s.transport.ListenAndServe(addr, port, &NetHandle{svr: s})
 	})
 }
 
 func (s *service) OpenTransport() {
-	if s.tr != nil {
-		s.tr.Open()
+	if s.transport != nil {
+		s.transport.Open()
 	}
 }
 
 func (s *service) CloseTransport() {
-	if s.tr != nil {
-		s.tr.Close()
-		s.tr = nil
+	if s.transport != nil {
+		s.transport.Close()
+		s.transport = nil
 	}
 }

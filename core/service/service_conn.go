@@ -39,7 +39,7 @@ func (h *NetHandle) Handle(conn Conn) {
 		return
 	}
 	go n.send()
-	n.input(h.svr.connPool.inmsg)
+	n.input(h.svr.connPool.inMsg)
 	h.svr.event.AsyncEmit(EVENT_DISCONNECTED, n.session)
 	h.svr.connPool.RemoveNode(n.session, true)
 }
@@ -173,13 +173,13 @@ type ConnPool struct {
 	clients map[uint64]*Node
 	session uint64
 	quit    bool
-	inmsg   chan *protocol.ProtoMsg
+	inMsg   chan *protocol.ProtoMsg
 }
 
 func NewConnPool(s *service) *ConnPool {
 	p := &ConnPool{
 		svr:     s,
-		inmsg:   make(chan *protocol.ProtoMsg, IN_MSG_LIST_MAX_COUNT),
+		inMsg:   make(chan *protocol.ProtoMsg, IN_MSG_LIST_MAX_COUNT),
 		clients: make(map[uint64]*Node),
 	}
 	return p
@@ -252,7 +252,7 @@ func (c *ConnPool) CloseAll() {
 }
 
 func (c *ConnPool) Inmsg() chan *protocol.ProtoMsg {
-	return c.inmsg
+	return c.inMsg
 }
 
 func (s *service) onConnEvent(event string, args interface{}) {
@@ -300,7 +300,7 @@ func (s *service) SendToClient(dest protocol.Mailbox, msg *protocol.ProtoMsg) er
 func (s *service) receive() {
 	for i := 0; i < PRE_ROUND_IN_MSG_MAX_PROCESS_COUNT; i++ { // max loop PRE_ROUND_IN_MSG_MAX_PROCESS_COUNT
 		select {
-		case msg := <-s.connPool.inmsg:
+		case msg := <-s.connPool.inMsg:
 			s.handler.OnMessage(msg)
 			for _, m := range s.mods {
 				if m.Interest(api.INTEREST_CONNECTION_EVENT) {

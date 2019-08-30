@@ -135,7 +135,7 @@ func (sd *LookupService) Register(id string, name string, addr string, port int)
 }
 
 func (sd *LookupService) UnregisterAll() {
-	for k, _ := range sd.localServ {
+	for k := range sd.localServ {
 		sd.client.Agent().ServiceDeregister(k)
 	}
 	sd.localServ = make(map[string]*ServiceInfo)
@@ -226,12 +226,12 @@ func (sd *LookupService) discoverServer(healthyOnly bool) {
 	}
 
 	oldSet := make(map[string]struct{})
-	for k, _ := range sd.service {
+	for k := range sd.service {
 		oldSet[k] = struct{}{}
 	}
 
 	addSet := make(map[string]*ServiceInfo)
-	for service, _ := range services {
+	for service := range services {
 		serviceData, _, err := sd.client.Health().Service(service, SERVICE_TAG, healthyOnly, option)
 		if err != nil {
 			log.Error(err)
@@ -387,10 +387,10 @@ func (s *service) SelectService(name string, balance int, hash string) protocol.
 	switch balance {
 	case api.LOAD_BALANCE_RAND:
 		id = ss[toolkit.RandRange(0, count)].NID
-	case api.LOAD_BALANCE_ROUNDROBIN:
+	case api.LOAD_BALANCE_ROUND_ROBIN:
 		s.lookup.lastSel++
 		id = ss[s.lookup.lastSel%count].NID
-	case api.LOAD_BALANCE_LEASTACTIVE:
+	case api.LOAD_BALANCE_LEAST_ACTIVE:
 		l := ss[0].Load
 		sel := 0
 		for i := 1; i < count; i++ {

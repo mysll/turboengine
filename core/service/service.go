@@ -46,8 +46,8 @@ type service struct {
 	running   bool
 	quit      bool
 	time      *utils.Time
-	attachs   []attach
-	attachId  uint64 // used for attachs
+	attaches  []attach
+	attachId  uint64 // used for attaches
 	mods      []api.Module
 	exchange  *Exchange
 	inMsg     chan *protocol.Message // receive message from message queue
@@ -58,12 +58,12 @@ type service struct {
 	plugin    map[string]api.Plugin
 	lookup    *LookupService
 	event     *event.Event
-	dislocker *lock.DisLocker
+	disLocker *lock.DisLocker
 	config    *config.Configuration
 	ready     bool
-	uuid      int64
-	tr        Transporter
-	connid    uint64
+	uuid      uint64
+	uuidTs    uint64
+	transport Transporter
 	connPool  *ConnPool
 	closing   bool
 }
@@ -72,7 +72,7 @@ func New(h api.ServiceHandler, c *Config) api.Service {
 	s := &service{
 		c:         c,
 		handler:   h,
-		attachs:   make([]attach, 0, 8),
+		attaches:  make([]attach, 0, 8),
 		attachId:  1,
 		mods:      make([]api.Module, 0, 8),
 		inMsg:     make(chan *protocol.Message, 512),
@@ -82,7 +82,7 @@ func New(h api.ServiceHandler, c *Config) api.Service {
 		plugin:    make(map[string]api.Plugin),
 		lookup:    NewLookupService(consulapi.DefaultConfig()),
 		event:     new(event.Event),
-		dislocker: new(lock.DisLocker),
+		disLocker: new(lock.DisLocker),
 		config:    new(config.Configuration),
 	}
 
@@ -179,7 +179,7 @@ func (s *service) init() {
 		log.Fatal(err)
 	}
 	s.lookup.SetNotify(s.notify)
-	s.usePlugin(lock.Name, s.dislocker, s.lookup.Client())
+	s.usePlugin(lock.Name, s.disLocker, s.lookup.Client())
 	s.usePlugin(config.Name, s.config, s.lookup.Client())
 	p, err := NewExchange(s.inMsg)
 	if err != nil {
@@ -207,17 +207,17 @@ func (s *service) shutInvoke(*api.Call) {
 func (s *service) Attach(fn api.Update) uint64 {
 	id := s.attachId
 	s.attachId++
-	s.attachs = append(s.attachs, attach{
+	s.attaches = append(s.attaches, attach{
 		id: id,
 		fn: fn,
 	})
 	return id
 }
 
-func (s *service) Deatch(id uint64) {
-	for k, a := range s.attachs {
+func (s *service) Detach(id uint64) {
+	for k, a := range s.attaches {
 		if a.id == id {
-			s.attachs = append(s.attachs[:k], s.attachs[k+1:]...)
+			s.attaches = append(s.attaches[:k], s.attaches[k+1:]...)
 			return
 		}
 	}
@@ -245,7 +245,7 @@ func (s *service) run() {
 		if s.c.Expose {
 			s.receive() // process client message
 		}
-		for _, f := range s.attachs {
+		for _, f := range s.attaches {
 			f.fn(s.time)
 		}
 		if s.c.FPS > 0 {

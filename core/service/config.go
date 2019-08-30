@@ -2,6 +2,8 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
+	"turboengine/core/api"
 
 	"github.com/BurntSushi/toml"
 	"github.com/mysll/toolkit"
@@ -27,10 +29,26 @@ func (c *Config) LoadFromJson(f string) error {
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(data, c)
+	err = json.Unmarshal(data, c)
+	if err != nil {
+		return err
+	}
+
+	return c.Valid()
 }
 
 func (c *Config) LoadFromToml(f string) error {
 	_, err := toml.DecodeFile(f, c)
-	return err
+	if err != nil {
+		return err
+	}
+
+	return c.Valid()
+}
+
+func (c *Config) Valid() error {
+	if c.ID > uint16(api.MAX_SID) {
+		return fmt.Errorf("service id must in 0 ~ %d", api.MAX_SID)
+	}
+	return nil
 }

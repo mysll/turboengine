@@ -7,7 +7,7 @@ import (
 	"turboengine/common/log"
 	"turboengine/common/protocol"
 
-	nats "github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go"
 )
 
 type Exchange struct {

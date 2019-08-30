@@ -23,7 +23,7 @@ func Srv1() {
 		Name:    "echo",
 		NatsUrl: "nats://0.0.0.0:4222",
 		Depend: []Dependency{
-			Dependency{
+			{
 				Name:  "echo",
 				Count: 1,
 			},
@@ -50,7 +50,7 @@ func Srv2() {
 		Name:    "echo",
 		NatsUrl: "nats://0.0.0.0:4222",
 		Depend: []Dependency{
-			Dependency{
+			{
 				Name:  "echo",
 				Count: 1,
 			},

@@ -19,11 +19,11 @@ var (
 	procSetStdHandle = kernel32.MustFindProc("SetStdHandle")
 )
 
-func setStdHandle(stdhandle int32, handle syscall.Handle) error {
-	r0, _, e1 := syscall.Syscall(procSetStdHandle.Addr(), 2, uintptr(stdhandle), uintptr(handle), 0)
+func setStdHandle(stdHandle int32, handle syscall.Handle) error {
+	r0, _, e1 := syscall.Syscall(procSetStdHandle.Addr(), 2, uintptr(stdHandle), uintptr(handle), 0)
 	if r0 == 0 {
 		if e1 != 0 {
-			return error(e1)
+			return e1
 		}
 		return syscall.EINVAL
 	}

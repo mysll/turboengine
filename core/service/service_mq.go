@@ -123,8 +123,8 @@ func (s *service) Sub(subject string, invoke api.InvokeFn) error {
 func (s *service) UnSub(subject string) {
 	if _, ok := s.delegate[subject]; ok {
 		delete(s.delegate, subject)
+		s.exchange.UnSub(subject)
 	}
-	s.exchange.UnSub(subject)
 }
 
 func (s *service) innerHandle(subject string, m *protocol.Message) bool {
