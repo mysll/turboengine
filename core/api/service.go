@@ -13,18 +13,17 @@ const (
 
 const (
 	LOAD_BALANCE_RAND = iota
-	LOAD_BALANCE_ROUNDROBIN
-	LOAD_BALANCE_LEASTACTIVE
+	LOAD_BALANCE_ROUND_ROBIN
+	LOAD_BALANCE_LEAST_ACTIVE
 	LOAD_BALANCE_HASH
 )
 
 const (
-	INTEREST_NONE = iota
-	INTEREST_CONNECTION_EVENT
+	INTEREST_CONNECTION_EVENT = iota + 1
 	INTEREST_SERVICE_EVENT
 )
 
-var MAX_SID = 0xFFFF
+var MAX_SID = 0x3FF
 
 type Plugin interface {
 	Prepare(srv Service, args ...interface{})
@@ -62,11 +61,13 @@ type Service interface {
 	Shut()
 	Ready()
 	Attach(fn Update) uint64
-	Deatch(id uint64)
+	Detach(id uint64)
+	GenGUID() uint64
 	Pub(subject string, data []byte) error
 	PubWithTimeout(subject string, data []byte, timeout time.Duration) (*Call, error)
 	Sub(subject string, invoke InvokeFn) error
 	SubNoInvoke(subject string) error
+	UnSub(subject string)
 	UsePlugin(name string, args ...interface{}) error
 	UnPlugin(name string)
 	Plugin(name string) interface{}

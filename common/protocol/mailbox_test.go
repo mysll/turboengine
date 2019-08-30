@@ -3,9 +3,9 @@ package protocol
 import "testing"
 
 func TestMailbox(t *testing.T) {
-	mb := NewMailbox(1, 0, 1)
-	if mb.ServiceId() != 1 || mb.Flag() != 0 || mb.Id() != 1 {
-		t.Fatalf("mailbox error, want: 1, 0, 1, have:%d, %d, %d", mb.ServiceId(), mb.Flag(), mb.Id())
+	mb := NewMailbox(0xFFF, 0, ID_MAX)
+	if mb.ServiceId() != 0xFFF || mb.Flag() != 0 || mb.Id() != ID_MAX {
+		t.Fatalf("mailbox error, want: 0xFFF, 0, ID_MAX, have:%d, %d, %d", mb.ServiceId(), mb.Flag(), mb.Id())
 	}
 
 	mb1 := NewMailbox(1, 1, 1000)
@@ -19,8 +19,8 @@ func TestMailbox(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if mb3.ServiceId() != 1 || mb3.Flag() != 0 || mb3.Id() != 1 {
-		t.Fatalf("mailbox error, want: 1, 0, 1, have:%d, %d, %d", mb3.ServiceId(), mb3.Flag(), mb3.Id())
+	if mb3.ServiceId() != 0xFFF || mb3.Flag() != 0 || mb3.Id() != ID_MAX {
+		t.Fatalf("mailbox error, want: 0xFFF, 0, ID_MAX, have:%d, %d, %d", mb3.ServiceId(), mb3.Flag(), mb3.Id())
 	}
 
 	mb4 := NewMailboxFromUid(mb1.Uid())

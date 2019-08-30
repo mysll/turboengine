@@ -10,11 +10,11 @@ import (
 type Mailbox uint64
 
 const (
-	ID_MAX = 0xFFFFFFFFFFF
+	ID_MAX = 0xFFFFFFFFFFFF
 )
 
-func generate(appid uint16, flag int8, id uint64) Mailbox {
-	return Mailbox(((uint64(appid) << 48) & 0xFFFF000000000000) | ((uint64(flag) & 0xF) << 44) | (id & ID_MAX))
+func generate(appId uint16, flag int8, id uint64) Mailbox {
+	return Mailbox(((uint64(appId) << 52) & 0xFFF0000000000000) | ((uint64(flag) & 0xF) << 48) | (id & ID_MAX))
 }
 
 func (m Mailbox) String() string {
@@ -22,7 +22,7 @@ func (m Mailbox) String() string {
 }
 
 func (m Mailbox) Service() Mailbox {
-	return (m & 0xFFFF000000000000)
+	return m & 0xFFF0000000000000
 }
 
 // 是否为空
@@ -32,12 +32,12 @@ func (m Mailbox) IsNil() bool {
 
 // 获取服务编号
 func (m Mailbox) ServiceId() uint16 {
-	return uint16((m & 0xFFFF000000000000) >> 48)
+	return uint16((m & 0xFFF0000000000000) >> 52)
 }
 
 // 获取标志位
 func (m Mailbox) Flag() int8 {
-	return int8((m >> 44) & 0xF)
+	return int8((m >> 48) & 0xF)
 }
 
 // 获取id
@@ -78,16 +78,16 @@ func NewMailboxFromUid(val uint64) Mailbox {
 }
 
 // 通过服务编号获取mailbox
-func GetServiceMailbox(appid uint16) Mailbox {
-	m := generate(appid, 0, 0)
+func GetServiceMailbox(appId uint16) Mailbox {
+	m := generate(appId, 0, 0)
 	return m
 }
 
 // 生成mailbox
-func NewMailbox(appid uint16, flag int8, id uint64) Mailbox {
+func NewMailbox(appId uint16, flag int8, id uint64) Mailbox {
 	if id > ID_MAX {
 		panic("id is wrong")
 	}
-	m := generate(appid, flag, id)
+	m := generate(appId, flag, id)
 	return m
 }

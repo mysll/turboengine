@@ -1,23 +1,32 @@
 package service
 
-import "time"
+import (
+	"time"
+	"turboengine/core/api"
+)
 
 var (
-	magic_time, _ = time.Parse("2006-01-02 15:04:05", "2019-01-01 00:00:00")
+	epoch, _ = time.Parse("2006-01-02 15:04:05", "2019-01-01 00:00:00")
 )
 
 // 生成GUID
-// |63 48|47 16|15       4|3   0|
-// |sid  |time |id(0~FFF) |ms   |
-func (s *service) GenerateGUID() int64 {
-	s.uuid++
-	dur := time.Now().Sub(magic_time).Seconds()
-	ms := int64(dur*10) - int64(dur)*10
-	if ms == 0 {
-		ms = 1
+// |64    24|23      13|12      1|
+// |time(ms)|id(0~3FF) |id(0~FFF)|
+func (s *service) GenGUID() uint64 {
+	ts := uint64(time.Now().Sub(epoch).Nanoseconds()) / uint64(time.Millisecond) // ms
+	if ts > 0x1FFFFFFFFFF {                                                      // 69years
+		ts = ts & 0x1FFFFFFFFFF
 	}
-	return (int64(s.id)&0xFFFF)<<48 |
-		(int64(dur)&0xFFFFFFFF)<<16 |
-		(int64(s.uuid%0xFFF)&0xFFF)<<4 |
-		int64(0xF/ms)&0xF
+	if s.uuidTs == ts {
+		s.uuid++
+		if s.uuid > 0xFFF { // 用完了
+			time.Sleep(time.Millisecond)
+			ts++
+			s.uuid = 0
+		}
+	} else {
+		s.uuid = 0
+	}
+	s.uuidTs = ts
+	return ts<<22 | uint64(s.id&uint16(api.MAX_SID))<<12 | s.uuid
 }
