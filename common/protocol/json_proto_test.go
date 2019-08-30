@@ -3,7 +3,6 @@ package protocol
 import (
 	"fmt"
 	"testing"
-	"turboengine/common/protocol"
 )
 
 type Test struct {
@@ -11,8 +10,8 @@ type Test struct {
 }
 
 func Test_Decode(t *testing.T) {
-	enc := NewEncoder()
-	msg, err := enc.Encode(&protocol.ProtoMsg{
+	enc := NewJsonEncoder()
+	msg, err := enc.Encode(&ProtoMsg{
 		Id:   1,
 		Data: &Test{1, 1},
 	})
@@ -20,7 +19,7 @@ func Test_Decode(t *testing.T) {
 		t.Fatal(err)
 	}
 	AddProto(1, func() interface{} { return &Test{} })
-	dec := NewDecoder()
+	dec := NewJsonDecoder()
 	p, err := dec.Decode(msg.Body)
 	if err != nil {
 		t.Fatal(err)

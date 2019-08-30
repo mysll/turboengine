@@ -7,22 +7,25 @@ type AutoExtendArchive struct {
 	sr  *StoreArchive
 }
 
-func NewAutoExtendArchive(init_cap int) *AutoExtendArchive {
+func NewAutoExtendArchive(initCap int) *AutoExtendArchive {
 	a := &AutoExtendArchive{}
-	a.msg = NewMessage(init_cap)
+	a.msg = NewMessage(initCap)
 	a.sr = NewStoreArchiver(a.msg.Body)
 	return a
 }
 
 func (a *AutoExtendArchive) Put(val interface{}) error {
 	err := a.sr.Put(val)
-	if err == io.EOF {
+	for err == io.EOF {
 		msg := NewMessage(cap(a.msg.Body) * 2)
 		sr := NewStoreArchiver(msg.Body)
 		sr.Write(a.sr.Data())
 		a.sr = sr
 		a.msg = msg
-		return a.sr.Put(val)
+		err = a.sr.Put(val)
+		if err == nil {
+			break
+		}
 	}
 	return err
 }

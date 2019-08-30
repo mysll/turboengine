@@ -103,9 +103,9 @@ func (ar *StoreArchive) Put(val interface{}) error {
 	case *uint:
 		return binary.Write(ar, binary.LittleEndian, uint32(*t))
 	case bool:
-		return binary.Write(ar, binary.LittleEndian, bool(t))
+		return binary.Write(ar, binary.LittleEndian, t)
 	case *bool:
-		return binary.Write(ar, binary.LittleEndian, bool(*t))
+		return binary.Write(ar, binary.LittleEndian, *t)
 	case string:
 		return ar.PutString(t)
 	case *string:
