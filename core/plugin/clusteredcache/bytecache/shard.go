@@ -3,7 +3,6 @@ package bytecache
 import (
 	"fmt"
 	"sync"
-	"turboengine/common/log"
 	"turboengine/common/protocol"
 )
 
@@ -15,13 +14,13 @@ var (
 type entry struct {
 	key     string
 	index   int
-	hashkey uint64
+	hashKey uint64
 	next    *entry
 }
 
 type shard struct {
 	lock    sync.RWMutex
-	hashmap map[uint64]uint32
+	hashMap map[uint64]uint32
 	entries *BytesQueue
 	items   []*entry
 	count   int
@@ -36,7 +35,7 @@ func newShard(size int) *shard {
 		size = defaultItemSize
 	}
 	s.size = size
-	s.hashmap = make(map[uint64]uint32, size)
+	s.hashMap = make(map[uint64]uint32, size)
 	s.items = make([]*entry, 0, size)
 	s.entries = NewBytesQueue(1024*1024, 1024*1024*1024, false)
 	return s
@@ -49,9 +48,9 @@ func (s *shard) saveItem(index uint32, e *entry, data []byte) error {
 
 	s.caps++
 	s.count++
-	len := len(s.items)
-	if index == uint32(len) {
-		s.items = s.items[:len+1]
+	count := len(s.items)
+	if index == uint32(count) {
+		s.items = s.items[:count+1]
 	}
 	if index >= uint32(cap(s.items)) {
 		panic("index exceed")
@@ -63,7 +62,7 @@ func (s *shard) saveItem(index uint32, e *entry, data []byte) error {
 	}
 	e.index = i
 	s.items[index] = e
-	s.hashmap[e.hashkey] = uint32(index)
+	s.hashMap[e.hashKey] = index
 	return nil
 }
 
@@ -71,7 +70,7 @@ func (s *shard) Clear() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.items = s.items[:0]
-	s.hashmap = make(map[uint64]uint32, s.size)
+	s.hashMap = make(map[uint64]uint32, s.size)
 	s.caps = 0
 	s.count = 0
 	s.tail = 0
@@ -83,19 +82,19 @@ func (s *shard) Set(key string, hashkey uint64, value []byte) error {
 	defer s.lock.Unlock()
 	e := &entry{
 		key:     key,
-		hashkey: hashkey,
+		hashKey: hashkey,
 	}
 
-	if index, ok := s.hashmap[hashkey]; ok {
+	if index, ok := s.hashMap[hashkey]; ok {
 		old := s.items[index]
 		for old != nil {
 			if old.key == key { // exist
-				oldbyte, err := s.entries.Get(old.index)
+				oldData, err := s.entries.Get(old.index)
 				if err != nil {
 					panic(err)
 				}
-				if len(oldbyte) == len(value) {
-					copy(oldbyte, value)
+				if len(oldData) == len(value) {
+					copy(oldData, value)
 				} else {
 					index, err := s.entries.Push(value)
 					if err != nil {
@@ -197,17 +196,17 @@ func (s *shard) trim(left int, right int) {
 		return
 	}
 
-	hashkey := s.items[right].hashkey
+	hashKey := s.items[right].hashKey
 	s.items[left], s.items[right] = s.items[right], s.items[left] // exchange
-	s.hashmap[hashkey] = uint32(left)                             // reindex
+	s.hashMap[hashKey] = uint32(left)                             // reindex
 	s.items = s.items[:right]                                     // shrink
 	s.trim(left+1, right-1)
 }
 
-func (s *shard) Get(key string, hashkey uint64) []byte {
+func (s *shard) Get(key string, hashKey uint64) []byte {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	if index, ok := s.hashmap[hashkey]; ok {
+	if index, ok := s.hashMap[hashKey]; ok {
 		obj := s.items[index]
 		for obj != nil {
 			if obj.key == key {
@@ -223,10 +222,10 @@ func (s *shard) Get(key string, hashkey uint64) []byte {
 	return nil
 }
 
-func (s *shard) Del(key string, hashkey uint64) bool {
+func (s *shard) Del(key string, hashKey uint64) bool {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	if index, ok := s.hashmap[hashkey]; ok {
+	if index, ok := s.hashMap[hashKey]; ok {
 		obj := s.items[index]
 		var prev *entry
 		for obj != nil {
@@ -234,7 +233,7 @@ func (s *shard) Del(key string, hashkey uint64) bool {
 				if prev == nil { // first
 					if obj.next == nil {
 						s.items[index] = nil
-						delete(s.hashmap, hashkey)
+						delete(s.hashMap, hashKey)
 						s.caps--
 					} else {
 						s.items[index] = obj.next
@@ -292,7 +291,7 @@ func (s *shard) packItem(ar *protocol.AutoExtendArchive, obj *entry) error {
 	if err != nil {
 		return err
 	}
-	err = ar.Put(v.key)
+	err = ar.Put(obj.key)
 	if err != nil {
 		return err
 	}
