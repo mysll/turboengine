@@ -20,7 +20,7 @@ var (
 	Name = "Election"
 )
 
-var (
+const (
 	EVENT_ELECTED = "elected"
 	EVENT_FOLLOW  = "follow"
 )
@@ -33,7 +33,7 @@ type LeaderInfo struct {
 
 type Election struct {
 	srv        api.Service
-	dislock    *lock.DisLocker
+	disLock    *lock.DisLocker
 	leaderInfo LeaderInfo
 	cfg        *config.Configuration
 	event      *event.Event
@@ -51,14 +51,14 @@ func (e *Election) Prepare(srv api.Service, args ...interface{}) {
 }
 
 func (e *Election) Run() {
-	e.dislock = e.srv.Plugin(lock.Name).(*lock.DisLocker)
+	e.disLock = e.srv.Plugin(lock.Name).(*lock.DisLocker)
 	e.cfg = e.srv.Plugin(config.Name).(*config.Configuration)
 	e.event = e.srv.Plugin(event.Name).(*event.Event)
 }
 
 func (e *Election) Shut(api.Service) {
 	e.shut = true
-	e.srv.Deatch(e.attachId)
+	e.srv.Detach(e.attachId)
 	if e.leader {
 		e.cfg.DelKey(e.leaderKey)
 	}
@@ -84,7 +84,7 @@ func (e *Election) Announce(job string) {
 	e.leaderKey = fmt.Sprintf("%s/info", job)
 	e.leader = false
 	e.leaderInfo = LeaderInfo{}
-	e.dislock.AcquireLock(job, e, time.Second*3)
+	e.disLock.AcquireLock(job, e, time.Second*3)
 }
 
 func (e *Election) check() {

@@ -80,7 +80,7 @@ func (l *DisLocker) Run() {
 func (l *DisLocker) Shut(api.Service) {
 	l.shut = true
 	close(l.queue)
-	l.srv.Deatch(l.attachid)
+	l.srv.Detach(l.attachid)
 L:
 	for { //drain
 		select {

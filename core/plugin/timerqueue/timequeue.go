@@ -23,7 +23,7 @@ const (
 )
 
 const (
-	Name = "timequeue"
+	Name = "TimerQueue"
 )
 
 type TimerInvoke func(id int64) bool
@@ -71,7 +71,7 @@ func (tq *TimerQueue) Prepare(srv api.Service, args ...interface{}) {
 }
 
 func (tq *TimerQueue) Shut(srv api.Service) {
-	tq.srv.Deatch(tq.attachId)
+	tq.srv.Detach(tq.attachId)
 	tq.running = false
 }
 

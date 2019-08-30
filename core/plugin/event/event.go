@@ -43,7 +43,7 @@ func (e *Event) Prepare(srv api.Service, args ...interface{}) {
 }
 
 func (e *Event) Shut(api.Service) {
-	e.srv.Deatch(e.id)
+	e.srv.Detach(e.id)
 }
 
 func (e *Event) Run() {

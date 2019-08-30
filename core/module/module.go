@@ -121,7 +121,7 @@ func (m *module) Update(t *utils.Time) {
 func (m *module) Close() {
 	m.mod.OnStop()
 	if m.attachId > 0 {
-		m.srv.Deatch(m.attachId)
+		m.srv.Detach(m.attachId)
 	}
 	close(m.close)
 }

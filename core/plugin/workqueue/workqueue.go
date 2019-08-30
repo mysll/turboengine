@@ -53,7 +53,7 @@ func (w *WorkQueue) Shut(api.Service) {
 		close(w.jobs[i])
 	}
 	close(w.complete)
-	w.srv.Deatch(w.attachid)
+	w.srv.Detach(w.attachid)
 }
 
 func (w *WorkQueue) Handle(cmd string, args ...interface{}) interface{} {
