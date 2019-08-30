@@ -94,7 +94,9 @@ func main() {
 		panic(err)
 	}
 	srv := service.New(new({{.Pkg}}.{{.Name}}), cfg)
-	srv.Start()
+	if err := srv.Start(); err != nil {
+		panic(err)
+	}
 	srv.Await()
 }
 `

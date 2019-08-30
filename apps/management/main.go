@@ -26,7 +26,9 @@ func main() {
 	if err := cfg.LoadFromToml(*config); err != nil {
 		panic(err)
 	}
-	monitor := service.New(new(monitor.Monitor), cfg)
-	monitor.Start()
-	monitor.Await()
+	srv := service.New(new(monitor.Monitor), cfg)
+	if err := srv.Start(); err != nil {
+		panic(err)
+	}
+	srv.Await()
 }
