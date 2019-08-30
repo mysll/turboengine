@@ -25,7 +25,9 @@ func main() {
 		panic(err)
 	}
 
-	gate := service.New(new(gate.Gate), cfg)
-	gate.Start()
-	gate.Await()
+	srv := service.New(new(gate.Gate), cfg)
+	if err := srv.Start(); err != nil {
+		panic(err)
+	}
+	srv.Await()
 }

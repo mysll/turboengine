@@ -8,7 +8,6 @@ import (
 	"turboengine/common/utils"
 	"turboengine/core/api"
 	"turboengine/core/module"
-	"turboengine/core/plugin/lock"
 	"turboengine/core/plugin/workqueue"
 )
 
@@ -18,8 +17,7 @@ import (
 // Desc:
 type Proxy struct {
 	module.Module
-	workqueue *workqueue.WorkQueue
-	dislock   *lock.DisLocker
+	workQueue *workqueue.WorkQueue
 }
 
 func (m *Proxy) Name() string {
@@ -38,9 +36,7 @@ func (m *Proxy) OnPrepare(s api.Service) error {
 
 func (m *Proxy) OnStart(ctx context.Context) error {
 	m.Module.OnStart(ctx)
-	m.workqueue = m.Srv.Plugin(workqueue.Name).(*workqueue.WorkQueue)
-	m.dislock = m.Srv.Plugin(lock.Name).(*lock.DisLocker)
-
+	m.workQueue = m.Srv.Plugin(workqueue.Name).(*workqueue.WorkQueue)
 	// subscribe subject
 	// subscribe subject end
 	return nil
@@ -75,5 +71,5 @@ func (m *Proxy) OnMessage(msg *protocol.ProtoMsg) {
 }
 
 func (m *Proxy) Schedule(key string, task workqueue.Task) bool {
-	return m.workqueue.Schedule(utils.Hash64(key), task)
+	return m.workQueue.Schedule(utils.Hash64(key), task)
 }
