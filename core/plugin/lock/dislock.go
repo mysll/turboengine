@@ -61,13 +61,13 @@ type DisLocker struct {
 	client   *consulapi.Client
 	queue    chan *lockEntry
 	complete chan *lockEntry
-	attachid uint64
+	attachId uint64
 	shut     bool
 }
 
 func (l *DisLocker) Prepare(srv api.Service, args ...interface{}) {
 	l.srv = srv
-	l.attachid = srv.Attach(l.process)
+	l.attachId = srv.Attach(l.process)
 	l.client = args[0].(*consulapi.Client)
 	l.queue = make(chan *lockEntry, 64)
 	l.complete = make(chan *lockEntry, 64)
@@ -80,7 +80,7 @@ func (l *DisLocker) Run() {
 func (l *DisLocker) Shut(api.Service) {
 	l.shut = true
 	close(l.queue)
-	l.srv.Detach(l.attachid)
+	l.srv.Detach(l.attachId)
 L:
 	for { //drain
 		select {
