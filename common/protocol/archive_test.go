@@ -7,7 +7,7 @@ import (
 
 func TestLoadArchive(t *testing.T) {
 	buf := make([]byte, 0, 1024)
-	store := protocol.NewStoreArchiver(buf)
+	store := protocol.NewStoreArchive(buf)
 	v1 := int8(1)
 	v2 := int16(2)
 	v3 := int32(3)
@@ -101,7 +101,7 @@ func TestLoadArchive(t *testing.T) {
 
 func TestLoadArchive_GetDataNonCopy(t *testing.T) {
 	buf := make([]byte, 0, 1024)
-	store := protocol.NewStoreArchiver(buf)
+	store := protocol.NewStoreArchive(buf)
 	store.Put(int32(1))
 	store.PutData([]byte{0, 1, 2, 3, 4, 5, 6})
 	store.Put(int64(2))

@@ -19,7 +19,7 @@ const (
 
 func makeBody(typ uint8, id uint16, session uint64, data []byte) *protocol.Message {
 	msg := protocol.NewMessage(len(data) + 64)
-	sr := protocol.NewStoreArchiver(msg.Body)
+	sr := protocol.NewStoreArchive(msg.Body)
 	sr.Put(typ)
 	sr.Put(id)
 	sr.Put(session)
@@ -31,7 +31,7 @@ func makeBody(typ uint8, id uint16, session uint64, data []byte) *protocol.Messa
 
 func makeErrorBody(typ uint8, id uint16, session uint64, err error) *protocol.Message {
 	msg := protocol.NewMessage(len(err.Error()) + 64)
-	sr := protocol.NewStoreArchiver(msg.Body)
+	sr := protocol.NewStoreArchive(msg.Body)
 	sr.Put(typ)
 	sr.Put(id)
 	sr.Put(session)

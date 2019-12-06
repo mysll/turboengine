@@ -16,16 +16,16 @@ type StoreArchive struct {
 	pos int
 }
 
-type Marshaler interface {
+type Encoder interface {
 	MarshalArchive(io.Writer) error
 }
 
-type Unmarshaler interface {
+type Decoder interface {
 	UnmarshalArchive(io.Reader) error
 }
 
-// NewStoreArchiver 创建一个新的输出流
-func NewStoreArchiver(buf []byte) *StoreArchive {
+// NewStoreArchive 创建一个新的输出流
+func NewStoreArchive(buf []byte) *StoreArchive {
 	if buf == nil || cap(buf) == 0 {
 		return nil
 	}
@@ -84,7 +84,7 @@ func (ar *StoreArchive) WriteAt(offset int, val interface{}) error {
 
 // Put 写入任意类型数据
 func (ar *StoreArchive) Put(val interface{}) error {
-	if m, ok := val.(Marshaler); ok {
+	if m, ok := val.(Encoder); ok {
 		return m.MarshalArchive(ar)
 	}
 
@@ -200,7 +200,7 @@ func (ar *LoadArchive) Get(val interface{}) (err error) {
 	// 	return errors.New("destination pointer is nil")
 	// }
 
-	if m, ok := val.(Unmarshaler); ok {
+	if m, ok := val.(Decoder); ok {
 		return m.UnmarshalArchive(ar.reader)
 	}
 

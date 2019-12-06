@@ -10,7 +10,7 @@ type AutoExtendArchive struct {
 func NewAutoExtendArchive(initCap int) *AutoExtendArchive {
 	a := &AutoExtendArchive{}
 	a.msg = NewMessage(initCap)
-	a.sr = NewStoreArchiver(a.msg.Body)
+	a.sr = NewStoreArchive(a.msg.Body)
 	return a
 }
 
@@ -18,7 +18,7 @@ func (a *AutoExtendArchive) Put(val interface{}) error {
 	err := a.sr.Put(val)
 	for err == io.EOF {
 		msg := NewMessage(cap(a.msg.Body) * 2)
-		sr := NewStoreArchiver(msg.Body)
+		sr := NewStoreArchive(msg.Body)
 		sr.Write(a.sr.Data())
 		a.sr = sr
 		a.msg = msg
@@ -34,7 +34,7 @@ func (a *AutoExtendArchive) Append(data []byte) error {
 	_, err := a.sr.Write(data)
 	if err == io.EOF {
 		msg := NewMessage(cap(a.msg.Body) * 2)
-		sr := NewStoreArchiver(msg.Body)
+		sr := NewStoreArchive(msg.Body)
 		sr.Write(a.sr.Data())
 		a.sr = sr
 		a.msg = msg
