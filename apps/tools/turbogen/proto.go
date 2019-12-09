@@ -36,7 +36,7 @@ type {{.Name}}_RPC_Go_{{.Ver}} struct {
 
 {{range .Methods}}
 func (p *{{$.Name}}_RPC_Go_{{$.Ver}}) {{.Name}}(id uint16, data []byte) (ret *protocol.Message, err error) {
-	ar := protocol.NewLoadArchiver(data)
+	ar := protocol.NewLoadArchive(data)
 	{{range $k, $v := .ArgType}}
 	var arg{{$k}} {{$v}}
 	err = ar.Get(&arg{{$k}})
@@ -105,7 +105,7 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) {{.Name}}({{range $k, $v := .ArgTyp
 	}
 	{{$l := len .ReturnType}}{{if gt $l 1}}
 	for {
-		ar := protocol.NewLoadArchiver(call.Data)
+		ar := protocol.NewLoadArchive(call.Data)
 		{{range $k, $v := .ReturnType}}{{if ne $v "error"}}
 		err = ar.Get(&reply{{$k}})
 		if err != nil {
@@ -186,7 +186,7 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle) On{{.Name}}(call *coreapi.Ca
 	}
 	{{if gt $l 1}}
 	for {
-		ar := protocol.NewLoadArchiver(call.Data)
+		ar := protocol.NewLoadArchive(call.Data)
 		{{range $k, $v := .ReturnType}}{{if ne $v "error"}}
 		err = ar.Get(&reply.Arg{{$k}})
 		if err != nil {
