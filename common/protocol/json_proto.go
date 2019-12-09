@@ -45,7 +45,7 @@ func AddProto(id int32, builder Builder) {
 }
 
 func (d *JsonDecoder) Decode(data []byte) (*ProtoMsg, error) {
-	ar := NewLoadArchiver(data)
+	ar := NewLoadArchive(data)
 	id, err := ar.GetInt32()
 	if err != nil {
 		return nil, err

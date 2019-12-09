@@ -13,7 +13,7 @@ func PackArgs(args ...interface{}) *Message {
 }
 
 func UnPackArgs(msg *Message, args ...interface{}) error {
-	ar := NewLoadArchiver(msg.Body)
+	ar := NewLoadArchive(msg.Body)
 	for _, arg := range args {
 		if err := ar.Get(arg); err != nil {
 			return err
