@@ -157,7 +157,7 @@ type LoadArchive struct {
 	reader *bytes.Reader
 }
 
-func NewLoadArchiver(data []byte) *LoadArchive {
+func NewLoadArchive(data []byte) *LoadArchive {
 	ar := &LoadArchive{}
 	ar.reader = bytes.NewReader(data)
 	ar.bytes = data

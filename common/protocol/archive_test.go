@@ -47,7 +47,7 @@ func TestLoadArchive(t *testing.T) {
 	var x5 float32
 	var x6 float64
 
-	load := protocol.NewLoadArchiver(store.Data())
+	load := protocol.NewLoadArchive(store.Data())
 	if err := load.Get(&x1); err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -106,7 +106,7 @@ func TestLoadArchive_GetDataNonCopy(t *testing.T) {
 	store.PutData([]byte{0, 1, 2, 3, 4, 5, 6})
 	store.Put(int64(2))
 
-	load := protocol.NewLoadArchiver(store.Data())
+	load := protocol.NewLoadArchive(store.Data())
 	var i int32
 	var j int64
 	load.Get(&i)
@@ -139,7 +139,7 @@ func TestAutoExtendArchive_Put(t *testing.T) {
 	a.Put(int64(4))
 
 	msg := a.Message()
-	load := protocol.NewLoadArchiver(msg.Body)
+	load := protocol.NewLoadArchive(msg.Body)
 	load.GetData()
 	var i, k, l int64
 	var j string
