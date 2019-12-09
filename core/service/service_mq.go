@@ -42,7 +42,7 @@ func makeErrorBody(typ uint8, id uint16, session uint64, err error) *protocol.Me
 }
 
 func parseBody(m *protocol.Message) (typ uint8, id uint16, session uint64, data []byte, err error) {
-	ar := protocol.NewLoadArchiver(m.Body)
+	ar := protocol.NewLoadArchive(m.Body)
 	err = ar.Get(&typ)
 	if err != nil {
 		return

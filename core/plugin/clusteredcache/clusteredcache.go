@@ -127,7 +127,7 @@ func (c *ClusteredCache) GetWithValue(key string, value interface{}) error {
 		return errors.New("not found")
 	}
 
-	ar := protocol.NewLoadArchiver(data)
+	ar := protocol.NewLoadArchive(data)
 	return ar.Get(value)
 }
 
