@@ -18,7 +18,7 @@ type Echo_RPC_Go_V1_0_0 struct {
 }
 
 func (p *Echo_RPC_Go_V1_0_0) Print(id uint16, data []byte) (ret *protocol.Message, err error) {
-	ar := protocol.NewLoadArchiver(data)
+	ar := protocol.NewLoadArchive(data)
 
 	var arg0 string
 	err = ar.Get(&arg0)
@@ -35,7 +35,7 @@ func (p *Echo_RPC_Go_V1_0_0) Print(id uint16, data []byte) (ret *protocol.Messag
 }
 
 func (p *Echo_RPC_Go_V1_0_0) Echo(id uint16, data []byte) (ret *protocol.Message, err error) {
-	ar := protocol.NewLoadArchiver(data)
+	ar := protocol.NewLoadArchive(data)
 
 	var arg0 string
 	err = ar.Get(&arg0)
@@ -134,7 +134,7 @@ func (m *Echo_RPC_Go_V1_0_0_Client) Echo(arg0 string) (reply0 string, err error)
 	}
 
 	for {
-		ar := protocol.NewLoadArchiver(call.Data)
+		ar := protocol.NewLoadArchive(call.Data)
 
 		err = ar.Get(&reply0)
 		if err != nil {
@@ -243,7 +243,7 @@ func (m *Echo_RPC_Go_V1_0_0_Client_Handle) OnEcho(call *coreapi.Call) {
 	}
 
 	for {
-		ar := protocol.NewLoadArchiver(call.Data)
+		ar := protocol.NewLoadArchive(call.Data)
 
 		err = ar.Get(&reply.Arg0)
 		if err != nil {
