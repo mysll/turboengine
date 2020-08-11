@@ -3,6 +3,8 @@ turbo engine
 
 # quick start
 ## 前置条件，首先安装[consul](https://www.consul.io/)和[nats](http://www.nats.io/)
+---  
+
 ## 示例:
 ## 创建一个Echo服务:
 ##    
@@ -11,7 +13,7 @@ turbo engine
     输入包名: echo
     输入服务名： Echo  （注意服务器用大写开头）
 完成后，会在上一级目录创建Echo服务的基础结构和代码：
-## 
+##  
     echo
     ├─api           
     │  ├─proto      rpc协议
@@ -50,7 +52,7 @@ proto目录下新建echo.go,内容如下：
     type EchoServer struct {
     }
 
-    func (e *EchoServer) Login(input string) (string, error) {
+    func (e *EchoServer) Echo(input string) (string, error) {
         return input, nil
     }
 回到echo/mod/echo/echo.go  
