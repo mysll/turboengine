@@ -2,7 +2,8 @@
 turbo engine
 
 # quick start
-示例
+## 前置条件，首先安装[consul](https://www.consul.io/)和[nats](http://www.nats.io/)
+## 示例:
 ## 创建一个Echo服务:
 ##    
     cd apps/tools
@@ -66,6 +67,8 @@ proto目录下新建echo.go,内容如下：
 ## service关联module
 打开echo/echo/echo.go
 ##  
+    import "turboengine/apps/echo/mod/echo"
+
     func (s *Echo) OnPrepare(srv coreapi.Service, args map[string]string) error {
         s.Service.OnPrepare(srv, args)
         // use plugin
@@ -78,3 +81,23 @@ proto目录下新建echo.go,内容如下：
 
         return nil
     }
+
+这样一个带有Echo接口的服务就开发完成了  
+
+我们在其它服务中，调用Echo这个方法：
+##  
+    import "turboengine/apps/echo/api/rpc"
+
+    // 查找echo服务
+    dest := srv.SelectService("Echo", api.LOAD_BALANCE_HASH, 0)
+	if dest.IsNil() {
+		log.Error("echo not found")
+		return
+	}
+    // 创建一个EchoConsumer
+	echo := rpc.NewEchoConsumer(srv, "", dest, time.Second*3)
+    // 远程调用
+	go func() {
+        res, err := echo.Echo("hello") // 同步调用
+        log.Info("echo:%s", res)
+    }()
