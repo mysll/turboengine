@@ -40,7 +40,7 @@ func TestNew(t *testing.T) {
 	e := &Echo{}
 	c := &service.Config{Name: "echo"}
 	s := service.New(e, c)
-	s.Register(m)
+	s.AddModule(m)
 	go s.Start()
 	time.Sleep(time.Second * 10)
 	s.Close()
