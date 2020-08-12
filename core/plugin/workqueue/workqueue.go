@@ -69,7 +69,7 @@ func (w *WorkQueue) Schedule(hashkey uint64, task Task) bool {
 	case w.jobs[hashkey&w.hashmask] <- task:
 		return true
 	default:
-		log.Error("too much jobs")
+		log.Error("too many jobs")
 		return false
 	}
 }
