@@ -25,6 +25,7 @@ type module struct {
 	interest int
 }
 
+// 创建新模块,async为true时,将开启一个独立的goroutine来执行模块循环
 func New(h api.ModuleHandler, async bool) api.Module {
 	m := new(module)
 	m.mod = h
