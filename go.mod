@@ -15,7 +15,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mitchellh/gox v1.0.1 // indirect
 	github.com/mitchellh/iochan v1.0.0 // indirect
-	github.com/mysll/toolkit v0.0.0-20181212114411-d7e9ee9047dd
+	github.com/mysll/toolkit v1.0.0
 	github.com/nats-io/gnatsd v1.4.1 // indirect
 	github.com/nats-io/nats-server/v2 v2.1.7 // indirect
 	github.com/nats-io/nats-top v0.3.2 // indirect
@@ -27,7 +27,7 @@ require (
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/urfave/cli v1.22.4
 	github.com/yireyun/go-queue v0.0.0-20180809062148-5e6897360dac
-	golang.org/x/net v0.0.0-20200707034311-ab3426394381
+	golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc
 	gopkg.in/gizak/termui.v1 v1.0.0-20151021151108-e62b5929642a // indirect
 	stathat.com/c/consistent v1.0.0 // indirect
 )
