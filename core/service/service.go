@@ -243,7 +243,7 @@ func (s *service) run() {
 	}
 
 	s.running = true
-
+	go s.asyncLoop()
 	for !s.quit {
 		s.time.Update()
 		s.input() // message queue a round trip

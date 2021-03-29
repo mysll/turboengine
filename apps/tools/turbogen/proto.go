@@ -83,7 +83,7 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) Redirect(dest protocol.Mailbox) {
 }
 
 {{range .Methods}}
-// {{.Name}} must call in a new goroutine, if call in service's goroutine, it will be dead lock
+// {{.Name}}
 func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) {{.Name}}({{range $k, $v := .ArgType}}{{if ne $k 0}},{{end}}arg{{$k}} {{$v}}{{end}}) ({{range $k, $v := .ReturnType}}{{if ne $k 0}},{{end}}{{if eq $v "error"}}err{{else}}reply{{$k}}{{end}} {{$v}}{{end}}) {
 	sr := protocol.NewAutoExtendArchive(128)
 	{{range $k, $v := .ArgType}}err = sr.Put(arg{{$k}})
@@ -92,12 +92,11 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) {{.Name}}({{range $k, $v := .ArgTyp
 	}
 	{{end}}
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d:{{$.Name}}.{{.Name}}",m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
+	call, err := m.svr.AsyncPubWithTimeout(fmt.Sprintf("%s%d:{{$.Name}}.{{.Name}}",m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
 	}
-	call.Done = make(chan *coreapi.Call, 1)
 	call = <-call.Done
 	if call.Err != nil {
 		err = call.Err

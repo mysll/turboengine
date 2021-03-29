@@ -111,7 +111,7 @@ L:
 			msg.Header = msg.Header[:0]
 			msg.Header = append(msg.Header, []byte(m.Subject)...)
 			msg.Body = append(msg.Body, m.Data...)
-			if bytes.HasSuffix(msg.Header, []byte("#.async.reply")) {
+			if bytes.HasSuffix(msg.Header, []byte(".async.reply")) {
 				p.asyncCh <- msg
 			} else {
 				p.msgCh <- msg

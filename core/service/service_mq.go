@@ -184,6 +184,12 @@ func (s *service) innerHandle(subject string, m *protocol.Message) bool {
 	return res
 }
 
+func (s *service) asyncLoop() {
+	for !s.quit {
+		s.asyncInput()
+	}
+}
+
 func (s *service) asyncInput() {
 L:
 	for i := 0; i < PRE_ROUND_MAX_PROCESS_COUNT; i++ {
@@ -192,6 +198,7 @@ L:
 			subject := string(m.Header)
 			s.asyncHandle(subject, m)
 		default:
+			time.Sleep(time.Millisecond)
 			break L
 		}
 	}
