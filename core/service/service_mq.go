@@ -88,7 +88,23 @@ func (s *service) replyError(id uint16, session uint64, err error) error {
 }
 
 func (s *service) AsyncPubWithTimeout(subject string, data []byte, timeout time.Duration) (*api.Call, error) {
-	return s.PubWithTimeout(subject, data, timeout)
+	session := atomic.AddUint64(&s.session, 1)
+	msg := makeBody(0, s.c.ID, session, data)
+	err := s.exchange.Pub(subject, msg)
+	if err != nil {
+		msg.Free()
+		return nil, err
+	}
+
+	call := &api.Call{
+		Session:  session,
+		DeadLine: time.Now().Add(timeout),
+	}
+
+	s.lockCall.Lock()
+	s.pending[session] = call
+	s.lockCall.Unlock()
+	return call, nil
 }
 
 func (s *service) PubWithTimeout(subject string, data []byte, timeout time.Duration) (*api.Call, error) {
