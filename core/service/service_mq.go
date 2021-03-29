@@ -73,23 +73,23 @@ func parseBody(m *protocol.Message) (typ uint8, id uint16, session uint64, data 
 }
 
 func (s *service) Pub(subject string, data []byte) error {
-	msg := makeBody(0, s.c.ID, 0, data)
+	msg := makeBody(MSG_TYPE_NORMAL, s.c.ID, 0, data)
 	return s.exchange.Pub(subject, msg)
 }
 
 func (s *service) reply(id uint16, session uint64, data []byte) error {
-	msg := makeBody(1, s.c.ID, session, data)
+	msg := makeBody(MSG_TYPE_REPLY, s.c.ID, session, data)
 	return s.exchange.Pub(fmt.Sprintf(DEFAULT_REPLY, id), msg)
 }
 
 func (s *service) replyError(id uint16, session uint64, err error) error {
-	msg := makeErrorBody(1, s.c.ID, session, err)
+	msg := makeErrorBody(MSG_TYPE_REPLY, s.c.ID, session, err)
 	return s.exchange.Pub(fmt.Sprintf(DEFAULT_REPLY, id), msg)
 }
 
 func (s *service) AsyncPubWithTimeout(subject string, data []byte, timeout time.Duration) (*api.Call, error) {
 	session := atomic.AddUint64(&s.session, 1)
-	msg := makeBody(0, s.c.ID, session, data)
+	msg := makeBody(MSG_TYPE_NORMAL, s.c.ID, session, data)
 	err := s.exchange.Pub(subject, msg)
 	if err != nil {
 		msg.Free()
@@ -99,17 +99,18 @@ func (s *service) AsyncPubWithTimeout(subject string, data []byte, timeout time.
 	call := &api.Call{
 		Session:  session,
 		DeadLine: time.Now().Add(timeout),
+		Done:     make(chan *api.Call, 1),
 	}
 
 	s.lockCall.Lock()
-	s.pending[session] = call
+	s.asyncPending[session] = call
 	s.lockCall.Unlock()
 	return call, nil
 }
 
 func (s *service) PubWithTimeout(subject string, data []byte, timeout time.Duration) (*api.Call, error) {
 	session := atomic.AddUint64(&s.session, 1)
-	msg := makeBody(0, s.c.ID, session, data)
+	msg := makeBody(MSG_TYPE_NORMAL, s.c.ID, session, data)
 	err := s.exchange.Pub(subject, msg)
 	if err != nil {
 		msg.Free()
@@ -227,7 +228,7 @@ func (s *service) handle(subject string, m *protocol.Message) {
 		return
 	}
 
-	if typ == 0 { // normal message
+	if typ == MSG_TYPE_NORMAL { // normal message
 		//  sync invoke call
 		reply, err := s.invoke(subject, id, data)
 		m.Free()
@@ -246,7 +247,7 @@ func (s *service) handle(subject string, m *protocol.Message) {
 		return
 	}
 
-	if typ == 1 { // reply message
+	if typ == MSG_TYPE_REPLY { // reply message
 		s.callback(session, m, data)
 	}
 

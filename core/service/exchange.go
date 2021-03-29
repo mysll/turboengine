@@ -10,6 +10,12 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+const (
+	MSG_TYPE_NORMAL = 0
+	MSG_TYPE_REPLY  = 1
+	MSG_TYPE_ASYNC  = 0x8
+)
+
 type Exchange struct {
 	conn    *nats.Conn
 	recvCh  chan *nats.Msg
