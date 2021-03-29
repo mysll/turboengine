@@ -68,7 +68,7 @@ func (m *Login_RPC_Go_V1_0_0_Client) Redirect(dest protocol.Mailbox) {
 	m.dest = dest
 }
 
-// Login must call in a new goroutine, if call in service's goroutine, it will be dead lock
+// Login
 func (m *Login_RPC_Go_V1_0_0_Client) Login(arg0 string, arg1 string) (reply0 bool, err error) {
 	sr := protocol.NewAutoExtendArchive(128)
 	err = sr.Put(arg0)
@@ -81,12 +81,11 @@ func (m *Login_RPC_Go_V1_0_0_Client) Login(arg0 string, arg1 string) (reply0 boo
 	}
 
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d:Login.Login", m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
+	call, err := m.svr.AsyncPubWithTimeout(fmt.Sprintf("%s%d:Login.Login", m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
 	}
-	call.Done = make(chan *coreapi.Call, 1)
 	call = <-call.Done
 	if call.Err != nil {
 		err = call.Err

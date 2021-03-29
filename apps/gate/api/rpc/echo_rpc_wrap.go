@@ -84,7 +84,7 @@ func (m *Echo_RPC_Go_V1_0_0_Client) Redirect(dest protocol.Mailbox) {
 	m.dest = dest
 }
 
-// Print must call in a new goroutine, if call in service's goroutine, it will be dead lock
+// Print
 func (m *Echo_RPC_Go_V1_0_0_Client) Print(arg0 string) (err error) {
 	sr := protocol.NewAutoExtendArchive(128)
 	err = sr.Put(arg0)
@@ -93,12 +93,11 @@ func (m *Echo_RPC_Go_V1_0_0_Client) Print(arg0 string) (err error) {
 	}
 
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d:Echo.Print", m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
+	call, err := m.svr.AsyncPubWithTimeout(fmt.Sprintf("%s%d:Echo.Print", m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
 	}
-	call.Done = make(chan *coreapi.Call, 1)
 	call = <-call.Done
 	if call.Err != nil {
 		err = call.Err
@@ -112,7 +111,7 @@ func (m *Echo_RPC_Go_V1_0_0_Client) Print(arg0 string) (err error) {
 	return
 }
 
-// Echo must call in a new goroutine, if call in service's goroutine, it will be dead lock
+// Echo
 func (m *Echo_RPC_Go_V1_0_0_Client) Echo(arg0 string) (reply0 string, err error) {
 	sr := protocol.NewAutoExtendArchive(128)
 	err = sr.Put(arg0)
@@ -121,12 +120,11 @@ func (m *Echo_RPC_Go_V1_0_0_Client) Echo(arg0 string) (reply0 string, err error)
 	}
 
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d:Echo.Echo", m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
+	call, err := m.svr.AsyncPubWithTimeout(fmt.Sprintf("%s%d:Echo.Echo", m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
 	}
-	call.Done = make(chan *coreapi.Call, 1)
 	call = <-call.Done
 	if call.Err != nil {
 		err = call.Err
