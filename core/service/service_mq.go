@@ -190,7 +190,7 @@ L:
 		select {
 		case m := <-s.asyncMsg:
 			subject := string(m.Header)
-			s.handle(subject, m)
+			s.asyncHandle(subject, m)
 		default:
 			break L
 		}
@@ -221,6 +221,25 @@ L:
 			}
 		}
 	}
+}
+
+func (s *service) asyncHandle(subject string, m *protocol.Message) {
+	typ, _, session, data, err := parseBody(m)
+	if typ&MSG_TYPE_REPLY == 0 {
+		log.Error("message type error", typ)
+		return
+	}
+	if err != nil {
+		m.Free()
+		if session != 0 {
+			s.asyncCallbackError(session, err)
+			return
+		}
+		log.Error("parse msg failed")
+		return
+	}
+
+	s.asyncCallback(session, m, data)
 }
 
 func (s *service) input() { // run on main goroutine
@@ -323,6 +342,20 @@ func (s *service) invoke(subject string, id uint16, data []byte) (*protocol.Mess
 	return nil, fmt.Errorf("subject %s not handle", subject)
 }
 
+func (s *service) asyncCallback(session uint64, msg *protocol.Message, data []byte) {
+	s.lockCall.RLock()
+	call, ok := s.asyncPending[session]
+	s.lockCall.RUnlock()
+	if ok {
+		call.Data = data
+		call.Msg = msg // if msg call free, call.Data will be gc.
+		call.Done <- call
+		s.lockCall.Lock()
+		delete(s.asyncPending, session) // delete
+		s.lockCall.Unlock()
+	}
+}
+
 func (s *service) callback(session uint64, msg *protocol.Message, data []byte) {
 	s.lockCall.RLock()
 	call, ok := s.pending[session]
@@ -330,10 +363,7 @@ func (s *service) callback(session uint64, msg *protocol.Message, data []byte) {
 	if ok {
 		call.Data = data
 
-		if call.Done != nil {
-			call.Msg = msg // if msg call free, call.Data will be gc.
-			call.Done <- call
-		} else if call.Callback != nil {
+		if call.Callback != nil {
 			call.Callback(call)
 			msg.Free()
 		}
@@ -353,13 +383,29 @@ func (s *service) callbackError(session uint64, err error) {
 		call.Err = err
 		call.Data = nil
 
-		if call.Done != nil {
-			call.Done <- call
-		} else if call.Callback != nil {
+		if call.Callback != nil {
 			call.Callback(call)
 		}
 		s.lockCall.Lock()
 		delete(s.pending, session) // delete
+		s.lockCall.Unlock()
+	}
+}
+
+func (s *service) asyncCallbackError(session uint64, err error) {
+	s.lockCall.RLock()
+	call, ok := s.asyncPending[session]
+	s.lockCall.RUnlock()
+
+	if ok {
+		call.Err = err
+		call.Data = nil
+
+		if call.Done != nil {
+			call.Done <- call
+		}
+		s.lockCall.Lock()
+		delete(s.asyncPending, session) // delete
 		s.lockCall.Unlock()
 	}
 }
