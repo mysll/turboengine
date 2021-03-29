@@ -194,6 +194,7 @@ func (s *service) init() {
 		log.Fatal(err)
 	}
 	s.SubNoInvoke(fmt.Sprintf(DEFAULT_REPLY, s.c.ID)) // inner reply
+	s.SubNoInvoke(fmt.Sprintf(ASYNC_REPLY, s.c.ID))   // async reply
 	s.SubNoInvoke(SERVICE_SHUT)
 	s.SubNoInvoke(SERVICE_SHUT_ALL)
 	if s.c.Expose {

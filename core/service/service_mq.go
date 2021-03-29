@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	ASYNC_REPLY                 = "%d:#.async.reply"
 	DEFAULT_REPLY               = "%d:#.reply"
 	SERVICE_SHUT                = "#.shut"
 	SERVICE_SHUT_ALL            = "#.shut_all"
@@ -87,9 +88,19 @@ func (s *service) replyError(id uint16, session uint64, err error) error {
 	return s.exchange.Pub(fmt.Sprintf(DEFAULT_REPLY, id), msg)
 }
 
+func (s *service) asyncReply(id uint16, session uint64, data []byte) error {
+	msg := makeBody(MSG_TYPE_REPLY, s.c.ID, session, data)
+	return s.exchange.Pub(fmt.Sprintf(ASYNC_REPLY, id), msg)
+}
+
+func (s *service) asyncReplyError(id uint16, session uint64, err error) error {
+	msg := makeErrorBody(MSG_TYPE_REPLY, s.c.ID, session, err)
+	return s.exchange.Pub(fmt.Sprintf(ASYNC_REPLY, id), msg)
+}
+
 func (s *service) AsyncPubWithTimeout(subject string, data []byte, timeout time.Duration) (*api.Call, error) {
 	session := atomic.AddUint64(&s.session, 1)
-	msg := makeBody(MSG_TYPE_NORMAL, s.c.ID, session, data)
+	msg := makeBody(MSG_TYPE_NORMAL|MSG_TYPE_ASYNC, s.c.ID, session, data)
 	err := s.exchange.Pub(subject, msg)
 	if err != nil {
 		msg.Free()
@@ -228,17 +239,29 @@ func (s *service) handle(subject string, m *protocol.Message) {
 		return
 	}
 
-	if typ == MSG_TYPE_NORMAL { // normal message
+	if typ&MSG_TYPE_NORMAL != 0 { // normal message
+		sync := true
+		if typ&MSG_TYPE_ASYNC != 0 {
+			sync = false
+		}
 		//  sync invoke call
 		reply, err := s.invoke(subject, id, data)
 		m.Free()
 		if session != 0 { // need reply
 			if err != nil {
-				s.replyError(id, session, err)
+				if sync {
+					s.replyError(id, session, err)
+				} else {
+					s.asyncReplyError(id, session, err)
+				}
 				return
 			}
 			if reply != nil {
-				s.reply(id, session, reply.Body)
+				if sync {
+					s.reply(id, session, reply.Body)
+				} else {
+					s.asyncReply(id, session, reply.Body)
+				}
 				reply.Free()
 				return
 			}

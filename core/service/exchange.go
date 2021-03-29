@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	MSG_TYPE_NORMAL = 0
-	MSG_TYPE_REPLY  = 1
+	MSG_TYPE_NORMAL = 1
+	MSG_TYPE_REPLY  = 2
 	MSG_TYPE_ASYNC  = 0x8
 )
 
