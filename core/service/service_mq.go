@@ -87,6 +87,10 @@ func (s *service) replyError(id uint16, session uint64, err error) error {
 	return s.exchange.Pub(fmt.Sprintf(DEFAULT_REPLY, id), msg)
 }
 
+func (s *service) AsyncPubWithTimeout(subject string, data []byte, timeout time.Duration) (*api.Call, error) {
+	return s.PubWithTimeout(subject, data, timeout)
+}
+
 func (s *service) PubWithTimeout(subject string, data []byte, timeout time.Duration) (*api.Call, error) {
 	session := atomic.AddUint64(&s.session, 1)
 	msg := makeBody(0, s.c.ID, session, data)

@@ -78,6 +78,8 @@ type Service interface {
 	Pub(subject string, data []byte) error
 	// 发布消息并设置超时
 	PubWithTimeout(subject string, data []byte, timeout time.Duration) (*Call, error)
+	// 异步发布消息并设置超时
+	AsyncPubWithTimeout(subject string, data []byte, timeout time.Duration) (*Call, error)
 	// 订阅消息,invoke为收到消息时的回调函数
 	Sub(subject string, invoke InvokeFn) error
 	// 订阅消息
