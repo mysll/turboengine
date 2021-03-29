@@ -41,49 +41,51 @@ type service struct {
 	mailbox protocol.Mailbox
 	sid     string
 
-	c         *Config
-	handler   api.ServiceHandler
-	running   bool
-	quit      bool
-	time      *utils.Time
-	attaches  []attach
-	attachId  uint64 // used for attaches
-	mods      []api.Module
-	exchange  *Exchange
-	inMsg     chan *protocol.Message // receive message from message queue
-	lockCall  sync.RWMutex           // protect pending
-	pending   map[uint64]*api.Call   // pending call
-	session   uint64                 // used for pending
-	delegate  map[string]api.InvokeFn
-	plugin    map[string]api.Plugin
-	lookup    *LookupService
-	event     *event.Event
-	disLocker *lock.DisLocker
-	config    *config.Configuration
-	ready     bool
-	uuid      uint64
-	uuidTs    uint64
-	transport Transporter
-	connPool  *ConnPool
-	closing   bool
+	c            *Config
+	handler      api.ServiceHandler
+	running      bool
+	quit         bool
+	time         *utils.Time
+	attaches     []attach
+	attachId     uint64 // used for attaches
+	mods         []api.Module
+	exchange     *Exchange
+	inMsg        chan *protocol.Message // receive message from message queue
+	lockCall     sync.RWMutex           // protect pending
+	pending      map[uint64]*api.Call   // pending call
+	asyncPending map[uint64]*api.Call   // async pending call
+	session      uint64                 // used for pending
+	delegate     map[string]api.InvokeFn
+	plugin       map[string]api.Plugin
+	lookup       *LookupService
+	event        *event.Event
+	disLocker    *lock.DisLocker
+	config       *config.Configuration
+	ready        bool
+	uuid         uint64
+	uuidTs       uint64
+	transport    Transporter
+	connPool     *ConnPool
+	closing      bool
 }
 
 func New(h api.ServiceHandler, c *Config) api.Service {
 	s := &service{
-		c:         c,
-		handler:   h,
-		attaches:  make([]attach, 0, 8),
-		attachId:  1,
-		mods:      make([]api.Module, 0, 8),
-		inMsg:     make(chan *protocol.Message, 512),
-		pending:   make(map[uint64]*api.Call),
-		session:   0,
-		delegate:  make(map[string]api.InvokeFn),
-		plugin:    make(map[string]api.Plugin),
-		lookup:    NewLookupService(consulapi.DefaultConfig()),
-		event:     new(event.Event),
-		disLocker: new(lock.DisLocker),
-		config:    new(config.Configuration),
+		c:            c,
+		handler:      h,
+		attaches:     make([]attach, 0, 8),
+		attachId:     1,
+		mods:         make([]api.Module, 0, 8),
+		inMsg:        make(chan *protocol.Message, 512),
+		pending:      make(map[uint64]*api.Call),
+		asyncPending: make(map[uint64]*api.Call),
+		session:      0,
+		delegate:     make(map[string]api.InvokeFn),
+		plugin:       make(map[string]api.Plugin),
+		lookup:       NewLookupService(consulapi.DefaultConfig()),
+		event:        new(event.Event),
+		disLocker:    new(lock.DisLocker),
+		config:       new(config.Configuration),
 	}
 
 	if s.c != nil {
