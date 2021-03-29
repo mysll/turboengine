@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"time"
@@ -21,19 +22,21 @@ type Exchange struct {
 	recvCh  chan *nats.Msg
 	sendCh  chan *protocol.Message
 	msgCh   chan *protocol.Message
+	asyncCh chan *protocol.Message
 	close   chan struct{}
 	closing bool
 	cancel  func()
 	subs    map[string]*nats.Subscription
 }
 
-func NewExchange(recv chan *protocol.Message) (*Exchange, error) {
+func NewExchange(recv chan *protocol.Message, asyncRecv chan *protocol.Message) (*Exchange, error) {
 	p := &Exchange{
-		recvCh: make(chan *nats.Msg, 128),
-		msgCh:  recv,
-		sendCh: make(chan *protocol.Message, 128),
-		close:  make(chan struct{}),
-		subs:   make(map[string]*nats.Subscription),
+		recvCh:  make(chan *nats.Msg, 128),
+		msgCh:   recv,
+		asyncCh: asyncRecv,
+		sendCh:  make(chan *protocol.Message, 128),
+		close:   make(chan struct{}),
+		subs:    make(map[string]*nats.Subscription),
 	}
 	return p, nil
 }
@@ -108,7 +111,11 @@ L:
 			msg.Header = msg.Header[:0]
 			msg.Header = append(msg.Header, []byte(m.Subject)...)
 			msg.Body = append(msg.Body, m.Data...)
-			p.msgCh <- msg
+			if bytes.HasSuffix(msg.Header, []byte("#.async.reply")) {
+				p.asyncCh <- msg
+			} else {
+				p.msgCh <- msg
+			}
 			if p.closing {
 				break L
 			}

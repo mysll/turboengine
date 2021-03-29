@@ -184,6 +184,45 @@ func (s *service) innerHandle(subject string, m *protocol.Message) bool {
 	return res
 }
 
+func (s *service) asyncInput() {
+L:
+	for i := 0; i < PRE_ROUND_MAX_PROCESS_COUNT; i++ {
+		select {
+		case m := <-s.asyncMsg:
+			subject := string(m.Header)
+			s.handle(subject, m)
+		default:
+			break L
+		}
+	}
+
+	// check timeout
+	n := time.Now()
+	s.lockCall.Lock()
+	var timeout []*api.Call
+	for id, call := range s.asyncPending {
+		if call.DeadLine.Sub(n) <= 0 {
+			timeout = append(timeout, call)
+			delete(s.asyncPending, id)
+		}
+	}
+	s.lockCall.Unlock()
+	if len(timeout) > 0 {
+		for _, call := range timeout {
+			if call.DeadLine.Sub(n) <= 0 {
+				call.Err = ERR_TIMEOUT
+				call.Data = nil
+
+				if call.Done != nil {
+					call.Done <- call
+				} else if call.Callback != nil {
+					call.Callback(call)
+				}
+			}
+		}
+	}
+}
+
 func (s *service) input() { // run on main goroutine
 L:
 	for i := 0; i < PRE_ROUND_MAX_PROCESS_COUNT; i++ {
@@ -231,7 +270,7 @@ func (s *service) handle(subject string, m *protocol.Message) {
 
 	if err != nil {
 		m.Free()
-		if typ == 1 && session != 0 {
+		if typ&MSG_TYPE_REPLY != 0 && session != 0 {
 			s.callbackError(session, err)
 			return
 		}
@@ -270,7 +309,7 @@ func (s *service) handle(subject string, m *protocol.Message) {
 		return
 	}
 
-	if typ == MSG_TYPE_REPLY { // reply message
+	if typ&MSG_TYPE_REPLY != 0 { // reply message
 		s.callback(session, m, data)
 	}
 

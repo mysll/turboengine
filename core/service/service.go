@@ -51,6 +51,7 @@ type service struct {
 	mods         []api.Module
 	exchange     *Exchange
 	inMsg        chan *protocol.Message // receive message from message queue
+	asyncMsg     chan *protocol.Message // receive async message from message queue
 	lockCall     sync.RWMutex           // protect pending
 	pending      map[uint64]*api.Call   // pending call
 	asyncPending map[uint64]*api.Call   // async pending call
@@ -77,6 +78,7 @@ func New(h api.ServiceHandler, c *Config) api.Service {
 		attachId:     1,
 		mods:         make([]api.Module, 0, 8),
 		inMsg:        make(chan *protocol.Message, 512),
+		asyncMsg:     make(chan *protocol.Message, 128),
 		pending:      make(map[uint64]*api.Call),
 		asyncPending: make(map[uint64]*api.Call),
 		session:      0,
@@ -183,7 +185,7 @@ func (s *service) init() {
 	s.lookup.SetNotify(s.notify)
 	s.usePlugin(lock.Name, s.disLocker, s.lookup.Client())
 	s.usePlugin(config.Name, s.config, s.lookup.Client())
-	p, err := NewExchange(s.inMsg)
+	p, err := NewExchange(s.inMsg, s.asyncMsg)
 	if err != nil {
 		log.Fatal(err)
 	}
