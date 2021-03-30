@@ -53,6 +53,9 @@ func (s *{{.Name}}) OnShut() bool {
 `
 
 var server_rpc = `package proto
+const (
+	service = "{{.Name}}"
+)
 var reg = make(map[string]interface{})
 `
 

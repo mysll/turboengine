@@ -76,10 +76,15 @@ type {{$.Name}}_RPC_Go_{{$.Ver}}_Client struct {
 	prefix string
 	dest    protocol.Mailbox
 	timeout time.Duration
+	selector coreapi.Selector
 }
 
 func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) Redirect(dest protocol.Mailbox) {
 	m.dest = dest
+}
+
+func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) SetSelector(selector coreapi.Selector) {
+	m.selector = selector
 }
 
 {{range .Methods}}
@@ -151,10 +156,15 @@ type {{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle struct {
 	dest    protocol.Mailbox
 	timeout time.Duration
 	handler I{{$.Name}}_RPC_Go_{{$.Ver}}_Handler
+	selector coreapi.Selector
 }
 
 func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle) Redirect(dest protocol.Mailbox) {
 	m.dest = dest
+}
+
+func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle)  SetSelector(selector coreapi.Selector) {
+	m.selector = selector
 }
 
 {{range .Methods}}

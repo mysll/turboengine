@@ -74,14 +74,19 @@ func SetEchoProvider(svr coreapi.Service, prefix string, provider IEcho_RPC_Go_V
 
 // client
 type Echo_RPC_Go_V1_0_0_Client struct {
-	svr     coreapi.Service
-	prefix  string
-	dest    protocol.Mailbox
-	timeout time.Duration
+	svr      coreapi.Service
+	prefix   string
+	dest     protocol.Mailbox
+	timeout  time.Duration
+	selector coreapi.Selector
 }
 
 func (m *Echo_RPC_Go_V1_0_0_Client) Redirect(dest protocol.Mailbox) {
 	m.dest = dest
+}
+
+func (m *Echo_RPC_Go_V1_0_0_Client) SetSelector(selector coreapi.Selector) {
+	m.selector = selector
 }
 
 // Print
@@ -174,15 +179,20 @@ type IEcho_RPC_Go_V1_0_0_Handler interface {
 }
 
 type Echo_RPC_Go_V1_0_0_Client_Handle struct {
-	svr     coreapi.Service
-	prefix  string
-	dest    protocol.Mailbox
-	timeout time.Duration
-	handler IEcho_RPC_Go_V1_0_0_Handler
+	svr      coreapi.Service
+	prefix   string
+	dest     protocol.Mailbox
+	timeout  time.Duration
+	handler  IEcho_RPC_Go_V1_0_0_Handler
+	selector coreapi.Selector
 }
 
 func (m *Echo_RPC_Go_V1_0_0_Client_Handle) Redirect(dest protocol.Mailbox) {
 	m.dest = dest
+}
+
+func (m *Echo_RPC_Go_V1_0_0_Client_Handle) SetSelector(selector coreapi.Selector) {
+	m.selector = selector
 }
 
 func (m *Echo_RPC_Go_V1_0_0_Client_Handle) Print(arg0 string) (err error) {

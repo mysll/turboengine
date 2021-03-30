@@ -134,3 +134,8 @@ type ServiceHandler interface {
 	// 收到客户端消息
 	OnMessage(*protocol.ProtoMsg)
 }
+
+// 服务选择器
+type Selector interface {
+	Select(srv Service, service string, args string) protocol.Mailbox
+}

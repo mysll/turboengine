@@ -58,14 +58,19 @@ func SetLoginProvider(svr coreapi.Service, prefix string, provider ILogin_RPC_Go
 
 // client
 type Login_RPC_Go_V1_0_0_Client struct {
-	svr     coreapi.Service
-	prefix  string
-	dest    protocol.Mailbox
-	timeout time.Duration
+	svr      coreapi.Service
+	prefix   string
+	dest     protocol.Mailbox
+	timeout  time.Duration
+	selector coreapi.Selector
 }
 
 func (m *Login_RPC_Go_V1_0_0_Client) Redirect(dest protocol.Mailbox) {
 	m.dest = dest
+}
+
+func (m *Login_RPC_Go_V1_0_0_Client) SetSelector(selector coreapi.Selector) {
+	m.selector = selector
 }
 
 // Login
@@ -130,15 +135,20 @@ type ILogin_RPC_Go_V1_0_0_Handler interface {
 }
 
 type Login_RPC_Go_V1_0_0_Client_Handle struct {
-	svr     coreapi.Service
-	prefix  string
-	dest    protocol.Mailbox
-	timeout time.Duration
-	handler ILogin_RPC_Go_V1_0_0_Handler
+	svr      coreapi.Service
+	prefix   string
+	dest     protocol.Mailbox
+	timeout  time.Duration
+	handler  ILogin_RPC_Go_V1_0_0_Handler
+	selector coreapi.Selector
 }
 
 func (m *Login_RPC_Go_V1_0_0_Client_Handle) Redirect(dest protocol.Mailbox) {
 	m.dest = dest
+}
+
+func (m *Login_RPC_Go_V1_0_0_Client_Handle) SetSelector(selector coreapi.Selector) {
+	m.selector = selector
 }
 
 func (m *Login_RPC_Go_V1_0_0_Client_Handle) Login(arg0 string, arg1 string) (reply0 bool, err error) {

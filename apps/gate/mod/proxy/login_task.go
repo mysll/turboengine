@@ -16,13 +16,13 @@ type Login struct {
 	result bool
 }
 
+func (l *Login) Select(srv api.Service, service string, args string) protocol.Mailbox {
+	dest := srv.SelectService(service, api.LOAD_BALANCE_HASH, args)
+	return dest
+}
+
 func (l *Login) Run() {
-	dest := l.proxy.Srv.SelectService("Login", api.LOAD_BALANCE_HASH, l.l.User)
-	if dest.IsNil() {
-		log.Error("login not found")
-		return
-	}
-	login := rpc.NewLoginConsumer(l.proxy.Srv, "", dest, time.Second*3)
+	login := rpc.NewLoginConsumer(l.proxy.Srv, "", 0, time.Second*3)
 	res, err := login.Login(l.l.User, l.l.Pass)
 	if err != nil {
 		log.Error(err)
