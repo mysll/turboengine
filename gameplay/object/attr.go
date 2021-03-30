@@ -61,12 +61,30 @@ func (h *AttrHolder) SetIndex(idx int) {
 	h.index = idx
 }
 
+type NoneHolder struct {
+	AttrHolder
+}
+
+func NewNoneHolder(name string) Attr {
+	return &NoneHolder{
+		AttrHolder: AttrHolder{name: name},
+	}
+}
+
+func (i *NoneHolder) Write(stream io.Writer) (int, error) {
+	return 0, nil
+}
+
+func (i *NoneHolder) Read(reader io.Reader) (int, error) {
+	return 0, nil
+}
+
 type IntHolder struct {
 	AttrHolder
 	data int32
 }
 
-func NewIntHolder(name string) *IntHolder {
+func NewIntHolder(name string) Attr {
 	return &IntHolder{
 		AttrHolder: AttrHolder{name: name},
 		data:       0,
@@ -85,7 +103,7 @@ func (i *IntHolder) Data() int32 {
 	return i.data
 }
 
-func (i *IntHolder) Write(stream io.Writer) (uint32, error) {
+func (i *IntHolder) Write(stream io.Writer) (int, error) {
 	err := binary.Write(stream, Endian, i.data)
 	if err != nil {
 		return 0, err
@@ -93,7 +111,7 @@ func (i *IntHolder) Write(stream io.Writer) (uint32, error) {
 	return 4, nil
 }
 
-func (i *IntHolder) Read(reader io.Reader) (uint32, error) {
+func (i *IntHolder) Read(reader io.Reader) (int, error) {
 	err := binary.Read(reader, Endian, &i.data)
 	if err != nil {
 		return 0, err
@@ -106,7 +124,7 @@ type Int64Holder struct {
 	data int64
 }
 
-func NewInt64Holder(name string) *Int64Holder {
+func NewInt64Holder(name string) Attr {
 	return &Int64Holder{
 		AttrHolder: AttrHolder{name: name},
 		data:       0,
@@ -125,7 +143,7 @@ func (i *Int64Holder) Data() int64 {
 	return i.data
 }
 
-func (i *Int64Holder) Write(stream io.Writer) (uint32, error) {
+func (i *Int64Holder) Write(stream io.Writer) (int, error) {
 	err := binary.Write(stream, Endian, i.data)
 	if err != nil {
 		return 0, err
@@ -133,7 +151,7 @@ func (i *Int64Holder) Write(stream io.Writer) (uint32, error) {
 	return 4, nil
 }
 
-func (i *Int64Holder) Read(reader io.Reader) (uint32, error) {
+func (i *Int64Holder) Read(reader io.Reader) (int, error) {
 	err := binary.Read(reader, Endian, &i.data)
 	if err != nil {
 		return 0, err
@@ -146,7 +164,7 @@ type FloatHolder struct {
 	data float32
 }
 
-func NewFloatHolder(name string) *FloatHolder {
+func NewFloatHolder(name string) Attr {
 	return &FloatHolder{
 		AttrHolder: AttrHolder{name: name},
 		data:       0,
@@ -165,7 +183,7 @@ func (f *FloatHolder) Data() float32 {
 	return f.data
 }
 
-func (f *FloatHolder) Write(stream io.Writer) (uint32, error) {
+func (f *FloatHolder) Write(stream io.Writer) (int, error) {
 	err := binary.Write(stream, Endian, f.data)
 	if err != nil {
 		return 0, err
@@ -173,10 +191,17 @@ func (f *FloatHolder) Write(stream io.Writer) (uint32, error) {
 	return 4, nil
 }
 
-func (f *FloatHolder) Read(reader io.Reader) (uint32, error) {
+func (f *FloatHolder) Read(reader io.Reader) (int, error) {
 	err := binary.Read(reader, Endian, &f.data)
 	if err != nil {
 		return 0, err
 	}
 	return 4, nil
+}
+
+func init() {
+	typeToObject[TYPE_UNKNOWN] = NewNoneHolder
+	typeToObject[TYPE_INT] = NewIntHolder
+	typeToObject[TYPE_FLOAT] = NewFloatHolder
+	typeToObject[TYPE_INT64] = NewInt64Holder
 }
