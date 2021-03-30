@@ -134,16 +134,25 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) {{.Name}}({{range $k, $v := .ArgTyp
 }
 {{end}}
 
-func New{{.Name}}Consumer(svr coreapi.Service, prefix string, dest protocol.Mailbox, timeout time.Duration) *proto.{{.Name}} {
+func New{{.Name}}Consumer(svr coreapi.Service, prefix string, dest protocol.Mailbox, selector coreapi.Selector, timeout time.Duration) *proto.{{.Name}} {
 	m := new(proto.{{.Name}})
 	mc := new({{$.Name}}_RPC_Go_{{$.Ver}}_Client)
 	mc.svr = svr
 	mc.dest = dest
 	mc.prefix = prefix
 	mc.timeout = timeout
+	mc.selector=selector
 	m.XXX = mc	{{range .Methods}}
 	m.{{.Name}}=mc.{{.Name}}{{end}}
 	return m
+}
+
+func New{{.Name}}ConsumerBySelector(svr coreapi.Service, prefix string, selector coreapi.Selector, timeout time.Duration) *proto.{{.Name}} {
+	return New{{.Name}}Consumer(svr, prefix, 0, selector, timeout)
+}
+
+func New{{.Name}}ConsumerByMailbox(svr coreapi.Service, prefix string, remote protocol.Mailbox, timeout time.Duration) *proto.{{.Name}} {
+	return New{{.Name}}Consumer(svr, prefix, remote, nil, timeout)
 }
 
 {{range .Methods}}
@@ -224,7 +233,7 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle) On{{.Name}}(call *coreapi.Ca
 
 {{end}}
 
-func New{{.Name}}ConsumerWithHandle(svr coreapi.Service, prefix string, dest protocol.Mailbox, timeout time.Duration, handler I{{$.Name}}_RPC_Go_{{$.Ver}}_Handler) *proto.{{.Name}} {
+func New{{.Name}}ConsumerWithHandle(svr coreapi.Service, prefix string, dest protocol.Mailbox, selector coreapi.Selector,timeout time.Duration, handler I{{$.Name}}_RPC_Go_{{$.Ver}}_Handler) *proto.{{.Name}} {
 	m := new(proto.{{.Name}})
 	mc := new({{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle)
 	mc.svr = svr
@@ -232,9 +241,18 @@ func New{{.Name}}ConsumerWithHandle(svr coreapi.Service, prefix string, dest pro
 	mc.prefix = prefix
 	mc.timeout = timeout
 	mc.handler = handler
+	mc.selector=selector
 	m.XXX = mc	{{range .Methods}}
 	m.{{.Name}}=mc.{{.Name}}{{end}}
 	return m
+}
+
+func New{{.Name}}ConsumerWithHandleBySelector(svr coreapi.Service, prefix string, selector coreapi.Selector,timeout time.Duration, handler I{{$.Name}}_RPC_Go_{{$.Ver}}_Handler) *proto.{{.Name}} {
+	return New{{.Name}}ConsumerWithHandle(svr, prefix, 0, selector, timeout, handler)
+}
+
+func New{{.Name}}ConsumerWithHandleByMailbox(svr coreapi.Service, prefix string, remote protocol.Mailbox, timeout time.Duration, handler I{{$.Name}}_RPC_Go_{{$.Ver}}_Handler) *proto.{{.Name}} {
+	return New{{.Name}}ConsumerWithHandle(svr, prefix, remote, nil, timeout, handler)
 }
 `
 

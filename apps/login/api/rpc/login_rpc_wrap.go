@@ -122,16 +122,25 @@ func (m *Login_RPC_Go_V1_0_0_Client) Login(arg0 string, arg1 string) (reply0 boo
 	return
 }
 
-func NewLoginConsumer(svr coreapi.Service, prefix string, dest protocol.Mailbox, timeout time.Duration) *proto.Login {
+func NewLoginConsumer(svr coreapi.Service, prefix string, dest protocol.Mailbox, selector coreapi.Selector, timeout time.Duration) *proto.Login {
 	m := new(proto.Login)
 	mc := new(Login_RPC_Go_V1_0_0_Client)
 	mc.svr = svr
 	mc.dest = dest
 	mc.prefix = prefix
 	mc.timeout = timeout
+	mc.selector = selector
 	m.XXX = mc
 	m.Login = mc.Login
 	return m
+}
+
+func NewLoginConsumerBySelector(svr coreapi.Service, prefix string, selector coreapi.Selector, timeout time.Duration) *proto.Login {
+	return NewLoginConsumer(svr, prefix, 0, selector, timeout)
+}
+
+func NewLoginConsumerByMailbox(svr coreapi.Service, prefix string, remote protocol.Mailbox, timeout time.Duration) *proto.Login {
+	return NewLoginConsumer(svr, prefix, remote, nil, timeout)
 }
 
 type Login_RPC_Go_V1_0_0_Login_Reply struct {
@@ -209,7 +218,7 @@ func (m *Login_RPC_Go_V1_0_0_Client_Handle) OnLogin(call *coreapi.Call) {
 	m.handler.OnLogin(reply.Arg0, err)
 }
 
-func NewLoginConsumerWithHandle(svr coreapi.Service, prefix string, dest protocol.Mailbox, timeout time.Duration, handler ILogin_RPC_Go_V1_0_0_Handler) *proto.Login {
+func NewLoginConsumerWithHandle(svr coreapi.Service, prefix string, dest protocol.Mailbox, selector coreapi.Selector, timeout time.Duration, handler ILogin_RPC_Go_V1_0_0_Handler) *proto.Login {
 	m := new(proto.Login)
 	mc := new(Login_RPC_Go_V1_0_0_Client_Handle)
 	mc.svr = svr
@@ -217,7 +226,16 @@ func NewLoginConsumerWithHandle(svr coreapi.Service, prefix string, dest protoco
 	mc.prefix = prefix
 	mc.timeout = timeout
 	mc.handler = handler
+	mc.selector = selector
 	m.XXX = mc
 	m.Login = mc.Login
 	return m
+}
+
+func NewLoginConsumerWithHandleBySelector(svr coreapi.Service, prefix string, selector coreapi.Selector, timeout time.Duration, handler ILogin_RPC_Go_V1_0_0_Handler) *proto.Login {
+	return NewLoginConsumerWithHandle(svr, prefix, 0, selector, timeout, handler)
+}
+
+func NewLoginConsumerWithHandleByMailbox(svr coreapi.Service, prefix string, remote protocol.Mailbox, timeout time.Duration, handler ILogin_RPC_Go_V1_0_0_Handler) *proto.Login {
+	return NewLoginConsumerWithHandle(svr, prefix, remote, nil, timeout, handler)
 }

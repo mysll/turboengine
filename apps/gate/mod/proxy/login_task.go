@@ -22,7 +22,7 @@ func (l *Login) Select(srv api.Service, service string, args string) protocol.Ma
 }
 
 func (l *Login) Run() {
-	login := rpc.NewLoginConsumer(l.proxy.Srv, "", 0, time.Second*3)
+	login := rpc.NewLoginConsumerBySelector(l.proxy.Srv, "", l, time.Second*3)
 	res, err := login.Login(l.l.User, l.l.Pass)
 	if err != nil {
 		log.Error(err)
