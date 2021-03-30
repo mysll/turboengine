@@ -97,7 +97,15 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) {{.Name}}({{range $k, $v := .ArgTyp
 	}
 	{{end}}
 	msg := sr.Message()
-	call, err := m.svr.AsyncPubWithTimeout(fmt.Sprintf("%s%d:{{$.Name}}.{{.Name}}",m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
+	remote := m.dest
+	if remote.IsNil() { {{$l := len .ArgType}}{{$has := false}}	{{if gt $l 0}}{{$ft := index .ArgType 0}}{{if eq $ft "string"}}{{$has = true}}{{end}}{{end}}
+		{{if $has}} remote = m.selector.Select(m.svr, "{{$.Service}}", arg0){{else}}remote = m.selector.Select(m.svr, "{{$.Service}}", ""){{end}}
+	}
+	if remote.IsNil() {
+		err = fmt.Errorf("service {{$.Service}} not found")
+		return
+	}
+	call, err := m.svr.AsyncPubWithTimeout(fmt.Sprintf("%s%d:{{$.Name}}.{{.Name}}",m.prefix, remote.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
@@ -176,7 +184,15 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle) {{.Name}}({{range $k, $v := 
 	}
 	{{end}}
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d:{{$.Name}}.{{.Name}}",m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
+	remote := m.dest
+	if remote.IsNil() { {{$l := len .ArgType}}{{$has := false}}	{{if gt $l 0}}{{$ft := index .ArgType 0}}{{if eq $ft "string"}}{{$has = true}}{{end}}{{end}}
+		{{if $has}} remote = m.selector.Select(m.svr, "{{$.Service}}", arg0){{else}}remote = m.selector.Select(m.svr, "{{$.Service}}", ""){{end}}
+	}
+	if remote.IsNil() {
+		err = fmt.Errorf("service {{$.Service}} not found")
+		return
+	}
+	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d:{{$.Name}}.{{.Name}}",m.prefix, remote.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
@@ -235,6 +251,7 @@ type RpcDesc struct {
 	PkgPath string
 	Imp     map[string]struct{}
 	Methods []FuncDecl
+	Service string
 }
 
 func TypeName(t reflect.Type) (pkg string, typ string) {
@@ -254,7 +271,7 @@ func TypeName(t reflect.Type) (pkg string, typ string) {
 	return
 }
 
-func Generate(s interface{}, pkgpath string, pkg string, path string) {
+func Generate(s interface{}, pkgpath string, pkg string, path string, service string) {
 	ctype := reflect.TypeOf(s)
 	count := ctype.Elem().NumField()
 	desc := RpcDesc{}
@@ -264,6 +281,7 @@ func Generate(s interface{}, pkgpath string, pkg string, path string) {
 	desc.Name = ctype.Elem().Name()
 	desc.Imp = make(map[string]struct{})
 	desc.Methods = make([]FuncDecl, 0, count)
+	desc.Service = service
 	for i := 0; i < count; i++ {
 		m := ctype.Elem().Field(i)
 		if m.Name == "Ver" {

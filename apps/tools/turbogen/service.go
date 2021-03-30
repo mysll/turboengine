@@ -53,9 +53,6 @@ func (s *{{.Name}}) OnShut() bool {
 `
 
 var server_rpc = `package proto
-const (
-	service = "{{.Name}}"
-)
 var reg = make(map[string]interface{})
 `
 
@@ -69,7 +66,7 @@ import(
 func TestCreate(t *testing.T) {
 	for _, v := range reg {
 		typ := reflect.TypeOf(v)
-		turbogen.Generate(v, typ.Elem().PkgPath(), "rpc", "../rpc")
+		turbogen.Generate(v, typ.Elem().PkgPath(), "rpc", "../rpc", "{{.Name}}")
 	}
 }
 
