@@ -1,8 +1,11 @@
 package object
 
 import (
+	"encoding/binary"
 	"io"
 )
+
+var Endian = binary.LittleEndian
 
 // 属性接口
 type Attr interface {
@@ -39,4 +42,40 @@ func (h *AttrHolder) Name() string {
 
 func (h *AttrHolder) Index() uint32 {
 	return h.index
+}
+
+type IntHolder struct {
+	AttrHolder
+	data int32
+}
+
+func NewIntHolder(name string, index uint32, data int32) *IntHolder {
+	return &IntHolder{
+		AttrHolder: AttrHolder{name, index, 0},
+		data:       data,
+	}
+}
+
+func (i *IntHolder) SetData(data int32) {
+	i.data = data
+}
+
+func (i *IntHolder) Data() int32 {
+	return i.data
+}
+
+func (i *IntHolder) Write(stream io.Writer) (uint32, error) {
+	err := binary.Write(stream, Endian, i.data)
+	if err != nil {
+		return 0, err
+	}
+	return 4, nil
+}
+
+func (i *IntHolder) Read(reader io.Reader) (uint32, error) {
+	err := binary.Read(reader, Endian, &i.data)
+	if err != nil {
+		return 0, err
+	}
+	return 4, nil
 }
