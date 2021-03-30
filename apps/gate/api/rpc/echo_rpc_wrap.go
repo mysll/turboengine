@@ -98,7 +98,14 @@ func (m *Echo_RPC_Go_V1_0_0_Client) Print(arg0 string) (err error) {
 	}
 
 	msg := sr.Message()
-	call, err := m.svr.AsyncPubWithTimeout(fmt.Sprintf("%s%d:Echo.Print", m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
+	remote := m.dest
+	if remote.IsNil() {
+		remote = m.selector.Select(m.svr, "Login", arg0)
+	}
+	if remote.IsNil() {
+		return fmt.Errorf("service Login not found")
+	}
+	call, err := m.svr.AsyncPubWithTimeout(fmt.Sprintf("%s%d:Echo.Print", m.prefix, remote.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return

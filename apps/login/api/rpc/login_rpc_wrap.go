@@ -86,7 +86,15 @@ func (m *Login_RPC_Go_V1_0_0_Client) Login(arg0 string, arg1 string) (reply0 boo
 	}
 
 	msg := sr.Message()
-	call, err := m.svr.AsyncPubWithTimeout(fmt.Sprintf("%s%d:Login.Login", m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
+	remote := m.dest
+	if remote.IsNil() {
+		remote = m.selector.Select(m.svr, "Login", arg0)
+	}
+	if remote.IsNil() {
+		err = fmt.Errorf("service Login not found")
+		return
+	}
+	call, err := m.svr.AsyncPubWithTimeout(fmt.Sprintf("%s%d:Login.Login", m.prefix, remote.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
@@ -163,7 +171,15 @@ func (m *Login_RPC_Go_V1_0_0_Client_Handle) Login(arg0 string, arg1 string) (rep
 	}
 
 	msg := sr.Message()
-	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d:Login.Login", m.prefix, m.dest.ServiceId()), msg.Body, m.timeout)
+	remote := m.dest
+	if remote.IsNil() {
+		remote = m.selector.Select(m.svr, "Login", arg0)
+	}
+	if remote.IsNil() {
+		err = fmt.Errorf("service Login not found")
+		return
+	}
+	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d:Login.Login", m.prefix, remote.ServiceId()), msg.Body, m.timeout)
 	msg.Free()
 	if err != nil {
 		return
