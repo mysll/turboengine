@@ -11,6 +11,7 @@ const (
 	TYPE_UNKNOWN = 0
 	TYPE_INT     = 1
 	TYPE_FLOAT   = 2
+	TYPE_INT64   = 3
 )
 
 // 属性接口
@@ -88,6 +89,46 @@ func (i *IntHolder) Write(stream io.Writer) (uint32, error) {
 }
 
 func (i *IntHolder) Read(reader io.Reader) (uint32, error) {
+	err := binary.Read(reader, Endian, &i.data)
+	if err != nil {
+		return 0, err
+	}
+	return 4, nil
+}
+
+type Int64Holder struct {
+	AttrHolder
+	data int64
+}
+
+func NewInt64Holder(name string, index uint32, data int64) *Int64Holder {
+	return &Int64Holder{
+		AttrHolder: AttrHolder{name, index, 0},
+		data:       data,
+	}
+}
+
+func (i *Int64Holder) Type() int {
+	return TYPE_INT64
+}
+
+func (i *Int64Holder) SetData(data int64) {
+	i.data = data
+}
+
+func (i *Int64Holder) Data() int64 {
+	return i.data
+}
+
+func (i *Int64Holder) Write(stream io.Writer) (uint32, error) {
+	err := binary.Write(stream, Endian, i.data)
+	if err != nil {
+		return 0, err
+	}
+	return 4, nil
+}
+
+func (i *Int64Holder) Read(reader io.Reader) (uint32, error) {
 	err := binary.Read(reader, Endian, &i.data)
 	if err != nil {
 		return 0, err
