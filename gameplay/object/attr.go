@@ -16,35 +16,36 @@ const (
 
 // 属性接口
 type Attr interface {
-	Flag() uint32
-	SetFlag(f uint32)
-	ClearFlag(f uint32)
+	Flag() int
+	SetFlag(f int)
+	ClearFlag(f int)
 	Name() string
-	Index() uint32
+	Index() int
+	SetIndex(int)
 	Type() int
-	Write(stream io.Writer) (uint32, error)
-	Read(reader io.Reader) (uint32, error)
+	Write(stream io.Writer) (int, error)
+	Read(reader io.Reader) (int, error)
 }
 
 type AttrHolder struct {
 	name  string
-	index uint32
-	flag  uint32
+	index int
+	flag  int
 }
 
 func (h *AttrHolder) Type() int {
 	return TYPE_UNKNOWN
 }
 
-func (h *AttrHolder) Flag() uint32 {
+func (h *AttrHolder) Flag() int {
 	return h.flag
 }
 
-func (h *AttrHolder) SetFlag(f uint32) {
+func (h *AttrHolder) SetFlag(f int) {
 	h.flag |= f
 }
 
-func (h *AttrHolder) ClearFlag(f uint32) {
+func (h *AttrHolder) ClearFlag(f int) {
 	h.flag &= ^f
 }
 
@@ -52,8 +53,12 @@ func (h *AttrHolder) Name() string {
 	return h.name
 }
 
-func (h *AttrHolder) Index() uint32 {
+func (h *AttrHolder) Index() int {
 	return h.index
+}
+
+func (h *AttrHolder) SetIndex(idx int) {
+	h.index = idx
 }
 
 type IntHolder struct {
@@ -61,10 +66,10 @@ type IntHolder struct {
 	data int32
 }
 
-func NewIntHolder(name string, index uint32, data int32) *IntHolder {
+func NewIntHolder(name string) *IntHolder {
 	return &IntHolder{
-		AttrHolder: AttrHolder{name, index, 0},
-		data:       data,
+		AttrHolder: AttrHolder{name: name},
+		data:       0,
 	}
 }
 
@@ -101,10 +106,10 @@ type Int64Holder struct {
 	data int64
 }
 
-func NewInt64Holder(name string, index uint32, data int64) *Int64Holder {
+func NewInt64Holder(name string) *Int64Holder {
 	return &Int64Holder{
-		AttrHolder: AttrHolder{name, index, 0},
-		data:       data,
+		AttrHolder: AttrHolder{name: name},
+		data:       0,
 	}
 }
 
@@ -141,10 +146,10 @@ type FloatHolder struct {
 	data float32
 }
 
-func NewFloatHolder(name string, index uint32, data float32) *FloatHolder {
+func NewFloatHolder(name string) *FloatHolder {
 	return &FloatHolder{
-		AttrHolder: AttrHolder{name, index, 0},
-		data:       data,
+		AttrHolder: AttrHolder{name: name},
+		data:       0,
 	}
 }
 
