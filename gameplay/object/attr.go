@@ -7,6 +7,12 @@ import (
 
 var Endian = binary.LittleEndian
 
+const (
+	TYPE_UNKNOWN = 0
+	TYPE_INT     = 1
+	TYPE_FLOAT   = 2
+)
+
 // 属性接口
 type Attr interface {
 	Flag() uint32
@@ -14,6 +20,7 @@ type Attr interface {
 	ClearFlag(f uint32)
 	Name() string
 	Index() uint32
+	Type() int
 	Write(stream io.Writer) (uint32, error)
 	Read(reader io.Reader) (uint32, error)
 }
@@ -22,6 +29,10 @@ type AttrHolder struct {
 	name  string
 	index uint32
 	flag  uint32
+}
+
+func (h *AttrHolder) Type() int {
+	return TYPE_UNKNOWN
 }
 
 func (h *AttrHolder) Flag() uint32 {
@@ -56,6 +67,10 @@ func NewIntHolder(name string, index uint32, data int32) *IntHolder {
 	}
 }
 
+func (i *IntHolder) Type() int {
+	return TYPE_INT
+}
+
 func (i *IntHolder) SetData(data int32) {
 	i.data = data
 }
@@ -74,6 +89,46 @@ func (i *IntHolder) Write(stream io.Writer) (uint32, error) {
 
 func (i *IntHolder) Read(reader io.Reader) (uint32, error) {
 	err := binary.Read(reader, Endian, &i.data)
+	if err != nil {
+		return 0, err
+	}
+	return 4, nil
+}
+
+type FloatHolder struct {
+	AttrHolder
+	data float32
+}
+
+func NewFloatHolder(name string, index uint32, data float32) *FloatHolder {
+	return &FloatHolder{
+		AttrHolder: AttrHolder{name, index, 0},
+		data:       data,
+	}
+}
+
+func (f *FloatHolder) Type() int {
+	return TYPE_FLOAT
+}
+
+func (f *FloatHolder) SetData(data float32) {
+	f.data = data
+}
+
+func (f *FloatHolder) Data() float32 {
+	return f.data
+}
+
+func (f *FloatHolder) Write(stream io.Writer) (uint32, error) {
+	err := binary.Write(stream, Endian, f.data)
+	if err != nil {
+		return 0, err
+	}
+	return 4, nil
+}
+
+func (f *FloatHolder) Read(reader io.Reader) (uint32, error) {
+	err := binary.Read(reader, Endian, &f.data)
 	if err != nil {
 		return 0, err
 	}
