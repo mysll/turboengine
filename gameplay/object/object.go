@@ -6,10 +6,27 @@ import (
 
 var typeToObject = make(map[int]func(string) Attr)
 
+type ObjectId uint64
+
 // 基础对象，所以游戏内的对象基类
 type Object struct {
+	id        ObjectId
 	attrs     []Attr
 	nameToIdx map[string]int
+	replicate bool
+	dirty     bool
+}
+
+func (o *Object) Id() ObjectId {
+	return o.id
+}
+
+func (o *Object) Dirty() bool {
+	return o.dirty
+}
+
+func (o *Object) ClearDirty() {
+	o.dirty = false
 }
 
 func (o *Object) AddAttr(attr Attr) (int, error) {
