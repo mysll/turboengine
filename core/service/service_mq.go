@@ -296,7 +296,7 @@ func (s *service) handle(subject string, m *protocol.Message) {
 
 	if err != nil {
 		m.Free()
-		if typ&MSG_TYPE_REPLY != 0 && session != 0 {
+		if typ&MSG_TYPE_REPLY == MSG_TYPE_REPLY && session != 0 {
 			s.callbackError(session, err)
 			return
 		}
@@ -304,9 +304,9 @@ func (s *service) handle(subject string, m *protocol.Message) {
 		return
 	}
 
-	if typ&MSG_TYPE_NORMAL != 0 { // normal message
+	if typ&MSG_TYPE_NORMAL == MSG_TYPE_NORMAL { // normal message
 		sync := true
-		if typ&MSG_TYPE_ASYNC != 0 {
+		if typ&MSG_TYPE_ASYNC == MSG_TYPE_ASYNC {
 			sync = false
 		}
 		//  sync invoke call
@@ -335,7 +335,7 @@ func (s *service) handle(subject string, m *protocol.Message) {
 		return
 	}
 
-	if typ&MSG_TYPE_REPLY != 0 { // reply message
+	if typ&MSG_TYPE_REPLY == MSG_TYPE_REPLY { // reply message
 		s.callback(session, m, data)
 	}
 

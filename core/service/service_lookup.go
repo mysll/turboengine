@@ -401,7 +401,10 @@ func (s *service) SelectService(name string, balance int, hash string) protocol.
 		}
 		id = ss[sel].NID
 	case api.LOAD_BALANCE_HASH:
-		sel := utils.Hash64(hash)
+		var sel uint64
+		if hash != "" {
+			sel = utils.Hash64(hash)
+		}
 		id = ss[sel%uint64(count)].NID
 	}
 
