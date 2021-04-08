@@ -72,6 +72,25 @@ func TestCreate(t *testing.T) {
 
 `
 
+var server_entity = `package def
+var entities = make(map[string]interface{})
+`
+
+var server_entity_test = `package def
+import(
+	"reflect"
+	"testing"
+	"turboengine/apps/tools/turbogen"
+)
+
+func TestCreate(t *testing.T) {
+	for _, v := range entities {
+		typ := reflect.TypeOf(v)
+		turbogen.ObjectWrap(v, typ.Elem().PkgPath(), "entity", "../entity")
+	}
+}
+`
+
 var server_main = `package main
 import (
 	"flag"
@@ -212,9 +231,17 @@ func createService(pkg, name, auth, path string) {
 		}
 	}
 
-	internal := path + "/internal"
-	if ok, _ := toolkit.PathExists(internal); !ok {
-		err := os.MkdirAll(internal, 0777)
+	entity_def := path + "/internal/def"
+	if ok, _ := toolkit.PathExists(entity_def); !ok {
+		err := os.MkdirAll(entity_def, 0777)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	entity := path + "/internal/entity"
+	if ok, _ := toolkit.PathExists(entity); !ok {
+		err := os.MkdirAll(entity, 0777)
 		if err != nil {
 			panic(err)
 		}
@@ -232,6 +259,9 @@ func createService(pkg, name, auth, path string) {
 
 	makeFile(server_rpc, "proto", proto, "proto", info)
 	makeFile(server_rpc_test, "proto_test", proto, "proto_test", info)
+
+	makeFile(server_entity, "entity", entity_def, "entity", info)
+	makeFile(server_entity_test, "entity_test", entity_def, "entity_test", info)
 }
 
 func CreateService(c *cli.Context) error {
