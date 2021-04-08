@@ -205,3 +205,11 @@ func init() {
 	typeToObject[TYPE_FLOAT] = NewFloatHolder
 	typeToObject[TYPE_INT64] = NewInt64Holder
 }
+
+// Create object with type
+func Create(typ int, name string) Attr {
+	if t, ok := typeToObject[typ]; ok {
+		return t(name)
+	}
+	return nil
+}
