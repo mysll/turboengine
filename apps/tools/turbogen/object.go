@@ -17,6 +17,9 @@ func ObjectWrap(s interface{}, pkgpath string, pkg string, path string) {
 //go:embed entity.tpl
 var entity_desc string
 
+//go:embed object.tpl
+var objectWarp string
+
 func CreateEntity(c *cli.Context) error {
 	path := c.String("path")
 	if path == "" {
