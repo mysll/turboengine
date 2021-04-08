@@ -54,6 +54,18 @@ func main() {
 						},
 					},
 				},
+				{
+					Name:   "entity",
+					Usage:  "create entity",
+					Action: turbogen.CreateEntity,
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "path,p",
+							Value: "./",
+							Usage: "output path",
+						},
+					},
+				},
 			},
 		},
 	}
