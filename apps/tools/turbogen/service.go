@@ -77,7 +77,6 @@ import (
 	"flag"
 	"turboengine/common/log"
 	"turboengine/core/service"
-	"./{{.Pkg}}"
 )
 
 var (
@@ -221,23 +220,18 @@ func createService(pkg, name, auth, path string) {
 		}
 	}
 
-	makeFile(service_tpl, name, fmt.Sprintf("%s/%s", path, pkg), strings.ToLower(name),
-		ServiceInfo{
-			Pkg:  pkg,
-			Name: name,
-			Auth: auth,
-			Time: time.Now(),
-		})
-
-	makeFile(server_main, "main", path, "main", ServiceInfo{
+	info := ServiceInfo{
 		Pkg:  pkg,
 		Name: name,
 		Auth: auth,
 		Time: time.Now(),
-	})
+	}
+	makeFile(service_tpl, name, fmt.Sprintf("%s/%s", path, pkg), strings.ToLower(name), info)
 
-	makeFile(server_rpc, "proto", proto, "proto", nil)
-	makeFile(server_rpc_test, "proto_test", proto, "proto_test", nil)
+	makeFile(server_main, "main", path, "main", info)
+
+	makeFile(server_rpc, "proto", proto, "proto", info)
+	makeFile(server_rpc_test, "proto_test", proto, "proto_test", info)
 }
 
 func CreateService(c *cli.Context) error {
