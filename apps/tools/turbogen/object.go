@@ -2,6 +2,7 @@ package turbogen
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	_ "embed"
@@ -9,9 +10,26 @@ import (
 	"github.com/urfave/cli"
 )
 
+type AttrDecl struct {
+	Name    string
+	ArgType string
+}
+
+type ObjectDesc struct {
+	Name    string
+	Pkg     string
+	PkgPath string
+	Attrs   []AttrDecl
+}
+
 func ObjectWrap(s interface{}, pkgpath string, pkg string, path string) {
-	/*ctype := reflect.TypeOf(s)
-	count := ctype.Elem().NumField()*/
+	ctype := reflect.TypeOf(s)
+	count := ctype.Elem().NumField()
+	desc := ObjectDesc{}
+	desc.PkgPath = pkgpath
+	desc.Pkg = pkg
+	desc.Name = ctype.Elem().Name()
+	desc.Attrs = make([]AttrDecl, count)
 }
 
 //go:embed entity.tpl
