@@ -2,6 +2,7 @@ package object
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 )
 
@@ -12,6 +13,7 @@ const (
 	TYPE_INT     = 1
 	TYPE_FLOAT   = 2
 	TYPE_INT64   = 3
+	TYPE_STRING  = 4
 )
 
 // 属性接口
@@ -199,11 +201,65 @@ func (f *FloatHolder) Read(reader io.Reader) (int, error) {
 	return 4, nil
 }
 
+type StringHolder struct {
+	AttrHolder
+	data string
+}
+
+func NewStringHolder(name string) Attr {
+	return &StringHolder{
+		AttrHolder: AttrHolder{name: name},
+		data:       "",
+	}
+}
+
+func (f *StringHolder) Type() int {
+	return TYPE_STRING
+}
+
+func (f *StringHolder) SetData(data string) {
+	f.data = data
+}
+
+func (f *StringHolder) Data() string {
+	return f.data
+}
+
+func (f *StringHolder) Write(stream io.Writer) (int, error) {
+	size := uint16(len(f.data))
+	binary.Write(stream, Endian, size)
+	err := binary.Write(stream, Endian, f.data)
+	if err != nil {
+		return 0, err
+	}
+	return int(size) + 2, nil
+}
+
+func (f *StringHolder) Read(reader io.Reader) (int, error) {
+	var size uint16
+	binary.Read(reader, Endian, &size)
+	if size == 0 {
+		f.data = ""
+		return 0, nil
+	}
+	buf := make([]byte, size)
+	n, err := reader.Read(buf)
+	if err != nil {
+		return 0, err
+	}
+	if size != uint16(n) {
+		return 0, fmt.Errorf("size not match")
+	}
+	f.data = string(buf)
+	return int(size) + 2, nil
+}
+
 func init() {
 	typeToObject[TYPE_UNKNOWN] = NewNoneHolder
 	typeToObject[TYPE_INT] = NewIntHolder
 	typeToObject[TYPE_FLOAT] = NewFloatHolder
 	typeToObject[TYPE_INT64] = NewInt64Holder
+	typeToObject[TYPE_STRING] = NewStringHolder
 }
 
 // Create object with type
