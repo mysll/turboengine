@@ -159,3 +159,60 @@ type {{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle struct {
 	handler I{{$.Name}}_RPC_Go_{{$.Ver}}_Handler
 	selector coreapi.Selector
 }
+
+func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle) Redirect(dest protocol.Mailbox) {
+	m.dest = dest
+}
+
+func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle)  SetSelector(selector coreapi.Selector) {
+	m.selector = selector
+}
+
+{{range .Methods}}
+func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle) {{.Name}}({{range $k, $v := .ArgType}}{{if ne $k 0}},{{end}}arg{{$k}} {{$v}}{{end}}) ({{range $k, $v := .ReturnType}}{{if ne $k 0}},{{end}}{{if eq $v "error"}}err{{else}}reply{{$k}}{{end}} {{$v}}{{end}}) {
+	sr := protocol.NewAutoExtendArchive(128)
+	{{range $k, $v := .ArgType}}err = sr.Put(arg{{$k}})
+	if err != nil {
+		return
+	}
+	{{end}}
+	msg := sr.Message()
+	remote := m.dest
+	if remote.IsNil() { {{$l := len .ArgType}}{{$has := false}}	{{if gt $l 0}}{{$ft := index .ArgType 0}}{{if eq $ft "string"}}{{$has = true}}{{end}}{{end}}
+		{{if $has}} remote = m.selector.Select(m.svr, "{{$.Service}}", arg0){{else}}remote = m.selector.Select(m.svr, "{{$.Service}}", ""){{end}}
+	}
+	if remote.IsNil() {
+		err = fmt.Errorf("service {{$.Service}} not found")
+		return
+	}
+	call, err := m.svr.PubWithTimeout(fmt.Sprintf("%s%d:{{$.Name}}.{{.Name}}",m.prefix, remote.ServiceId()), msg.Body, m.timeout)
+	msg.Free()
+	if err != nil {
+		return
+	}
+	call.Callback = m.On{{.Name}}
+	return
+}
+
+func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle) On{{.Name}}(call *coreapi.Call) {
+	{{$l := len .ReturnType}}{{if gt $l 1}}var reply {{$.Name}}_RPC_Go_{{$.Ver}}_{{.Name}}_Reply{{end}}
+	var err error
+	err = call.Err
+	if err != nil {
+		m.handler.On{{.Name}}({{range $k, $v := .ReturnType}}{{if ne $v "error"}}reply.Arg{{$k}},{{end}}{{end}}err)
+		return
+	}
+	{{if gt $l 1}}
+	for {
+		ar := protocol.NewLoadArchive(call.Data)
+		{{range $k, $v := .ReturnType}}{{if ne $v "error"}}
+		err = ar.Get(&reply.Arg{{$k}})
+		if err != nil {
+			break
+		} {{end}} {{end}}
+		break
+	}{{end}}
+	m.handler.On{{.Name}}({{range $k, $v := .ReturnType}}{{if ne $v "error"}}reply.Arg{{$k}},{{end}}{{end}}err)
+}
+
+{{end}}
