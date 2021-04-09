@@ -12,7 +12,7 @@ func New{{.Name}}() *{{.Name}} {
         {{range .Attrs}}{{tolower .Name}}: {{create .ArgType}}("{{.Name}}"),
         {{end}}
     }
-    {{range .Attrs}}{{$obj}}.AddAttr(&{{$obj}}.{{tolower .Name}})
+    {{range .Attrs}}{{$obj}}.AddAttr({{$obj}}.{{tolower .Name}})
     {{end}}
     return {{$obj}}
 }
