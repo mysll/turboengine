@@ -53,3 +53,67 @@ func Set{{.Name}}Provider(svr coreapi.Service, prefix string, provider I{{.Name}
 	}{{end}}
 	return nil
 }
+
+// client
+type {{$.Name}}_RPC_Go_{{$.Ver}}_Client struct {
+	svr coreapi.Service
+	prefix string
+	dest    protocol.Mailbox
+	timeout time.Duration
+	selector coreapi.Selector
+}
+
+func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) Redirect(dest protocol.Mailbox) {
+	m.dest = dest
+}
+
+func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) SetSelector(selector coreapi.Selector) {
+	m.selector = selector
+}
+
+{{range .Methods}}
+// {{.Name}}
+func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) {{.Name}}({{range $k, $v := .ArgType}}{{if ne $k 0}},{{end}}arg{{$k}} {{$v}}{{end}}) ({{range $k, $v := .ReturnType}}{{if ne $k 0}},{{end}}{{if eq $v "error"}}err{{else}}reply{{$k}}{{end}} {{$v}}{{end}}) {
+	sr := protocol.NewAutoExtendArchive(128)
+	{{range $k, $v := .ArgType}}err = sr.Put(arg{{$k}})
+	if err != nil {
+		return
+	}
+	{{end}}
+	msg := sr.Message()
+	remote := m.dest
+	if remote.IsNil() { {{$l := len .ArgType}}{{$has := false}}	{{if gt $l 0}}{{$ft := index .ArgType 0}}{{if eq $ft "string"}}{{$has = true}}{{end}}{{end}}
+		{{if $has}} remote = m.selector.Select(m.svr, "{{$.Service}}", arg0){{else}}remote = m.selector.Select(m.svr, "{{$.Service}}", ""){{end}}
+	}
+	if remote.IsNil() {
+		err = fmt.Errorf("service {{$.Service}} not found")
+		return
+	}
+	call, err := m.svr.AsyncPubWithTimeout(fmt.Sprintf("%s%d:{{$.Name}}.{{.Name}}",m.prefix, remote.ServiceId()), msg.Body, m.timeout)
+	msg.Free()
+	if err != nil {
+		return
+	}
+	call = <-call.Done
+	if call.Err != nil {
+		err = call.Err
+		return
+	}
+	{{$l := len .ReturnType}}{{if gt $l 1}}
+	for {
+		ar := protocol.NewLoadArchive(call.Data)
+		{{range $k, $v := .ReturnType}}{{if ne $v "error"}}
+		err = ar.Get(&reply{{$k}})
+		if err != nil {
+			break
+		} {{end}} {{end}}
+		break
+	}{{end}}
+
+	if call.Msg != nil {
+		call.Msg.Free()
+		call.Msg = nil
+	}
+	return
+}
+{{end}}
