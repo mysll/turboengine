@@ -117,3 +117,45 @@ func (m *{{$.Name}}_RPC_Go_{{$.Ver}}_Client) {{.Name}}({{range $k, $v := .ArgTyp
 	return
 }
 {{end}}
+
+func New{{.Name}}Consumer(svr coreapi.Service, prefix string, dest protocol.Mailbox, selector coreapi.Selector, timeout time.Duration) *proto.{{.Name}} {
+	m := new(proto.{{.Name}})
+	mc := new({{$.Name}}_RPC_Go_{{$.Ver}}_Client)
+	mc.svr = svr
+	mc.dest = dest
+	mc.prefix = prefix
+	mc.timeout = timeout
+	mc.selector=selector
+	m.XXX = mc	{{range .Methods}}
+	m.{{.Name}}=mc.{{.Name}}{{end}}
+	return m
+}
+
+func New{{.Name}}ConsumerBySelector(svr coreapi.Service, prefix string, selector coreapi.Selector, timeout time.Duration) *proto.{{.Name}} {
+	return New{{.Name}}Consumer(svr, prefix, 0, selector, timeout)
+}
+
+func New{{.Name}}ConsumerByMailbox(svr coreapi.Service, prefix string, remote protocol.Mailbox, timeout time.Duration) *proto.{{.Name}} {
+	return New{{.Name}}Consumer(svr, prefix, remote, nil, timeout)
+}
+
+{{range .Methods}}
+type {{$.Name}}_RPC_Go_{{$.Ver}}_{{.Name}}_Reply struct {
+	{{range $k, $v := .ReturnType}}{{if ne $v "error"}}
+	Arg{{$k}} {{$v}}{{end}}{{end}}
+}
+{{end}}
+
+type I{{$.Name}}_RPC_Go_{{$.Ver}}_Handler interface {
+	{{range .Methods}}
+	On{{.Name}}({{range $k, $v := .ReturnType}}{{if ne $k 0}},{{end}}{{$v}}{{end}}){{end}}
+}
+
+type {{$.Name}}_RPC_Go_{{$.Ver}}_Client_Handle struct {
+	svr     coreapi.Service
+	prefix  string
+	dest    protocol.Mailbox
+	timeout time.Duration
+	handler I{{$.Name}}_RPC_Go_{{$.Ver}}_Handler
+	selector coreapi.Selector
+}
