@@ -30,8 +30,50 @@ func getType(typ string) string {
 	switch typ {
 	case "string":
 		return "object.StringHolder"
+	case "float32":
+		return "object.FloatHolder"
+	case "float64":
+		return "object.Float64Holder"
+	case "int32":
+		return "object.IntHolder"
+	case "int64":
+		return "object.Int64Holder"
 	default:
 		return "unknown"
+	}
+}
+
+func getTypeEnum(typ string) string {
+	switch typ {
+	case "string":
+		return "object.TYPE_STRING"
+	case "float32":
+		return "object.TYPE_FLOAT"
+	case "float64":
+		return "object.TYPE_FLOAT64"
+	case "int32":
+		return "object.TYPE_INT"
+	case "int64":
+		return "object.TYPE_INT64"
+	default:
+		return "object.TYPE_UNKNOWN"
+	}
+}
+
+func getTypeCreate(typ string) string {
+	switch typ {
+	case "string":
+		return "object.NewStringHolder"
+	case "float32":
+		return "object.NewFloatHolder"
+	case "float64":
+		return "object.NewFloat64Holder"
+	case "int32":
+		return "object.NewIntHolder"
+	case "int64":
+		return "object.NewInt64Holder"
+	default:
+		return "object.NewNoneHolder"
 	}
 }
 
@@ -55,8 +97,10 @@ func ObjectWrap(s interface{}, pkgpath string, pkg string, path string) {
 		desc.Attrs = append(desc.Attrs, decl)
 	}
 	t := template.Must(template.New(desc.Name).Funcs(template.FuncMap{
-		"tolower": strings.ToLower,
-		"getType": getType,
+		"tolower":     strings.ToLower,
+		"getType":     getType,
+		"getTypeEnum": getTypeEnum,
+		"create":      getTypeCreate,
 	}).Parse(objectWarp))
 	outfile := path + "/" + strings.ToLower(desc.Name) + ".go"
 	if ok, _ := toolkit.PathExists(path); !ok {
