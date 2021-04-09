@@ -7,11 +7,12 @@ type {{.Name}} struct {
     {{end}}
 }
 
+{{$obj := tolower $.Name}}
 {{range .Attrs}}
-func (player *{{.Name}}) Name() string {
-	return player.name.Data()
+func ({{$obj}} *{{.Name}}) {{.Name}}() {{.ArgType}} {
+	return {{$obj}}.{{tolower .Name}}.Data()
 }
 
-func (player *{{.Name}}) SetName(v string) {
-	player.name.SetData(v)
+func ({{$obj}} *{{.Name}}) Set{{.Name}}(v {{.ArgType}}) {
+	{{$obj}}.{{tolower .Name}}.SetData(v)
 } {{end}}
