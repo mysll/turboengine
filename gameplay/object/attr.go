@@ -68,7 +68,7 @@ type NoneHolder struct {
 	AttrHolder
 }
 
-func NewNoneHolder(name string) Attr {
+func NewNoneHolder(name string) *NoneHolder {
 	return &NoneHolder{
 		AttrHolder: AttrHolder{name: name},
 	}
@@ -87,7 +87,7 @@ type IntHolder struct {
 	data int32
 }
 
-func NewIntHolder(name string) Attr {
+func NewIntHolder(name string) *IntHolder {
 	return &IntHolder{
 		AttrHolder: AttrHolder{name: name},
 		data:       0,
@@ -127,7 +127,7 @@ type Int64Holder struct {
 	data int64
 }
 
-func NewInt64Holder(name string) Attr {
+func NewInt64Holder(name string) *Int64Holder {
 	return &Int64Holder{
 		AttrHolder: AttrHolder{name: name},
 		data:       0,
@@ -167,7 +167,7 @@ type FloatHolder struct {
 	data float32
 }
 
-func NewFloatHolder(name string) Attr {
+func NewFloatHolder(name string) *FloatHolder {
 	return &FloatHolder{
 		AttrHolder: AttrHolder{name: name},
 		data:       0,
@@ -207,7 +207,7 @@ type Float64Holder struct {
 	data float64
 }
 
-func NewFloat64Holder(name string) Attr {
+func NewFloat64Holder(name string) *Float64Holder {
 	return &Float64Holder{
 		AttrHolder: AttrHolder{name: name},
 		data:       0,
@@ -247,7 +247,7 @@ type StringHolder struct {
 	data string
 }
 
-func NewStringHolder(name string) Attr {
+func NewStringHolder(name string) *StringHolder {
 	return &StringHolder{
 		AttrHolder: AttrHolder{name: name},
 		data:       "",
@@ -296,12 +296,12 @@ func (f *StringHolder) Read(reader io.Reader) (int, error) {
 }
 
 func init() {
-	typeToObject[TYPE_UNKNOWN] = NewNoneHolder
-	typeToObject[TYPE_INT] = NewIntHolder
-	typeToObject[TYPE_FLOAT] = NewFloatHolder
-	typeToObject[TYPE_FLOAT64] = NewFloat64Holder
-	typeToObject[TYPE_INT64] = NewInt64Holder
-	typeToObject[TYPE_STRING] = NewStringHolder
+	typeToObject[TYPE_UNKNOWN] = func(name string) Attr { return NewNoneHolder(name) }
+	typeToObject[TYPE_INT] = func(name string) Attr { return NewIntHolder(name) }
+	typeToObject[TYPE_FLOAT] = func(name string) Attr { return NewFloatHolder(name) }
+	typeToObject[TYPE_FLOAT64] = func(name string) Attr { return NewFloat64Holder(name) }
+	typeToObject[TYPE_INT64] = func(name string) Attr { return NewInt64Holder(name) }
+	typeToObject[TYPE_STRING] = func(name string) Attr { return NewStringHolder(name) }
 }
 
 // Create object with type
