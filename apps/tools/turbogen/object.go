@@ -15,7 +15,7 @@ func ObjectWrap(s interface{}, pkgpath string, pkg string, path string) {
 }
 
 //go:embed entity.tpl
-var entity_desc string
+var entityDesc string
 
 //go:embed object.tpl
 var objectWarp string
@@ -34,7 +34,7 @@ func CreateEntity(c *cli.Context) error {
 	var name string
 	fmt.Scanln(&name)
 
-	makeFile(entity_desc, "def", path, strings.ToLower(name), map[string]interface{}{
+	makeFile(entityDesc, "def", path, strings.ToLower(name), map[string]interface{}{
 		"Name": name,
 		"Pkg":  pkg,
 	})

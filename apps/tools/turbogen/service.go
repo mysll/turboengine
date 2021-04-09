@@ -1,6 +1,7 @@
 package turbogen
 
 import (
+	_ "embed"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -13,111 +14,25 @@ import (
 	"github.com/urfave/cli"
 )
 
-var service_tpl = `package {{tolower .Pkg}} 
-
-import (
-	coreapi "turboengine/core/api"
-	"turboengine/core/service"
-)
- 
-// Service: 	{{.Name}}
-// Auth: 	 	{{.Auth}}
-// Data:	  	{{.Time.Format "2006-01-02 15:04:05"}}
-// Desc:
-type {{.Name}} struct{
-	service.Service
-}
-
-func (s *{{.Name}}) OnPrepare(srv coreapi.Service, args map[string]string) error {
-	s.Service.OnPrepare(srv, args)
-	// use plugin
-	// use plugin end
-
-	// add module
-	// add module end 
-	
-	return nil
-}
-
-func (s *{{.Name}}) OnStart() error {
-	return nil
-}
-
-func (s *{{.Name}}) OnDependReady() {
-	s.Ctx.Service().Ready()
-}
-
-func (s *{{.Name}}) OnShut() bool {
-	return true // If you want to close manually return false
-}
-`
+//go:embed service.tpl
+var service_tpl string
 
 var server_rpc = `package proto
 var reg = make(map[string]interface{})
 `
 
-var server_rpc_test = `package proto
-import(
-	"reflect"
-	"testing"
-	"turboengine/apps/tools/turbogen"
-)
-
-func TestCreate(t *testing.T) {
-	for _, v := range reg {
-		typ := reflect.TypeOf(v)
-		turbogen.Generate(v, typ.Elem().PkgPath(), "rpc", "../rpc", "{{.Name}}")
-	}
-}
-
-`
+//go:embed proto_test.tpl
+var server_rpc_test string
 
 var server_entity = `package def
 var entities = make(map[string]interface{})
 `
 
-var server_entity_test = `package def
-import(
-	"reflect"
-	"testing"
-	"turboengine/apps/tools/turbogen"
-)
+//go:embed entity_test.tpl
+var server_entity_test string
 
-func TestCreate(t *testing.T) {
-	for _, v := range entities {
-		typ := reflect.TypeOf(v)
-		turbogen.ObjectWrap(v, typ.Elem().PkgPath(), "entity", "../entity")
-	}
-}
-`
-
-var server_main = `package main
-import (
-	"flag"
-	"turboengine/common/log"
-	"turboengine/core/service"
-)
-
-var (
-	config = flag.String("c", "./conf/{{tolower .Name}}.toml", "config path")
-)
-
-func main() {
-	flag.Parse()
-	log.Init(nil)
-	defer log.Close()
-
-	cfg := new(service.Config)
-	if err := cfg.LoadFromToml(*config); err != nil {
-		panic(err)
-	}
-	srv := service.New(new({{.Pkg}}.{{.Name}}), cfg)
-	if err := srv.Start(); err != nil {
-		panic(err)
-	}
-	srv.Await()
-}
-`
+//go:embed service_main.tpl
+var server_main string
 
 type ServiceInfo struct {
 	Pkg  string
@@ -165,31 +80,11 @@ func makeFile(tpl string, name, path, file string, data interface{}) {
 	fmt.Println("File created successfully! location: ", outfile)
 }
 
+//go:embed config.tpl
+var config string
+
 func saveConfig(name string, path string) {
-	tpl := fmt.Sprintf(`
-# service id
-ID = 1
-# service name
-Name = "%s"
-# nats agent url
-NatsUrl = "nats://0.0.0.0:4222"
-# if expose is true, it's a outgoing service.
-Expose = false
-Addr = "0.0.0.0"
-Port = 0
-FPS = 0
-Debug = false
-DebugPort = 0
-
-# depend other services
-# [[Depend]]
-# Name = ""
-# Count = 1
-
-# custom args
-# [Args]
-# Key = "value"
-`, name)
+	tpl := fmt.Sprintf(config, name)
 
 	if err := ioutil.WriteFile(fmt.Sprintf("%s/%s.toml", path, strings.ToLower(name)), []byte(tpl), 0777); err != nil {
 		panic(err)
