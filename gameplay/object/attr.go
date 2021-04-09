@@ -11,9 +11,10 @@ var Endian = binary.LittleEndian
 const (
 	TYPE_UNKNOWN = 0
 	TYPE_INT     = 1
-	TYPE_FLOAT   = 2
-	TYPE_INT64   = 3
-	TYPE_STRING  = 4
+	TYPE_INT64   = 2
+	TYPE_FLOAT   = 3
+	TYPE_FLOAT64 = 4
+	TYPE_STRING  = 5
 )
 
 // 属性接口
@@ -201,6 +202,46 @@ func (f *FloatHolder) Read(reader io.Reader) (int, error) {
 	return 4, nil
 }
 
+type Float64Holder struct {
+	AttrHolder
+	data float64
+}
+
+func NewFloat64Holder(name string) Attr {
+	return &Float64Holder{
+		AttrHolder: AttrHolder{name: name},
+		data:       0,
+	}
+}
+
+func (f *Float64Holder) Type() int {
+	return TYPE_FLOAT64
+}
+
+func (f *Float64Holder) SetData(data float64) {
+	f.data = data
+}
+
+func (f *Float64Holder) Data() float64 {
+	return f.data
+}
+
+func (f *Float64Holder) Write(stream io.Writer) (int, error) {
+	err := binary.Write(stream, Endian, f.data)
+	if err != nil {
+		return 0, err
+	}
+	return 4, nil
+}
+
+func (f *Float64Holder) Read(reader io.Reader) (int, error) {
+	err := binary.Read(reader, Endian, &f.data)
+	if err != nil {
+		return 0, err
+	}
+	return 4, nil
+}
+
 type StringHolder struct {
 	AttrHolder
 	data string
@@ -258,6 +299,7 @@ func init() {
 	typeToObject[TYPE_UNKNOWN] = NewNoneHolder
 	typeToObject[TYPE_INT] = NewIntHolder
 	typeToObject[TYPE_FLOAT] = NewFloatHolder
+	typeToObject[TYPE_FLOAT64] = NewFloat64Holder
 	typeToObject[TYPE_INT64] = NewInt64Holder
 	typeToObject[TYPE_STRING] = NewStringHolder
 }
