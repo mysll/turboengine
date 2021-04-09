@@ -34,6 +34,9 @@ var server_entity_test string
 //go:embed service_main.tpl
 var server_main string
 
+//go:embed config.tpl
+var config string
+
 type ServiceInfo struct {
 	Pkg  string
 	Name string
@@ -79,9 +82,6 @@ func makeFile(tpl string, name, path, file string, data interface{}) {
 	cmd.Run()
 	fmt.Println("File created successfully! location: ", outfile)
 }
-
-//go:embed config.tpl
-var config string
 
 func saveConfig(name string, path string) {
 	tpl := fmt.Sprintf(config, name)
