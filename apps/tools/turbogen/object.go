@@ -2,11 +2,15 @@ package turbogen
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"reflect"
 	"strings"
+	"text/template"
 
 	_ "embed"
 
+	"github.com/mysll/toolkit"
 	"github.com/urfave/cli"
 )
 
@@ -22,6 +26,18 @@ type ObjectDesc struct {
 	Attrs   []AttrDecl
 }
 
+func getType(typ string) string {
+	switch typ {
+	case "string":
+		return "object.StringHolder"
+	default:
+		return "unknown"
+	}
+}
+
+//go:embed object.tpl
+var objectWarp string
+
 func ObjectWrap(s interface{}, pkgpath string, pkg string, path string) {
 	ctype := reflect.TypeOf(s)
 	count := ctype.Elem().NumField()
@@ -29,14 +45,43 @@ func ObjectWrap(s interface{}, pkgpath string, pkg string, path string) {
 	desc.PkgPath = pkgpath
 	desc.Pkg = pkg
 	desc.Name = ctype.Elem().Name()
-	desc.Attrs = make([]AttrDecl, count)
+	desc.Attrs = make([]AttrDecl, 0, count)
+	for i := 0; i < count; i++ {
+		m := ctype.Elem().Field(i)
+
+		decl := AttrDecl{}
+		decl.Name = m.Name
+		decl.ArgType = m.Type.Name()
+		desc.Attrs = append(desc.Attrs, decl)
+	}
+	t := template.Must(template.New(desc.Name).Funcs(template.FuncMap{
+		"tolower": strings.ToLower,
+		"getType": getType,
+	}).Parse(objectWarp))
+	outfile := path + "/" + strings.ToLower(desc.Name) + ".go"
+	if ok, _ := toolkit.PathExists(path); !ok {
+		err := os.MkdirAll(path, 0777)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	f, err := os.Create(outfile)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	err = t.Execute(f, desc)
+	if err != nil {
+		panic(err)
+	}
+
+	cmd := exec.Command("gofmt", "--w", outfile)
+	cmd.Run()
 }
 
 //go:embed entity.tpl
 var entityDesc string
-
-//go:embed object.tpl
-var objectWarp string
 
 func CreateEntity(c *cli.Context) error {
 	path := c.String("path")
