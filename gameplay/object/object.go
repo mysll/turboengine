@@ -23,6 +23,7 @@ type Object struct {
 	nameToIdx map[string]int
 	replicate bool
 	dirty     bool
+	silent    bool // 静默
 }
 
 func (o *Object) Id() ObjectId {
@@ -35,6 +36,14 @@ func (o *Object) Dirty() bool {
 
 func (o *Object) ClearDirty() {
 	o.dirty = false
+}
+
+func (o *Object) Silent() bool {
+	return o.silent
+}
+
+func (o *Object) SetSilent(s bool) {
+	o.silent = s
 }
 
 func (o *Object) AddAttr(attr Attr) (int, error) {

@@ -17,6 +17,8 @@ const (
 	TYPE_STRING  = 5
 )
 
+type OnChange func(int, interface{})
+
 // 属性接口
 type Attr interface {
 	Flag() int
@@ -28,12 +30,15 @@ type Attr interface {
 	Type() int
 	Write(stream io.Writer) (int, error)
 	Read(reader io.Reader) (int, error)
+	// 数据变动
+	Change(notify OnChange)
 }
 
 type AttrHolder struct {
-	name  string
-	index int
-	flag  int
+	name   string
+	index  int
+	flag   int
+	change OnChange
 }
 
 func (h *AttrHolder) Type() int {
@@ -62,6 +67,10 @@ func (h *AttrHolder) Index() int {
 
 func (h *AttrHolder) SetIndex(idx int) {
 	h.index = idx
+}
+
+func (h *AttrHolder) Change(change OnChange) {
+	h.change = change
 }
 
 type NoneHolder struct {
@@ -99,7 +108,11 @@ func (i *IntHolder) Type() int {
 }
 
 func (i *IntHolder) SetData(data int32) {
+	old := i.data
 	i.data = data
+	if i.change != nil {
+		i.change(i.index, old)
+	}
 }
 
 func (i *IntHolder) Data() int32 {
@@ -139,7 +152,11 @@ func (i *Int64Holder) Type() int {
 }
 
 func (i *Int64Holder) SetData(data int64) {
+	old := i.data
 	i.data = data
+	if i.change != nil {
+		i.change(i.index, old)
+	}
 }
 
 func (i *Int64Holder) Data() int64 {
@@ -179,7 +196,11 @@ func (f *FloatHolder) Type() int {
 }
 
 func (f *FloatHolder) SetData(data float32) {
+	old := f.data
 	f.data = data
+	if f.change != nil {
+		f.change(f.index, old)
+	}
 }
 
 func (f *FloatHolder) Data() float32 {
@@ -219,7 +240,11 @@ func (f *Float64Holder) Type() int {
 }
 
 func (f *Float64Holder) SetData(data float64) {
+	old := f.data
 	f.data = data
+	if f.change != nil {
+		f.change(f.index, old)
+	}
 }
 
 func (f *Float64Holder) Data() float64 {
@@ -254,33 +279,37 @@ func NewStringHolder(name string) *StringHolder {
 	}
 }
 
-func (f *StringHolder) Type() int {
+func (s *StringHolder) Type() int {
 	return TYPE_STRING
 }
 
-func (f *StringHolder) SetData(data string) {
-	f.data = data
+func (s *StringHolder) SetData(data string) {
+	old := s.data
+	s.data = data
+	if s.change != nil {
+		s.change(s.index, old)
+	}
 }
 
-func (f *StringHolder) Data() string {
-	return f.data
+func (s *StringHolder) Data() string {
+	return s.data
 }
 
-func (f *StringHolder) Write(stream io.Writer) (int, error) {
-	size := uint16(len(f.data))
+func (s *StringHolder) Write(stream io.Writer) (int, error) {
+	size := uint16(len(s.data))
 	binary.Write(stream, Endian, size)
-	err := binary.Write(stream, Endian, f.data)
+	err := binary.Write(stream, Endian, s.data)
 	if err != nil {
 		return 0, err
 	}
 	return int(size) + 2, nil
 }
 
-func (f *StringHolder) Read(reader io.Reader) (int, error) {
+func (s *StringHolder) Read(reader io.Reader) (int, error) {
 	var size uint16
 	binary.Read(reader, Endian, &size)
 	if size == 0 {
-		f.data = ""
+		s.data = ""
 		return 0, nil
 	}
 	buf := make([]byte, size)
@@ -291,7 +320,7 @@ func (f *StringHolder) Read(reader io.Reader) (int, error) {
 	if size != uint16(n) {
 		return 0, fmt.Errorf("size not match")
 	}
-	f.data = string(buf)
+	s.data = string(buf)
 	return int(size) + 2, nil
 }
 
