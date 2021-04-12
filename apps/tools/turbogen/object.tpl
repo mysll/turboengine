@@ -28,7 +28,15 @@ func ({{$obj}} *{{$.Name}}) {{.Name}}() {{.ArgType}} {
 	return {{$obj}}.{{tolower .Name}}.Data()
 }
 
+func ({{$obj}} *{{$.Name}}) {{.Name}}Index() int {
+    return {{$obj}}.{{tolower .Name}}.Index()
+}
+
 func ({{$obj}} *{{$.Name}}) Set{{.Name}}(v {{.ArgType}}) {
 	{{$obj}}.{{tolower .Name}}.SetData(v)
 } 
+
+func ({{$obj}} *{{$.Name}}) {{.Name}}Change(change object.OnChange) {
+    {{$obj}}.Change({{$obj}}.{{tolower .Name}}.Index(), change)
+}
 {{end}}

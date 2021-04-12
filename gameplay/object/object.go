@@ -114,8 +114,11 @@ func (o *Object) ClearChange(index int) {
 }
 
 func (o *Object) onChange(index int, val interface{}) {
+	if o.silent {
+		return
+	}
 	if index >= 0 && index < len(o.attrs) {
-		if o.attrs[index].FlagSet(OBJECT_CHANGING) {
+		if o.attrs[index].HasFlag(OBJECT_CHANGING) {
 			return
 		}
 		o.attrs[index].SetFlag(OBJECT_CHANGING)

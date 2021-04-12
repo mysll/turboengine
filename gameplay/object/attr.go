@@ -25,7 +25,7 @@ type Attr interface {
 	SetFlag(f int)
 	ClearFlag(f int)
 	// 是否存在标志位
-	FlagSet(flag int) bool
+	HasFlag(flag int) bool
 	Name() string
 	Index() int
 	SetIndex(int)
@@ -55,7 +55,7 @@ func (h *AttrHolder) SetFlag(f int) {
 	h.flag |= f
 }
 
-func (h *AttrHolder) FlagSet(flag int) bool {
+func (h *AttrHolder) HasFlag(flag int) bool {
 	return h.flag&flag != 0
 }
 
