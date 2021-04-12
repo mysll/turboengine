@@ -12,10 +12,12 @@ func New{{.Name}}() *{{.Name}} {
         {{range .Attrs}}{{tolower .Name}}: {{create .ArgType}}("{{.Name}}"),
         {{end}}
     }
-    {{range .Attrs}}{{$pri := "0"}}{{if eq .Save true}}{{$pri = (printf "%s|%s" $pri "object.OBJECT_SAVE")}}{{end}}{{if eq .Public true}}{{$pri = (printf "%s|%s" $pri "object.OBJECT_PUBLIC")}}{{end}}{{if eq .Private true}}{{$pri = (printf "%s|%s" $pri "object.OBJECT_PRIVATE")}}{{end}}
-    {{$obj}}.{{tolower .Name}}.SetFlag({{$pri}})
-    {{$obj}}.AddAttr({{$obj}}.{{tolower .Name}})
-    {{end}}
+    {{range .Attrs}}{{$pri := "0"}}{{if eq .Save true}}{{$pri = (printf "%s|%s" $pri "object.OBJECT_SAVE")}}{{end}}
+    {{if eq .Public true}}{{$pri = (printf "%s|%s" $pri "object.OBJECT_PUBLIC")}}{{end}}
+    {{if eq .Private true}}{{$pri = (printf "%s|%s" $pri "object.OBJECT_PRIVATE")}}{{end}}
+    {{if eq .Realtime true}}{{$pri = (printf "%s|%s" $pri "object.OBJECT_REALTIME")}}{{end}}
+    {{if ne $pri "0"}}{{$obj}}.{{tolower .Name}}.SetFlag({{$pri}}){{end}}
+    {{$obj}}.AddAttr({{$obj}}.{{tolower .Name}}){{end}}
     return {{$obj}}
 }
 

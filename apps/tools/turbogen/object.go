@@ -15,11 +15,12 @@ import (
 )
 
 type AttrDecl struct {
-	Name    string
-	ArgType string
-	Save    bool
-	Public  bool
-	Private bool
+	Name     string
+	ArgType  string
+	Save     bool
+	Public   bool
+	Private  bool
+	Realtime bool
 }
 
 type ObjectDesc struct {
@@ -106,6 +107,8 @@ func ObjectWrap(s interface{}, pkgpath string, pkg string, path string) {
 					decl.Public = true
 				case "private":
 					decl.Private = true
+				case "realtime":
+					decl.Realtime = true
 				}
 
 			}

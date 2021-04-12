@@ -9,6 +9,7 @@ const (
 	OBJECT_SAVE
 	OBJECT_PUBLIC
 	OBJECT_PRIVATE
+	OBJECT_REALTIME
 )
 
 var typeToObject = make(map[int]func(string) Attr)
