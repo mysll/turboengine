@@ -10,6 +10,8 @@ const (
 	OBJECT_PUBLIC
 	OBJECT_PRIVATE
 	OBJECT_REALTIME
+	OBJECT_CHANGE
+	OBJECT_CHANGING
 )
 
 var typeToObject = make(map[int]func(string) Attr)
@@ -24,6 +26,15 @@ type Object struct {
 	replicate bool
 	dirty     bool
 	silent    bool // 静默
+	inited    bool
+	change    []OnChange
+}
+
+func (o *Object) Init() {
+	if o.inited {
+		return
+	}
+	o.change = make([]OnChange, len(o.attrs))
 }
 
 func (o *Object) Id() ObjectId {
@@ -78,4 +89,33 @@ func (o *Object) GetAttrByName(name string) Attr {
 		return o.attrs[index]
 	}
 	return nil
+}
+
+func (o *Object) Change(index int, change OnChange) {
+	if index > 0 && index < len(o.attrs) {
+		o.attrs[index].Change(o.onChange)
+		o.change[index] = change
+		o.attrs[index].SetFlag(OBJECT_CHANGE)
+	}
+}
+
+func (o *Object) ClearChange(index int) {
+	if index > 0 && index < len(o.attrs) {
+		o.attrs[index].Change(nil)
+		o.change[index] = nil
+		o.attrs[index].ClearFlag(OBJECT_CHANGE)
+	}
+}
+
+func (o *Object) onChange(index int, val interface{}) {
+	if index > 0 && index < len(o.attrs) {
+		if o.attrs[index].FlagSet(OBJECT_CHANGING) {
+			return
+		}
+		o.attrs[index].SetFlag(OBJECT_CHANGING)
+		if o.change[index] != nil {
+			o.change[index](index, val)
+		}
+		o.attrs[index].ClearFlag(OBJECT_CHANGING)
+	}
 }
