@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"turboengine/common/utils"
 )
 
 var Endian = binary.LittleEndian
@@ -113,12 +114,16 @@ func (i *IntHolder) Type() int {
 	return TYPE_INT
 }
 
-func (i *IntHolder) SetData(data int32) {
+func (i *IntHolder) SetData(data int32) bool {
+	if i.data == data {
+		return false
+	}
 	old := i.data
 	i.data = data
 	if i.change != nil {
 		i.change(i.index, old)
 	}
+	return i.data != old
 }
 
 func (i *IntHolder) Data() int32 {
@@ -157,12 +162,16 @@ func (i *Int64Holder) Type() int {
 	return TYPE_INT64
 }
 
-func (i *Int64Holder) SetData(data int64) {
+func (i *Int64Holder) SetData(data int64) bool {
+	if i.data == data {
+		return false
+	}
 	old := i.data
 	i.data = data
 	if i.change != nil {
 		i.change(i.index, old)
 	}
+	return i.data != old
 }
 
 func (i *Int64Holder) Data() int64 {
@@ -201,12 +210,16 @@ func (f *FloatHolder) Type() int {
 	return TYPE_FLOAT
 }
 
-func (f *FloatHolder) SetData(data float32) {
+func (f *FloatHolder) SetData(data float32) bool {
+	if utils.IsEqual(float64(f.data), float64(data)) {
+		return false
+	}
 	old := f.data
 	f.data = data
 	if f.change != nil {
 		f.change(f.index, old)
 	}
+	return !utils.IsEqual(float64(f.data), float64(old))
 }
 
 func (f *FloatHolder) Data() float32 {
@@ -245,12 +258,16 @@ func (f *Float64Holder) Type() int {
 	return TYPE_FLOAT64
 }
 
-func (f *Float64Holder) SetData(data float64) {
+func (f *Float64Holder) SetData(data float64) bool {
+	if utils.IsEqual(f.data, data) {
+		return false
+	}
 	old := f.data
 	f.data = data
 	if f.change != nil {
 		f.change(f.index, old)
 	}
+	return !utils.IsEqual(f.data, old)
 }
 
 func (f *Float64Holder) Data() float64 {
@@ -289,12 +306,16 @@ func (s *StringHolder) Type() int {
 	return TYPE_STRING
 }
 
-func (s *StringHolder) SetData(data string) {
+func (s *StringHolder) SetData(data string) bool {
+	if s.data == data {
+		return false
+	}
 	old := s.data
 	s.data = data
 	if s.change != nil {
 		s.change(s.index, old)
 	}
+	return s.data != old
 }
 
 func (s *StringHolder) Data() string {

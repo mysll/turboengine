@@ -1,6 +1,9 @@
 package utils
 
-import "hash/fnv"
+import (
+	"hash/fnv"
+	"math"
+)
 
 func Hash32(s string) uint32 {
 	h := fnv.New32a()
@@ -16,4 +19,11 @@ func Hash64(s string) uint64 {
 
 func IsPowerOfTwo(number int) bool {
 	return (number & (number - 1)) == 0
+}
+
+const MIN = 0.000001
+
+// MIN 为用户自定义的比较精度
+func IsEqual(f1, f2 float64) bool {
+	return math.Dim(f1, f2) < MIN
 }

@@ -33,10 +33,13 @@ func ({{$obj}} *{{$.Name}}) {{.Name}}Index() int {
 }
 
 func ({{$obj}} *{{$.Name}}) Set{{.Name}}(v {{.ArgType}}) {
-	{{$obj}}.{{tolower .Name}}.SetData(v)
+    {{if eq .Save true}}	    if {{$obj}}.{{tolower .Name}}.SetData(v) {
+        {{$obj}}.SetDirty()
+    } {{else}}
+    {{$obj}}.{{tolower .Name}}.SetData(v){{end}}
 } 
 
-func ({{$obj}} *{{$.Name}}) {{.Name}}Change(change object.OnChange) {
-    {{$obj}}.Change({{$obj}}.{{tolower .Name}}.Index(), change)
+func ({{$obj}} *{{$.Name}}) {{.Name}}Change(callback object.OnChange) {
+    {{$obj}}.Change({{$obj}}.{{tolower .Name}}.Index(), callback)
 }
 {{end}}

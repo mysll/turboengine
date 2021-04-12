@@ -51,6 +51,10 @@ func (o *Object) Dirty() bool {
 	return o.dirty
 }
 
+func (o *Object) SetDirty() {
+	o.dirty = true
+}
+
 func (o *Object) ClearDirty() {
 	o.dirty = false
 }
@@ -61,6 +65,10 @@ func (o *Object) Silent() bool {
 
 func (o *Object) SetSilent(s bool) {
 	o.silent = s
+}
+
+func (o *Object) AttrCount() int {
+	return len(o.attrs)
 }
 
 func (o *Object) AddAttr(attr Attr) (int, error) {
