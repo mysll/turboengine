@@ -17,6 +17,9 @@ import (
 type AttrDecl struct {
 	Name    string
 	ArgType string
+	Save    bool
+	Public  bool
+	Private bool
 }
 
 type ObjectDesc struct {
@@ -90,10 +93,24 @@ func ObjectWrap(s interface{}, pkgpath string, pkg string, path string) {
 	desc.Attrs = make([]AttrDecl, 0, count)
 	for i := 0; i < count; i++ {
 		m := ctype.Elem().Field(i)
-
 		decl := AttrDecl{}
 		decl.Name = m.Name
 		decl.ArgType = m.Type.Name()
+		if value, ok := m.Tag.Lookup("attr"); ok {
+			values := strings.Split(value, ",")
+			for _, v := range values {
+				switch v {
+				case "save":
+					decl.Save = true
+				case "public":
+					decl.Public = true
+				case "private":
+					decl.Private = true
+				}
+
+			}
+		}
+
 		desc.Attrs = append(desc.Attrs, decl)
 	}
 	t := template.Must(template.New(desc.Name).Funcs(template.FuncMap{

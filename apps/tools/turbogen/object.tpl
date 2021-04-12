@@ -12,7 +12,9 @@ func New{{.Name}}() *{{.Name}} {
         {{range .Attrs}}{{tolower .Name}}: {{create .ArgType}}("{{.Name}}"),
         {{end}}
     }
-    {{range .Attrs}}{{$obj}}.AddAttr({{$obj}}.{{tolower .Name}})
+    {{range .Attrs}}{{$pri := "0"}}{{if eq .Save true}}{{$pri = (printf "%s|%s" $pri "object.OBJECT_SAVE")}}{{end}}{{if eq .Public true}}{{$pri = (printf "%s|%s" $pri "object.OBJECT_PUBLIC")}}{{end}}{{if eq .Private true}}{{$pri = (printf "%s|%s" $pri "object.OBJECT_PRIVATE")}}{{end}}
+    {{$obj}}.{{tolower .Name}}.SetFlag({{$pri}})
+    {{$obj}}.AddAttr({{$obj}}.{{tolower .Name}})
     {{end}}
     return {{$obj}}
 }

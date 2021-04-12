@@ -4,6 +4,13 @@ import (
 	"fmt"
 )
 
+const (
+	OBJECT_NONE = iota
+	OBJECT_SAVE
+	OBJECT_PUBLIC
+	OBJECT_PRIVATE
+)
+
 var typeToObject = make(map[int]func(string) Attr)
 
 type ObjectId uint64
