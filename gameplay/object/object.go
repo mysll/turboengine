@@ -5,13 +5,13 @@ import (
 )
 
 const (
-	OBJECT_NONE = iota
-	OBJECT_SAVE
-	OBJECT_PUBLIC
-	OBJECT_PRIVATE
-	OBJECT_REALTIME
-	OBJECT_CHANGE
-	OBJECT_CHANGING
+	OBJECT_NONE     = 0
+	OBJECT_SAVE     = 1
+	OBJECT_PUBLIC   = 1 << 1
+	OBJECT_PRIVATE  = 1 << 2
+	OBJECT_REALTIME = 1 << 3
+	OBJECT_CHANGE   = 1 << 4
+	OBJECT_CHANGING = 1 << 5
 )
 
 var typeToObject = make(map[int]func(string) Attr)
@@ -30,11 +30,17 @@ type Object struct {
 	change    []OnChange
 }
 
+func (o *Object) New(cap int) {
+	o.attrs = make([]Attr, 0, cap)
+	o.nameToIdx = make(map[string]int, cap)
+	o.change = make([]OnChange, cap)
+}
+
 func (o *Object) Init() {
 	if o.inited {
 		return
 	}
-	o.change = make([]OnChange, len(o.attrs))
+	o.inited = true
 }
 
 func (o *Object) Id() ObjectId {
@@ -78,7 +84,7 @@ func (o *Object) AddAttrByType(name string, typ int) (int, error) {
 }
 
 func (o *Object) GetAttr(index int) Attr {
-	if index > 0 && index < len(o.attrs) {
+	if index >= 0 && index < len(o.attrs) {
 		return o.attrs[index]
 	}
 	return nil
@@ -92,7 +98,7 @@ func (o *Object) GetAttrByName(name string) Attr {
 }
 
 func (o *Object) Change(index int, change OnChange) {
-	if index > 0 && index < len(o.attrs) {
+	if index >= 0 && index < len(o.attrs) {
 		o.attrs[index].Change(o.onChange)
 		o.change[index] = change
 		o.attrs[index].SetFlag(OBJECT_CHANGE)
@@ -100,7 +106,7 @@ func (o *Object) Change(index int, change OnChange) {
 }
 
 func (o *Object) ClearChange(index int) {
-	if index > 0 && index < len(o.attrs) {
+	if index >= 0 && index < len(o.attrs) {
 		o.attrs[index].Change(nil)
 		o.change[index] = nil
 		o.attrs[index].ClearFlag(OBJECT_CHANGE)
@@ -108,7 +114,7 @@ func (o *Object) ClearChange(index int) {
 }
 
 func (o *Object) onChange(index int, val interface{}) {
-	if index > 0 && index < len(o.attrs) {
+	if index >= 0 && index < len(o.attrs) {
 		if o.attrs[index].FlagSet(OBJECT_CHANGING) {
 			return
 		}
