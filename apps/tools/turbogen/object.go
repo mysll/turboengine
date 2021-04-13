@@ -63,29 +63,6 @@ func getType(typ string) string {
 	}
 }
 
-func getTypeEnum(typ string) string {
-	switch typ {
-	case "string":
-		return "object.TYPE_STRING"
-	case "float32":
-		return "object.TYPE_FLOAT"
-	case "float64":
-		return "object.TYPE_FLOAT64"
-	case "int32":
-		return "object.TYPE_INT"
-	case "int64":
-		return "object.TYPE_INT64"
-	case "Vec2":
-		return "object.TYPE_VECTOR2"
-	case "Vec3":
-		return "object.TYPE_VECTOR3"
-	case "[]uint8":
-		return "object.TYPE_BYTES"
-	default:
-		return "object.TYPE_UNKNOWN"
-	}
-}
-
 func getTypeCreate(typ string) string {
 	switch typ {
 	case "string":
@@ -150,11 +127,10 @@ func ObjectWrap(s interface{}, pkgpath string, pkg string, path string) {
 		desc.Attrs = append(desc.Attrs, decl)
 	}
 	t := template.Must(template.New(desc.Name).Funcs(template.FuncMap{
-		"tolower":     strings.ToLower,
-		"getType":     getType,
-		"getTypeEnum": getTypeEnum,
-		"create":      getTypeCreate,
-		"alias":       getTypeAlias,
+		"tolower": strings.ToLower,
+		"getType": getType,
+		"create":  getTypeCreate,
+		"alias":   getTypeAlias,
 	}).Parse(objectWarp))
 	outfile := path + "/" + strings.ToLower(desc.Name) + ".go"
 	if ok, _ := toolkit.PathExists(path); !ok {
