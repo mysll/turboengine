@@ -36,16 +36,17 @@ type Object struct {
 	holder    interface{}
 }
 
-func (o *Object) New(cap int) {
+func (o *Object) new(cap int) {
 	o.attrs = make([]Attr, 0, cap)
 	o.nameToIdx = make(map[string]int, cap)
 	o.change = NewChangeEvent(cap)
 }
 
-func (o *Object) Init(self interface{}) {
+func (o *Object) Init(self interface{}, cap int) {
 	if o.inited {
 		return
 	}
+	o.new(cap)
 	o.holder = self
 	o.inited = true
 }
