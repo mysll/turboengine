@@ -42,7 +42,7 @@ func (o *Object) new(cap int) {
 	o.change = NewChangeEvent(cap)
 }
 
-func (o *Object) Init(self interface{}, cap int) {
+func (o *Object) InitOnce(self interface{}, cap int) {
 	if o.inited {
 		return
 	}
