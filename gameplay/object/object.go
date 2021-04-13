@@ -30,21 +30,23 @@ type Object struct {
 	dirty     bool
 	silent    bool // 静默
 	inited    bool
-	change    []OnChange
+	change    *ChangeEvent
 	pubDirty  bool
 	priDirty  bool
+	holder    interface{}
 }
 
 func (o *Object) New(cap int) {
 	o.attrs = make([]Attr, 0, cap)
 	o.nameToIdx = make(map[string]int, cap)
-	o.change = make([]OnChange, cap)
+	o.change = NewChangeEvent(cap)
 }
 
-func (o *Object) Init() {
+func (o *Object) Init(self interface{}) {
 	if o.inited {
 		return
 	}
+	o.holder = self
 	o.inited = true
 }
 
@@ -137,15 +139,24 @@ func (o *Object) GetAttrByName(name string) Attr {
 func (o *Object) Change(index int, change OnChange) {
 	if index >= 0 && index < len(o.attrs) {
 		o.attrs[index].Change(o.onChange)
-		o.change[index] = change
+		o.change.add(index, change)
 		o.attrs[index].SetFlag(OBJECT_CHANGE)
+	}
+}
+
+func (o *Object) RemoveChange(index int, change OnChange) {
+	if index >= 0 && index < len(o.attrs) {
+		o.change.remove(index, change)
+		if !o.change.hasEvent(index) {
+			o.attrs[index].ClearFlag(OBJECT_CHANGE)
+		}
 	}
 }
 
 func (o *Object) ClearChange(index int) {
 	if index >= 0 && index < len(o.attrs) {
 		o.attrs[index].Change(nil)
-		o.change[index] = nil
+		o.change.clear(index)
 		o.attrs[index].ClearFlag(OBJECT_CHANGE)
 	}
 }
@@ -159,9 +170,7 @@ func (o *Object) onChange(index int, val interface{}) {
 			return
 		}
 		o.attrs[index].SetFlag(OBJECT_CHANGING)
-		if o.change[index] != nil {
-			o.change[index](index, val)
-		}
+		o.change.emit(o.holder, index, val)
 		o.attrs[index].ClearFlag(OBJECT_CHANGING)
 	}
 }
