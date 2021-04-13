@@ -30,6 +30,13 @@ type ObjectDesc struct {
 	Attrs   []AttrDecl
 }
 
+func getTypeAlias(typ string) string {
+	if typ == "Vec2" || typ == "Vec3" {
+		return "object." + typ
+	}
+	return typ
+}
+
 func getType(typ string) string {
 	switch typ {
 	case "string":
@@ -42,6 +49,8 @@ func getType(typ string) string {
 		return "object.IntHolder"
 	case "int64":
 		return "object.Int64Holder"
+	case "Vec2":
+		return "object.Vector2Holder"
 	default:
 		return "unknown"
 	}
@@ -59,6 +68,8 @@ func getTypeEnum(typ string) string {
 		return "object.TYPE_INT"
 	case "int64":
 		return "object.TYPE_INT64"
+	case "Vec2":
+		return "object.TYPE_VECTOR2"
 	default:
 		return "object.TYPE_UNKNOWN"
 	}
@@ -76,6 +87,8 @@ func getTypeCreate(typ string) string {
 		return "object.NewIntHolder"
 	case "int64":
 		return "object.NewInt64Holder"
+	case "Vec2":
+		return "object.NewVector2Holder"
 	default:
 		return "object.NewNoneHolder"
 	}
@@ -121,6 +134,7 @@ func ObjectWrap(s interface{}, pkgpath string, pkg string, path string) {
 		"getType":     getType,
 		"getTypeEnum": getTypeEnum,
 		"create":      getTypeCreate,
+		"alias":       getTypeAlias,
 	}).Parse(objectWarp))
 	outfile := path + "/" + strings.ToLower(desc.Name) + ".go"
 	if ok, _ := toolkit.PathExists(path); !ok {

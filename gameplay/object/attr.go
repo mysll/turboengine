@@ -20,6 +20,7 @@ const (
 	TYPE_VECTOR3 = 7
 )
 
+type Vec2 [2]float64
 type OnChange func(int, interface{})
 
 // 属性接口
@@ -408,7 +409,7 @@ func (s *StringHolder) Equal(other Attr) bool {
 
 type Vector2Holder struct {
 	AttrHolder
-	data [2]float64
+	data Vec2
 }
 
 func NewVector2Holder(name string) *Vector2Holder {
@@ -421,7 +422,7 @@ func (v *Vector2Holder) Type() int {
 	return TYPE_VECTOR2
 }
 
-func (v *Vector2Holder) SetData(val [2]float64) bool {
+func (v *Vector2Holder) SetData(val Vec2) bool {
 	if utils.IsEqual(v.data[0], val[0]) && utils.IsEqual(v.data[1], val[1]) {
 		return false
 	}
@@ -438,7 +439,7 @@ func (v *Vector2Holder) SetData(val [2]float64) bool {
 	return true
 }
 
-func (v *Vector2Holder) Data() [2]float64 {
+func (v *Vector2Holder) Data() Vec2 {
 	return v.data
 }
 

@@ -24,7 +24,7 @@ func New{{.Name}}() *{{.Name}} {
 }
 
 {{range .Attrs}}
-func ({{$obj}} *{{$.Name}}) {{.Name}}() {{.ArgType}} {
+func ({{$obj}} *{{$.Name}}) {{.Name}}() {{alias .ArgType}} {
 	return {{$obj}}.{{tolower .Name}}.Data()
 }
 
@@ -32,7 +32,7 @@ func ({{$obj}} *{{$.Name}}) {{.Name}}Index() int {
     return {{$obj}}.{{tolower .Name}}.Index()
 }
 
-func ({{$obj}} *{{$.Name}}) Set{{.Name}}(v {{.ArgType}}) {
+func ({{$obj}} *{{$.Name}}) Set{{.Name}}(v {{alias .ArgType}}) {
     {{if or (or (eq .Save true) (eq .Public true)) (eq .Private true)}}if {{$obj}}.{{tolower .Name}}.SetData(v) {
         {{if eq .Save true}}{{$obj}}.SetDirty()
         {{$obj}}.{{tolower .Name}}.SetFlag(object.OBJECT_DIRTY)
