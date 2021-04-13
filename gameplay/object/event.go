@@ -20,6 +20,10 @@ func NewEventCallback(cb OnChange) *EventCallback {
 	}
 }
 
+func (e *EventCallback) Equal(cb OnChange) bool {
+	return e.ptr == reflect.ValueOf(cb).Pointer()
+}
+
 type ChangeEvent struct {
 	cb []*EventCallback
 }
@@ -47,6 +51,32 @@ func (c *ChangeEvent) add(index int, cb OnChange) error {
 		}
 		e = e.next
 	}
+}
+
+func (c *ChangeEvent) remove(index int, cb OnChange) error {
+	if index < 0 || index > len(c.cb) {
+		return fmt.Errorf("index error, get %d", index)
+	}
+
+	e := c.cb[index]
+	if e.Equal(cb) {
+		c.cb[index] = e.next
+		return nil
+	}
+	pre := e
+	e = e.next
+	for ; e != nil; e = e.next {
+		if e.Equal(cb) {
+			pre.next = e.next
+			break
+		}
+		pre = e
+	}
+	return nil
+}
+
+func (c *ChangeEvent) clear(index int) {
+	c.cb[index] = nil
 }
 
 func (c *ChangeEvent) emit(index int, val interface{}) error {
