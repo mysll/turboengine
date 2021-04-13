@@ -5,13 +5,16 @@ import (
 )
 
 const (
-	OBJECT_NONE     = 0
-	OBJECT_SAVE     = 1
-	OBJECT_PUBLIC   = 1 << 1
-	OBJECT_PRIVATE  = 1 << 2
-	OBJECT_REALTIME = 1 << 3
-	OBJECT_CHANGE   = 1 << 4
-	OBJECT_CHANGING = 1 << 5
+	OBJECT_NONE          = 0
+	OBJECT_SAVE          = 1
+	OBJECT_PUBLIC        = 1 << 1
+	OBJECT_PRIVATE       = 1 << 2
+	OBJECT_REALTIME      = 1 << 3
+	OBJECT_CHANGE        = 1 << 4
+	OBJECT_CHANGING      = 1 << 5
+	OBJECT_DIRTY         = 1 << 6
+	OBJECT_PUBLIC_DIRTY  = 1 << 7
+	OBJECT_PRIVATE_DIRTY = 1 << 8
 )
 
 var typeToObject = make(map[int]func(string) Attr)
@@ -28,6 +31,8 @@ type Object struct {
 	silent    bool // 静默
 	inited    bool
 	change    []OnChange
+	pubDirty  bool
+	priDirty  bool
 }
 
 func (o *Object) New(cap int) {
@@ -57,6 +62,30 @@ func (o *Object) SetDirty() {
 
 func (o *Object) ClearDirty() {
 	o.dirty = false
+}
+
+func (o *Object) PublicDirty() bool {
+	return o.pubDirty
+}
+
+func (o *Object) SetPublicDirty() {
+	o.pubDirty = true
+}
+
+func (o *Object) ClearPublicDirty() {
+	o.pubDirty = false
+}
+
+func (o *Object) PrivateDirty() bool {
+	return o.priDirty
+}
+
+func (o *Object) SetPrivateDirty() {
+	o.priDirty = true
+}
+
+func (o *Object) ClearPrivateDirty() {
+	o.priDirty = false
 }
 
 func (o *Object) Silent() bool {

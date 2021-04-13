@@ -33,10 +33,13 @@ func ({{$obj}} *{{$.Name}}) {{.Name}}Index() int {
 }
 
 func ({{$obj}} *{{$.Name}}) Set{{.Name}}(v {{.ArgType}}) {
-    {{if eq .Save true}}	    if {{$obj}}.{{tolower .Name}}.SetData(v) {
-        {{$obj}}.SetDirty()
-    } {{else}}
-    {{$obj}}.{{tolower .Name}}.SetData(v){{end}}
+    {{if or (or (eq .Save true) (eq .Public true)) (eq .Private true)}}if {{$obj}}.{{tolower .Name}}.SetData(v) {
+        {{if eq .Save true}}{{$obj}}.SetDirty()
+        {{$obj}}.{{tolower .Name}}.SetFlag(object.OBJECT_DIRTY)
+        {{end}}{{if eq .Public true}}{{$obj}}.SetPublicDirty()
+        {{$obj}}.{{tolower .Name}}.SetFlag(object.OBJECT_PUBLIC_DIRTY)
+        {{end}}{{if eq .Private true}}{{$obj}}.SetPrivateDirty()
+        {{$obj}}.{{tolower .Name}}.SetFlag(object.OBJECT_PRIVATE_DIRTY){{end}} } {{else}}{{$obj}}.{{tolower .Name}}.SetData(v){{end}}
 } 
 
 func ({{$obj}} *{{$.Name}}) {{.Name}}Change(callback object.OnChange) {
