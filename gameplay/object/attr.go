@@ -4,7 +4,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"turboengine/common/utils"
+
+	"github.com/mysll/toolkit"
 )
 
 var Endian = binary.LittleEndian
@@ -270,7 +271,7 @@ func (f *FloatHolder) Type() int {
 }
 
 func (f *FloatHolder) SetData(data float32) bool {
-	if utils.IsEqual(float64(f.data), float64(data)) {
+	if toolkit.IsEqual32(f.data, data) {
 		return false
 	}
 	old := f.data
@@ -278,7 +279,7 @@ func (f *FloatHolder) SetData(data float32) bool {
 	if f.change != nil {
 		f.change(f.index, old)
 	}
-	return !utils.IsEqual(float64(f.data), float64(old))
+	return !toolkit.IsEqual32(f.data, old)
 }
 
 func (f *FloatHolder) Data() float32 {
@@ -304,7 +305,7 @@ func (f *FloatHolder) Read(reader io.Reader) (int, error) {
 func (f *FloatHolder) Equal(other Attr) bool {
 	if other.Type() == f.Type() {
 		if o, ok := other.(*FloatHolder); ok {
-			return utils.IsEqual(float64(f.data), float64(o.data))
+			return toolkit.IsEqual32(f.data, o.data)
 		}
 	}
 	return false
@@ -327,7 +328,7 @@ func (f *Float64Holder) Type() int {
 }
 
 func (f *Float64Holder) SetData(data float64) bool {
-	if utils.IsEqual(f.data, data) {
+	if toolkit.IsEqual64(f.data, data) {
 		return false
 	}
 	old := f.data
@@ -335,7 +336,7 @@ func (f *Float64Holder) SetData(data float64) bool {
 	if f.change != nil {
 		f.change(f.index, old)
 	}
-	return !utils.IsEqual(f.data, old)
+	return !toolkit.IsEqual64(f.data, old)
 }
 
 func (f *Float64Holder) Data() float64 {
@@ -361,7 +362,7 @@ func (f *Float64Holder) Read(reader io.Reader) (int, error) {
 func (f *Float64Holder) Equal(other Attr) bool {
 	if other.Type() == f.Type() {
 		if o, ok := other.(*Float64Holder); ok {
-			return utils.IsEqual(f.data, o.data)
+			return toolkit.IsEqual64(f.data, o.data)
 		}
 	}
 	return false
@@ -453,7 +454,7 @@ func (v *Vector2Holder) Type() int {
 }
 
 func (v *Vector2Holder) SetData(val Vec2) bool {
-	if utils.IsEqual(v.data[0], val[0]) && utils.IsEqual(v.data[1], val[1]) {
+	if toolkit.IsEqual64(v.data[0], val[0]) && toolkit.IsEqual64(v.data[1], val[1]) {
 		return false
 	}
 	old := v.data
@@ -463,7 +464,7 @@ func (v *Vector2Holder) SetData(val Vec2) bool {
 		v.change(v.index, old)
 	}
 
-	if utils.IsEqual(v.data[0], old[0]) && utils.IsEqual(v.data[1], old[1]) {
+	if toolkit.IsEqual64(v.data[0], old[0]) && toolkit.IsEqual64(v.data[1], old[1]) {
 		return false
 	}
 	return true
@@ -492,7 +493,7 @@ func (v *Vector2Holder) Read(reader io.Reader) (int, error) {
 func (v *Vector2Holder) Equal(other Attr) bool {
 	if other.Type() == v.Type() {
 		if o, ok := other.(*Vector2Holder); ok {
-			return utils.IsEqual(v.data[0], o.data[0]) && utils.IsEqual(v.data[1], o.data[1])
+			return toolkit.IsEqual64(v.data[0], o.data[0]) && toolkit.IsEqual64(v.data[1], o.data[1])
 		}
 	}
 	return false
@@ -514,9 +515,9 @@ func (v *Vector3Holder) Type() int {
 }
 
 func (v *Vector3Holder) SetData(val Vec3) bool {
-	if utils.IsEqual(v.data[0], val[0]) &&
-		utils.IsEqual(v.data[1], val[1]) &&
-		utils.IsEqual(v.data[2], val[2]) {
+	if toolkit.IsEqual64(v.data[0], val[0]) &&
+		toolkit.IsEqual64(v.data[1], val[1]) &&
+		toolkit.IsEqual64(v.data[2], val[2]) {
 		return false
 	}
 	old := v.data
@@ -526,9 +527,9 @@ func (v *Vector3Holder) SetData(val Vec3) bool {
 		v.change(v.index, old)
 	}
 
-	if utils.IsEqual(v.data[0], old[0]) &&
-		utils.IsEqual(v.data[1], old[1]) &&
-		utils.IsEqual(v.data[2], val[2]) {
+	if toolkit.IsEqual64(v.data[0], old[0]) &&
+		toolkit.IsEqual64(v.data[1], old[1]) &&
+		toolkit.IsEqual64(v.data[2], val[2]) {
 		return false
 	}
 	return true
@@ -557,9 +558,9 @@ func (v *Vector3Holder) Read(reader io.Reader) (int, error) {
 func (v *Vector3Holder) Equal(other Attr) bool {
 	if other.Type() == v.Type() {
 		if o, ok := other.(*Vector3Holder); ok {
-			return utils.IsEqual(v.data[0], o.data[0]) &&
-				utils.IsEqual(v.data[1], o.data[1]) &&
-				utils.IsEqual(v.data[2], o.data[2])
+			return toolkit.IsEqual64(v.data[0], o.data[0]) &&
+				toolkit.IsEqual64(v.data[1], o.data[1]) &&
+				toolkit.IsEqual64(v.data[2], o.data[2])
 		}
 	}
 	return false

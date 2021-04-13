@@ -2,7 +2,6 @@ package utils
 
 import (
 	"hash/fnv"
-	"math"
 )
 
 func Hash32(s string) uint32 {
@@ -19,10 +18,4 @@ func Hash64(s string) uint64 {
 
 func IsPowerOfTwo(number int) bool {
 	return (number & (number - 1)) == 0
-}
-
-const MIN = 0.000001
-
-func IsEqual(f1, f2 float64) bool {
-	return math.Abs(f1-f2) < MIN
 }
