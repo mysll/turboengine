@@ -21,6 +21,7 @@ const (
 )
 
 type Vec2 [2]float64
+type Vec3 [3]float64
 type OnChange func(int, interface{})
 
 // 属性接口
@@ -468,6 +469,73 @@ func (v *Vector2Holder) Equal(other Attr) bool {
 	return false
 }
 
+type Vector3Holder struct {
+	AttrHolder
+	data Vec3
+}
+
+func NewVector3Holder(name string) *Vector3Holder {
+	return &Vector3Holder{
+		AttrHolder: AttrHolder{name: name},
+	}
+}
+
+func (v *Vector3Holder) Type() int {
+	return TYPE_VECTOR3
+}
+
+func (v *Vector3Holder) SetData(val Vec3) bool {
+	if utils.IsEqual(v.data[0], val[0]) &&
+		utils.IsEqual(v.data[1], val[1]) &&
+		utils.IsEqual(v.data[2], val[2]) {
+		return false
+	}
+	old := v.data
+	v.data[0], v.data[1], v.data[2] = val[0], val[1], val[2]
+
+	if v.change != nil {
+		v.change(v.index, old)
+	}
+
+	if utils.IsEqual(v.data[0], old[0]) &&
+		utils.IsEqual(v.data[1], old[1]) &&
+		utils.IsEqual(v.data[2], val[2]) {
+		return false
+	}
+	return true
+}
+
+func (v *Vector3Holder) Data() Vec3 {
+	return v.data
+}
+
+func (v *Vector3Holder) Write(stream io.Writer) (int, error) {
+	err := binary.Write(stream, Endian, v.data)
+	if err != nil {
+		return 0, err
+	}
+	return 4, nil
+}
+
+func (v *Vector3Holder) Read(reader io.Reader) (int, error) {
+	err := binary.Read(reader, Endian, &v.data)
+	if err != nil {
+		return 0, err
+	}
+	return 4, nil
+}
+
+func (v *Vector3Holder) Equal(other Attr) bool {
+	if other.Type() == v.Type() {
+		if o, ok := other.(*Vector3Holder); ok {
+			return utils.IsEqual(v.data[0], o.data[0]) &&
+				utils.IsEqual(v.data[1], o.data[1]) &&
+				utils.IsEqual(v.data[2], o.data[2])
+		}
+	}
+	return false
+}
+
 func init() {
 	typeToObject[TYPE_UNKNOWN] = func(name string) Attr { return NewNoneHolder(name) }
 	typeToObject[TYPE_INT] = func(name string) Attr { return NewIntHolder(name) }
@@ -476,6 +544,7 @@ func init() {
 	typeToObject[TYPE_INT64] = func(name string) Attr { return NewInt64Holder(name) }
 	typeToObject[TYPE_STRING] = func(name string) Attr { return NewStringHolder(name) }
 	typeToObject[TYPE_VECTOR2] = func(name string) Attr { return NewVector2Holder(name) }
+	typeToObject[TYPE_VECTOR3] = func(name string) Attr { return NewVector3Holder(name) }
 }
 
 // Create object with type

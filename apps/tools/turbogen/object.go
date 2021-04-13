@@ -51,6 +51,8 @@ func getType(typ string) string {
 		return "object.Int64Holder"
 	case "Vec2":
 		return "object.Vector2Holder"
+	case "Vec3":
+		return "object.Vector3Holder"
 	default:
 		return "unknown"
 	}
@@ -70,6 +72,8 @@ func getTypeEnum(typ string) string {
 		return "object.TYPE_INT64"
 	case "Vec2":
 		return "object.TYPE_VECTOR2"
+	case "Vec3":
+		return "object.TYPE_VECTOR3"
 	default:
 		return "object.TYPE_UNKNOWN"
 	}
@@ -89,6 +93,8 @@ func getTypeCreate(typ string) string {
 		return "object.NewInt64Holder"
 	case "Vec2":
 		return "object.NewVector2Holder"
+	case "Vec3":
+		return "object.NewVector3Holder"
 	default:
 		return "object.NewNoneHolder"
 	}
