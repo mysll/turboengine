@@ -16,6 +16,8 @@ const (
 	TYPE_FLOAT   = 3
 	TYPE_FLOAT64 = 4
 	TYPE_STRING  = 5
+	TYPE_VECTOR2 = 6
+	TYPE_VECTOR3 = 7
 )
 
 type OnChange func(int, interface{})
@@ -35,6 +37,7 @@ type Attr interface {
 	Read(reader io.Reader) (int, error)
 	// 数据变动
 	Change(notify OnChange)
+	Equal(Attr) bool
 }
 
 type AttrHolder struct {
@@ -98,6 +101,13 @@ func (i *NoneHolder) Read(reader io.Reader) (int, error) {
 	return 0, nil
 }
 
+func (i *NoneHolder) Equal(other Attr) bool {
+	if other.Type() == i.Type() {
+		return true
+	}
+	return false
+}
+
 type IntHolder struct {
 	AttrHolder
 	data int32
@@ -144,6 +154,15 @@ func (i *IntHolder) Read(reader io.Reader) (int, error) {
 		return 0, err
 	}
 	return 4, nil
+}
+
+func (i *IntHolder) Equal(other Attr) bool {
+	if other.Type() == i.Type() {
+		if o, ok := other.(*IntHolder); ok {
+			return i.data == o.data
+		}
+	}
+	return false
 }
 
 type Int64Holder struct {
@@ -194,6 +213,15 @@ func (i *Int64Holder) Read(reader io.Reader) (int, error) {
 	return 4, nil
 }
 
+func (i *Int64Holder) Equal(other Attr) bool {
+	if other.Type() == i.Type() {
+		if o, ok := other.(*Int64Holder); ok {
+			return i.data == o.data
+		}
+	}
+	return false
+}
+
 type FloatHolder struct {
 	AttrHolder
 	data float32
@@ -242,6 +270,15 @@ func (f *FloatHolder) Read(reader io.Reader) (int, error) {
 	return 4, nil
 }
 
+func (f *FloatHolder) Equal(other Attr) bool {
+	if other.Type() == f.Type() {
+		if o, ok := other.(*FloatHolder); ok {
+			return utils.IsEqual(float64(f.data), float64(o.data))
+		}
+	}
+	return false
+}
+
 type Float64Holder struct {
 	AttrHolder
 	data float64
@@ -288,6 +325,15 @@ func (f *Float64Holder) Read(reader io.Reader) (int, error) {
 		return 0, err
 	}
 	return 4, nil
+}
+
+func (f *Float64Holder) Equal(other Attr) bool {
+	if other.Type() == f.Type() {
+		if o, ok := other.(*Float64Holder); ok {
+			return utils.IsEqual(f.data, o.data)
+		}
+	}
+	return false
 }
 
 type StringHolder struct {
@@ -351,6 +397,76 @@ func (s *StringHolder) Read(reader io.Reader) (int, error) {
 	return int(size) + 2, nil
 }
 
+func (s *StringHolder) Equal(other Attr) bool {
+	if other.Type() == s.Type() {
+		if o, ok := other.(*StringHolder); ok {
+			return s.data == o.data
+		}
+	}
+	return false
+}
+
+type Vector2Holder struct {
+	AttrHolder
+	data [2]float64
+}
+
+func NewVector2Holder(name string) *Vector2Holder {
+	return &Vector2Holder{
+		AttrHolder: AttrHolder{name: name},
+	}
+}
+
+func (v *Vector2Holder) Type() int {
+	return TYPE_VECTOR2
+}
+
+func (v *Vector2Holder) SetData(val [2]float64) bool {
+	if utils.IsEqual(v.data[0], val[0]) && utils.IsEqual(v.data[1], val[1]) {
+		return false
+	}
+	old := v.data
+	v.data[0], v.data[1] = val[0], val[1]
+
+	if v.change != nil {
+		v.change(v.index, old)
+	}
+
+	if utils.IsEqual(v.data[0], old[0]) && utils.IsEqual(v.data[1], old[1]) {
+		return false
+	}
+	return true
+}
+
+func (v *Vector2Holder) Data() [2]float64 {
+	return v.data
+}
+
+func (v *Vector2Holder) Write(stream io.Writer) (int, error) {
+	err := binary.Write(stream, Endian, v.data)
+	if err != nil {
+		return 0, err
+	}
+	return 4, nil
+}
+
+func (v *Vector2Holder) Read(reader io.Reader) (int, error) {
+	err := binary.Read(reader, Endian, &v.data)
+	if err != nil {
+		return 0, err
+	}
+	return 4, nil
+}
+
+func (v *Vector2Holder) Equal(other Attr) bool {
+	if other.Type() == v.Type() {
+		if o, ok := other.(*Vector2Holder); ok {
+			return utils.IsEqual(v.data[0], o.data[0]) && utils.IsEqual(v.data[1], o.data[1])
+		}
+	}
+	return false
+}
+
 func init() {
 	typeToObject[TYPE_UNKNOWN] = func(name string) Attr { return NewNoneHolder(name) }
 	typeToObject[TYPE_INT] = func(name string) Attr { return NewIntHolder(name) }
@@ -358,6 +474,7 @@ func init() {
 	typeToObject[TYPE_FLOAT64] = func(name string) Attr { return NewFloat64Holder(name) }
 	typeToObject[TYPE_INT64] = func(name string) Attr { return NewInt64Holder(name) }
 	typeToObject[TYPE_STRING] = func(name string) Attr { return NewStringHolder(name) }
+	typeToObject[TYPE_VECTOR2] = func(name string) Attr { return NewVector2Holder(name) }
 }
 
 // Create object with type
