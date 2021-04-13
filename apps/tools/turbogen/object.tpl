@@ -19,7 +19,7 @@ func New{{.Name}}() *{{.Name}} {
     {{if eq .Realtime true}}{{$pri = (printf "%s|%s" $pri "object.OBJECT_REALTIME")}}{{end}}
     {{if ne $pri "0"}}{{$obj}}.{{tolower .Name}}.SetFlag({{$pri}}){{end}}
     {{$obj}}.AddAttr({{$obj}}.{{tolower .Name}}){{end}}
-    {{$obj}}.Init()
+    {{$obj}}.Init({{$obj}})
     return {{$obj}}
 }
 

@@ -23,6 +23,8 @@ const (
 type Vec2 [2]float64
 type Vec3 [3]float64
 
+type changeFn func(int, interface{})
+
 // 属性接口
 type Attr interface {
 	Flag() int
@@ -36,8 +38,7 @@ type Attr interface {
 	Type() int
 	Write(stream io.Writer) (int, error)
 	Read(reader io.Reader) (int, error)
-	// 数据变动
-	Change(notify OnChange)
+	Change(change changeFn)
 	Equal(Attr) bool
 }
 
@@ -45,7 +46,7 @@ type AttrHolder struct {
 	name   string
 	index  int
 	flag   int
-	change OnChange
+	change changeFn
 }
 
 func (h *AttrHolder) Type() int {
@@ -80,7 +81,7 @@ func (h *AttrHolder) SetIndex(idx int) {
 	h.index = idx
 }
 
-func (h *AttrHolder) Change(change OnChange) {
+func (h *AttrHolder) Change(change changeFn) {
 	h.change = change
 }
 
