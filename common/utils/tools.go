@@ -23,7 +23,6 @@ func IsPowerOfTwo(number int) bool {
 
 const MIN = 0.000001
 
-// MIN 为用户自定义的比较精度
 func IsEqual(f1, f2 float64) bool {
-	return math.Dim(f1, f2) < MIN
+	return math.Abs(f1-f2) < MIN
 }

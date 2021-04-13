@@ -21,7 +21,36 @@ const (
 )
 
 type Vec2 [2]float64
+
+func V2(x float64, y float64) Vec2 {
+	return [2]float64{x, y}
+}
+
+func (v Vec2) X() float64 {
+	return v[0]
+}
+
+func (v Vec2) Y() float64 {
+	return v[1]
+}
+
 type Vec3 [3]float64
+
+func V3(x float64, y float64, z float64) Vec3 {
+	return [3]float64{x, y, z}
+}
+
+func (v Vec3) X() float64 {
+	return v[0]
+}
+
+func (v Vec3) Y() float64 {
+	return v[1]
+}
+
+func (v Vec3) Z() float64 {
+	return v[2]
+}
 
 type changeFn func(int, interface{})
 
