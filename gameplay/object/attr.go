@@ -22,7 +22,6 @@ const (
 
 type Vec2 [2]float64
 type Vec3 [3]float64
-type OnChange func(int, interface{})
 
 // 属性接口
 type Attr interface {
