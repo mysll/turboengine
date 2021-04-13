@@ -1,6 +1,7 @@
 package object
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -19,6 +20,7 @@ const (
 	TYPE_STRING  = 5
 	TYPE_VECTOR2 = 6
 	TYPE_VECTOR3 = 7
+	TYPE_BYTES   = 8
 )
 
 type Vec2 [2]float64
@@ -566,6 +568,75 @@ func (v *Vector3Holder) Equal(other Attr) bool {
 	return false
 }
 
+type BytesHolder struct {
+	AttrHolder
+	data []byte
+}
+
+func NewBytesHolder(name string) *BytesHolder {
+	return &BytesHolder{
+		AttrHolder: AttrHolder{name: name},
+	}
+}
+
+func (s *BytesHolder) Type() int {
+	return TYPE_BYTES
+}
+
+func (s *BytesHolder) SetData(data []byte) bool {
+	if bytes.Equal(s.data, data) {
+		return false
+	}
+	old := s.data
+	s.data = data
+	if s.change != nil {
+		s.change(s.index, old)
+	}
+	return !bytes.Equal(s.data, old)
+}
+
+func (s *BytesHolder) Data() []byte {
+	return s.data
+}
+
+func (s *BytesHolder) Write(stream io.Writer) (int, error) {
+	size := uint16(len(s.data))
+	binary.Write(stream, Endian, size)
+	err := binary.Write(stream, Endian, s.data)
+	if err != nil {
+		return 0, err
+	}
+	return int(size) + 2, nil
+}
+
+func (s *BytesHolder) Read(reader io.Reader) (int, error) {
+	var size uint16
+	binary.Read(reader, Endian, &size)
+	if size == 0 {
+		s.data = nil
+		return 0, nil
+	}
+	buf := make([]byte, size)
+	n, err := reader.Read(buf)
+	if err != nil {
+		return 0, err
+	}
+	if size != uint16(n) {
+		return 0, fmt.Errorf("size not match")
+	}
+	s.data = buf
+	return int(size) + 2, nil
+}
+
+func (s *BytesHolder) Equal(other Attr) bool {
+	if other.Type() == s.Type() {
+		if o, ok := other.(*BytesHolder); ok {
+			return bytes.Equal(s.data, o.data)
+		}
+	}
+	return false
+}
+
 func init() {
 	typeToObject[TYPE_UNKNOWN] = func(name string) Attr { return NewNoneHolder(name) }
 	typeToObject[TYPE_INT] = func(name string) Attr { return NewIntHolder(name) }
@@ -575,6 +646,7 @@ func init() {
 	typeToObject[TYPE_STRING] = func(name string) Attr { return NewStringHolder(name) }
 	typeToObject[TYPE_VECTOR2] = func(name string) Attr { return NewVector2Holder(name) }
 	typeToObject[TYPE_VECTOR3] = func(name string) Attr { return NewVector3Holder(name) }
+	typeToObject[TYPE_BYTES] = func(name string) Attr { return NewBytesHolder(name) }
 }
 
 // Create object with type

@@ -34,6 +34,9 @@ func getTypeAlias(typ string) string {
 	if typ == "Vec2" || typ == "Vec3" {
 		return "object." + typ
 	}
+	if typ == "[]uint8" {
+		return "[]byte"
+	}
 	return typ
 }
 
@@ -53,6 +56,8 @@ func getType(typ string) string {
 		return "object.Vector2Holder"
 	case "Vec3":
 		return "object.Vector3Holder"
+	case "[]uint8":
+		return "object.BytesHolder"
 	default:
 		return "unknown"
 	}
@@ -74,6 +79,8 @@ func getTypeEnum(typ string) string {
 		return "object.TYPE_VECTOR2"
 	case "Vec3":
 		return "object.TYPE_VECTOR3"
+	case "[]uint8":
+		return "object.TYPE_BYTES"
 	default:
 		return "object.TYPE_UNKNOWN"
 	}
@@ -95,6 +102,8 @@ func getTypeCreate(typ string) string {
 		return "object.NewVector2Holder"
 	case "Vec3":
 		return "object.NewVector3Holder"
+	case "[]uint8":
+		return "object.NewBytesHolder"
 	default:
 		return "object.NewNoneHolder"
 	}
@@ -115,7 +124,12 @@ func ObjectWrap(s interface{}, pkgpath string, pkg string, path string) {
 		m := ctype.Elem().Field(i)
 		decl := AttrDecl{}
 		decl.Name = m.Name
-		decl.ArgType = m.Type.Name()
+		if m.Type.Kind() != reflect.Slice {
+			decl.ArgType = m.Type.Name()
+		} else {
+			decl.ArgType = "[]" + m.Type.Elem().Name()
+		}
+
 		if value, ok := m.Tag.Lookup("attr"); ok {
 			values := strings.Split(value, ",")
 			for _, v := range values {
