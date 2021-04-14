@@ -7,30 +7,30 @@ import (
 
 type OnChange func(self interface{}, index int, val interface{})
 
-type EventCallback struct {
+type ChangeEventCallback struct {
 	ptr  uintptr
 	c    OnChange
-	next *EventCallback
+	next *ChangeEventCallback
 }
 
-func NewEventCallback(cb OnChange) *EventCallback {
-	return &EventCallback{
+func NewEventCallback(cb OnChange) *ChangeEventCallback {
+	return &ChangeEventCallback{
 		ptr: reflect.ValueOf(cb).Pointer(),
 		c:   cb,
 	}
 }
 
-func (e *EventCallback) Equal(cb OnChange) bool {
+func (e *ChangeEventCallback) Equal(cb OnChange) bool {
 	return e.ptr == reflect.ValueOf(cb).Pointer()
 }
 
 type ChangeEvent struct {
-	cb []*EventCallback
+	cb []*ChangeEventCallback
 }
 
 func NewChangeEvent(cap int) *ChangeEvent {
 	return &ChangeEvent{
-		cb: make([]*EventCallback, cap),
+		cb: make([]*ChangeEventCallback, cap),
 	}
 }
 
