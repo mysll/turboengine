@@ -5,7 +5,7 @@ import (
 )
 
 func TestNewChangeEvent(t *testing.T) {
-	event := NewChangeEvent(1)
+	event := newChangeEvent(1)
 	fc := func(object interface{}, index int, val interface{}) {
 		t.Log(val)
 	}
