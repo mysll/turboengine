@@ -30,7 +30,7 @@ type Object struct {
 	dirty     bool
 	silent    bool // 静默
 	inited    bool
-	change    *ChangeEvent
+	change    *changeEvent
 	pubDirty  bool
 	priDirty  bool
 	holder    interface{}
@@ -39,7 +39,7 @@ type Object struct {
 func (o *Object) new(cap int) {
 	o.attrs = make([]Attr, 0, cap)
 	o.nameToIdx = make(map[string]int, cap)
-	o.change = NewChangeEvent(cap)
+	o.change = newChangeEvent(cap)
 }
 
 func (o *Object) InitOnce(self interface{}, cap int) {

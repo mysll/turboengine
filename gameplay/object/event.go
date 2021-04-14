@@ -7,38 +7,34 @@ import (
 
 type OnChange func(self interface{}, index int, val interface{})
 
-type ChangeEventCallback struct {
+type changeEventCallback struct {
 	ptr  uintptr
 	c    OnChange
-	next *ChangeEventCallback
+	next *changeEventCallback
 }
 
-func NewEventCallback(cb OnChange) *ChangeEventCallback {
-	return &ChangeEventCallback{
-		ptr: reflect.ValueOf(cb).Pointer(),
-		c:   cb,
-	}
-}
-
-func (e *ChangeEventCallback) Equal(cb OnChange) bool {
+func (e *changeEventCallback) Equal(cb OnChange) bool {
 	return e.ptr == reflect.ValueOf(cb).Pointer()
 }
 
-type ChangeEvent struct {
-	cb []*ChangeEventCallback
+type changeEvent struct {
+	cb []*changeEventCallback
 }
 
-func NewChangeEvent(cap int) *ChangeEvent {
-	return &ChangeEvent{
-		cb: make([]*ChangeEventCallback, cap),
+func newChangeEvent(cap int) *changeEvent {
+	return &changeEvent{
+		cb: make([]*changeEventCallback, cap),
 	}
 }
 
-func (c *ChangeEvent) add(index int, cb OnChange) error {
+func (c *changeEvent) add(index int, cb OnChange) error {
 	if index < 0 || index > len(c.cb) {
 		return fmt.Errorf("index error, get %d", index)
 	}
-	event := NewEventCallback(cb)
+	event := &changeEventCallback{
+		ptr: reflect.ValueOf(cb).Pointer(),
+		c:   cb,
+	}
 	if c.cb[index] == nil {
 		c.cb[index] = event
 		return nil
@@ -53,7 +49,7 @@ func (c *ChangeEvent) add(index int, cb OnChange) error {
 	}
 }
 
-func (c *ChangeEvent) remove(index int, cb OnChange) error {
+func (c *changeEvent) remove(index int, cb OnChange) error {
 	if index < 0 || index > len(c.cb) {
 		return fmt.Errorf("index error, get %d", index)
 	}
@@ -75,18 +71,18 @@ func (c *ChangeEvent) remove(index int, cb OnChange) error {
 	return nil
 }
 
-func (c *ChangeEvent) hasEvent(index int) bool {
+func (c *changeEvent) hasEvent(index int) bool {
 	if index < 0 || index > len(c.cb) {
 		return false
 	}
 	return c.cb[index] != nil
 }
 
-func (c *ChangeEvent) clear(index int) {
+func (c *changeEvent) clear(index int) {
 	c.cb[index] = nil
 }
 
-func (c *ChangeEvent) emit(self interface{}, index int, val interface{}) error {
+func (c *changeEvent) emit(self interface{}, index int, val interface{}) error {
 	if index < 0 || index > len(c.cb) {
 		return fmt.Errorf("index error, get %d", index)
 	}
