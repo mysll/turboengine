@@ -3,10 +3,10 @@ package object
 type Replicate interface{}
 
 type Replication struct {
-	owner interface{}
+	owner GameObject
 }
 
-func NewReplication(owner interface{}) *Replication {
+func NewReplication(owner GameObject) *Replication {
 	return &Replication{
 		owner: owner,
 	}

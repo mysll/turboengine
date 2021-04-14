@@ -28,6 +28,24 @@ var typeToObject = make(map[int]func(string) Attr)
 
 type ObjectId uint64
 
+type GameObject interface {
+	Id() ObjectId
+	Dirty() bool
+	SetDirty()
+	ClearDirty()
+	PublicDirty() bool
+	SetPublicDirty()
+	ClearPublicDirty()
+	PrivateDirty() bool
+	SetPrivateDirty()
+	ClearPrivateDirty()
+	Silent() bool
+	SetSilent(s bool)
+	AttrCount() int
+	GetAttr(index int) Attr
+	GetAttrByName(name string) Attr
+}
+
 // 基础对象，所以游戏内的对象基类
 type Object struct {
 	id        ObjectId
@@ -40,7 +58,7 @@ type Object struct {
 	change    *changeEvent
 	pubDirty  bool
 	priDirty  bool
-	holder    interface{}
+	holder    GameObject
 	features  int
 	*Transform
 	*Replication
@@ -72,7 +90,7 @@ func (o *Object) new(cap int) {
 	o.change = newChangeEvent(cap)
 }
 
-func (o *Object) InitOnce(self interface{}, cap int) {
+func (o *Object) InitOnce(self GameObject, cap int) {
 	if o.inited {
 		return
 	}

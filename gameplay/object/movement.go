@@ -6,10 +6,10 @@ type Transform struct {
 	X     float64
 	Y     float64
 	Z     float64
-	owner interface{}
+	owner GameObject
 }
 
-func NewTransform(owner interface{}) *Transform {
+func NewTransform(owner GameObject) *Transform {
 	return &Transform{
 		owner: owner,
 	}
