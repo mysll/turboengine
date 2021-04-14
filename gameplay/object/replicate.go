@@ -1,8 +1,13 @@
 package object
 
-type Replicate struct {
+type Replicate interface{}
+
+type Replication struct {
+	owner interface{}
 }
 
-func NewReplicate() *Replicate {
-	return &Replicate{}
+func NewReplication(owner interface{}) *Replication {
+	return &Replication{
+		owner: owner,
+	}
 }

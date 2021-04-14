@@ -42,17 +42,19 @@ type Object struct {
 	priDirty  bool
 	holder    interface{}
 	features  int
-	*Movement
-	*Replicate
+	*Transform
+	*Replication
 }
 
 func (o *Object) SetFeature(features int) {
 	o.features = features
+	o.Transform = nil
 	if o.features|FEATURES_MOVEMENT != 0 {
-		o.Movement = NewMovement()
+		o.Transform = NewTransform(o.holder)
 	}
+	o.Replication = nil
 	if o.features|FEATURES_REPLICATE != 0 {
-		o.Replicate = NewReplicate()
+		o.Replication = NewReplication(o.holder)
 	}
 }
 
