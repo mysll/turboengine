@@ -17,6 +17,13 @@ const (
 	OBJECT_PRIVATE_DIRTY = 1 << 8
 )
 
+const (
+	FEATURES_NONE      = 0
+	FEATURES_MOVEMENT  = 1
+	FEATURES_REPLICATE = 1 << 1
+	FEATURES_ALL       = -1
+)
+
 var typeToObject = make(map[int]func(string) Attr)
 
 type ObjectId uint64
@@ -34,6 +41,27 @@ type Object struct {
 	pubDirty  bool
 	priDirty  bool
 	holder    interface{}
+	features  int
+	*Movement
+	*Replicate
+}
+
+func (o *Object) SetFeature(features int) {
+	o.features = features
+	if o.features|FEATURES_MOVEMENT != 0 {
+		o.Movement = NewMovement()
+	}
+	if o.features|FEATURES_REPLICATE != 0 {
+		o.Replicate = NewReplicate()
+	}
+}
+
+func (o *Object) IsMovement() bool {
+	return o.features|FEATURES_MOVEMENT != 0
+}
+
+func (o *Object) IsReplicate() bool {
+	return o.features|FEATURES_REPLICATE != 0
 }
 
 func (o *Object) new(cap int) {
