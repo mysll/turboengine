@@ -16,11 +16,6 @@ func NewTransform(owner GameObject) *Transform {
 	}
 }
 
-func (t *Transform) MoveTo(x float32, y float32, z float32, orient float32) {
-	t.pos = mgl32.Vec3{x, y, z}
-	t.orient = orient
-}
-
 func (t *Transform) Forward() Vec3 {
 	return Vec3{}
 }
@@ -39,4 +34,9 @@ func (t *Transform) Translate(x float32, y float32, z float32) {
 
 func (t *Transform) LookAt(x float32, y float32, z float32) {
 
+}
+
+func (t *Transform) MoveTo(x float32, y float32, z float32, orient float32) {
+	t.pos = mgl32.Vec3{x, y, z}
+	t.orient = orient
 }
