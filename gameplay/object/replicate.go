@@ -11,3 +11,7 @@ func NewReplication(owner GameObject) *Replication {
 		owner: owner,
 	}
 }
+
+func (r *Replication) change(index int, val interface{}) {
+
+}

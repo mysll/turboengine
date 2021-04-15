@@ -222,4 +222,7 @@ func (o *Object) onChange(index int, val interface{}) {
 		o.change.emit(o.holder, index, val)
 		o.attrs[index].ClearFlag(OBJECT_CHANGING)
 	}
+	if o.IsReplicate() {
+		o.Replication.change(index, val)
+	}
 }
