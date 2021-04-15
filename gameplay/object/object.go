@@ -21,6 +21,7 @@ const (
 	FEATURES_NONE      = 0
 	FEATURES_MOVEMENT  = 1
 	FEATURES_REPLICATE = 1 << 1
+	FEATURES_AOI       = 1 << 2
 	FEATURES_ALL       = -1
 )
 
@@ -44,6 +45,9 @@ type GameObject interface {
 	AttrCount() int
 	GetAttr(index int) Attr
 	GetAttrByName(name string) Attr
+	IsMovement() bool
+	IsReplicate() bool
+	HasView() bool
 }
 
 // 基础对象，所以游戏内的对象基类
@@ -51,7 +55,6 @@ type Object struct {
 	id        ObjectId
 	attrs     []Attr
 	nameToIdx map[string]int
-	replicate bool
 	dirty     bool
 	silent    bool // 静默
 	inited    bool
@@ -62,6 +65,7 @@ type Object struct {
 	features  int
 	*Transform
 	*Replication
+	*View
 }
 
 func (o *Object) SetFeature(features int) {
@@ -74,6 +78,10 @@ func (o *Object) SetFeature(features int) {
 	if o.features|FEATURES_REPLICATE != 0 {
 		o.Replication = NewReplication(o.holder)
 	}
+	o.View = nil
+	if o.features|FEATURES_AOI != 0 {
+		o.View = NewView(o.holder)
+	}
 }
 
 func (o *Object) IsMovement() bool {
@@ -82,6 +90,10 @@ func (o *Object) IsMovement() bool {
 
 func (o *Object) IsReplicate() bool {
 	return o.features|FEATURES_REPLICATE != 0
+}
+
+func (o *Object) HasView() bool {
+	return o.features|FEATURES_AOI != 0
 }
 
 func (o *Object) new(cap int) {
