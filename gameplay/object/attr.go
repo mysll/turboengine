@@ -23,35 +23,35 @@ const (
 	TYPE_BYTES   = 8
 )
 
-type Vec2 [2]float64
+type Vec2 [2]float32
 
-func V2(x float64, y float64) Vec2 {
-	return [2]float64{x, y}
+func V2(x float32, y float32) Vec2 {
+	return [2]float32{x, y}
 }
 
-func (v Vec2) X() float64 {
+func (v Vec2) X() float32 {
 	return v[0]
 }
 
-func (v Vec2) Y() float64 {
+func (v Vec2) Y() float32 {
 	return v[1]
 }
 
-type Vec3 [3]float64
+type Vec3 [3]float32
 
-func V3(x float64, y float64, z float64) Vec3 {
-	return [3]float64{x, y, z}
+func V3(x float32, y float32, z float32) Vec3 {
+	return [3]float32{x, y, z}
 }
 
-func (v Vec3) X() float64 {
+func (v Vec3) X() float32 {
 	return v[0]
 }
 
-func (v Vec3) Y() float64 {
+func (v Vec3) Y() float32 {
 	return v[1]
 }
 
-func (v Vec3) Z() float64 {
+func (v Vec3) Z() float32 {
 	return v[2]
 }
 
@@ -456,7 +456,7 @@ func (v *Vector2Holder) Type() int {
 }
 
 func (v *Vector2Holder) SetData(val Vec2) bool {
-	if toolkit.IsEqual64(v.data[0], val[0]) && toolkit.IsEqual64(v.data[1], val[1]) {
+	if toolkit.IsEqual32(v.data[0], val[0]) && toolkit.IsEqual32(v.data[1], val[1]) {
 		return false
 	}
 	old := v.data
@@ -466,7 +466,7 @@ func (v *Vector2Holder) SetData(val Vec2) bool {
 		v.change(v.index, old)
 	}
 
-	if toolkit.IsEqual64(v.data[0], old[0]) && toolkit.IsEqual64(v.data[1], old[1]) {
+	if toolkit.IsEqual32(v.data[0], old[0]) && toolkit.IsEqual32(v.data[1], old[1]) {
 		return false
 	}
 	return true
@@ -495,7 +495,8 @@ func (v *Vector2Holder) Read(reader io.Reader) (int, error) {
 func (v *Vector2Holder) Equal(other Attr) bool {
 	if other.Type() == v.Type() {
 		if o, ok := other.(*Vector2Holder); ok {
-			return toolkit.IsEqual64(v.data[0], o.data[0]) && toolkit.IsEqual64(v.data[1], o.data[1])
+			return toolkit.IsEqual32(v.data[0], o.data[0]) &&
+				toolkit.IsEqual32(v.data[1], o.data[1])
 		}
 	}
 	return false
@@ -517,9 +518,9 @@ func (v *Vector3Holder) Type() int {
 }
 
 func (v *Vector3Holder) SetData(val Vec3) bool {
-	if toolkit.IsEqual64(v.data[0], val[0]) &&
-		toolkit.IsEqual64(v.data[1], val[1]) &&
-		toolkit.IsEqual64(v.data[2], val[2]) {
+	if toolkit.IsEqual32(v.data[0], val[0]) &&
+		toolkit.IsEqual32(v.data[1], val[1]) &&
+		toolkit.IsEqual32(v.data[2], val[2]) {
 		return false
 	}
 	old := v.data
@@ -529,9 +530,9 @@ func (v *Vector3Holder) SetData(val Vec3) bool {
 		v.change(v.index, old)
 	}
 
-	if toolkit.IsEqual64(v.data[0], old[0]) &&
-		toolkit.IsEqual64(v.data[1], old[1]) &&
-		toolkit.IsEqual64(v.data[2], val[2]) {
+	if toolkit.IsEqual32(v.data[0], old[0]) &&
+		toolkit.IsEqual32(v.data[1], old[1]) &&
+		toolkit.IsEqual32(v.data[2], val[2]) {
 		return false
 	}
 	return true
@@ -560,9 +561,9 @@ func (v *Vector3Holder) Read(reader io.Reader) (int, error) {
 func (v *Vector3Holder) Equal(other Attr) bool {
 	if other.Type() == v.Type() {
 		if o, ok := other.(*Vector3Holder); ok {
-			return toolkit.IsEqual64(v.data[0], o.data[0]) &&
-				toolkit.IsEqual64(v.data[1], o.data[1]) &&
-				toolkit.IsEqual64(v.data[2], o.data[2])
+			return toolkit.IsEqual32(v.data[0], o.data[0]) &&
+				toolkit.IsEqual32(v.data[1], o.data[1]) &&
+				toolkit.IsEqual32(v.data[2], o.data[2])
 		}
 	}
 	return false

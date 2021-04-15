@@ -21,7 +21,7 @@ const (
 	FEATURES_NONE      = 0
 	FEATURES_MOVEMENT  = 1
 	FEATURES_REPLICATE = 1 << 1
-	FEATURES_AOI       = 1 << 2
+	FEATURES_AOI       = 1<<2 | FEATURES_MOVEMENT
 	FEATURES_ALL       = -1
 )
 
@@ -52,6 +52,9 @@ type GameObject interface {
 
 // 基础对象，所以游戏内的对象基类
 type Object struct {
+	*Transform
+	*Replication
+	*View
 	id        ObjectId
 	attrs     []Attr
 	nameToIdx map[string]int
@@ -63,9 +66,6 @@ type Object struct {
 	priDirty  bool
 	holder    GameObject
 	features  int
-	*Transform
-	*Replication
-	*View
 }
 
 func (o *Object) SetFeature(features int) {
@@ -233,8 +233,8 @@ func (o *Object) onChange(index int, val interface{}) {
 		o.attrs[index].SetFlag(OBJECT_CHANGING)
 		o.change.emit(o.holder, index, val)
 		o.attrs[index].ClearFlag(OBJECT_CHANGING)
-	}
-	if o.IsReplicate() {
-		o.Replication.change(index, val)
+		if o.IsReplicate() {
+			o.Replication.change(index, o.attrs[index])
+		}
 	}
 }
