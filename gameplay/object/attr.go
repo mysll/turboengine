@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/mysll/toolkit"
 )
 
@@ -23,7 +24,7 @@ const (
 	TYPE_BYTES   = 8
 )
 
-type Vec2 [2]float32
+type Vec2 mgl32.Vec2
 
 func V2(x float32, y float32) Vec2 {
 	return [2]float32{x, y}
@@ -37,7 +38,7 @@ func (v Vec2) Y() float32 {
 	return v[1]
 }
 
-type Vec3 [3]float32
+type Vec3 mgl32.Vec3
 
 func V3(x float32, y float32, z float32) Vec3 {
 	return [3]float32{x, y, z}
