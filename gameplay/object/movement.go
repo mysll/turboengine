@@ -5,15 +5,23 @@ import "github.com/go-gl/mathgl/mgl32"
 type Movement interface{}
 
 type Transform struct {
-	pos    mgl32.Vec3
-	orient float32 // 0~360
-	owner  GameObject
+	position mgl32.Vec3
+	orient   float32 // 0~2PI
+	owner    GameObject
 }
 
 func NewTransform(owner GameObject) *Transform {
 	return &Transform{
 		owner: owner,
 	}
+}
+
+func (t *Transform) Position() Vec3 {
+	return Vec3(t.position)
+}
+
+func (t *Transform) Orient() float32 {
+	return t.orient
 }
 
 func (t *Transform) Forward() Vec3 {
@@ -37,6 +45,10 @@ func (t *Transform) LookAt(x float32, y float32, z float32) {
 }
 
 func (t *Transform) MoveTo(x float32, y float32, z float32, orient float32) {
-	t.pos = mgl32.Vec3{x, y, z}
+	t.position = mgl32.Vec3{x, y, z}
 	t.orient = orient
+}
+
+func (t *Transform) Rotate(angle float32) {
+
 }
