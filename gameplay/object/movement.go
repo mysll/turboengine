@@ -22,12 +22,6 @@ var (
 	right   = mgl32.Vec3{1, 0, 0}
 )
 
-type EulerAngles struct {
-	pitch float32 // x
-	yaw   float32 // y
-	roll  float32 // z
-}
-
 func NewTransform(owner GameObject) *Transform {
 	return &Transform{
 		owner:    owner,
