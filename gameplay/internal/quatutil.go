@@ -27,17 +27,17 @@ func QuatMulVec3(q mgl32.Quat, v mgl32.Vec3) mgl32.Vec3 {
 }
 
 func toEulerYZX(rotation mgl32.Quat) mgl32.Vec3 {
-	var x, y, z float32
+	var x, y, z, w float32
 
 	r := rotation.Normalize()
-	te := r.Mat4()
-	m11 := float64(te[0])
-	m13 := float64(te[8])
-	m21 := float64(te[1])
-	m22 := float64(te[5])
-	m23 := float64(te[9])
-	m31 := float64(te[2])
-	m33 := float64(te[10])
+	w, x, y, z = r.W, r.V[0], r.V[1], r.V[2]
+	m11 := float64(1 - 2*y*y - 2*z*z)
+	m13 := float64(2*x*z + 2*w*y)
+	m21 := float64(2*x*y + 2*w*z)
+	m22 := float64(1 - 2*x*x - 2*z*z)
+	m23 := float64(2*y*z - 2*w*x)
+	m31 := float64(2*x*z - 2*w*y)
+	m33 := float64(1 - 2*x*x - 2*y*y)
 
 	z = float32(math.Asin(Clamp(m21, -1, 1)))
 	if math.Abs(m21) < 0.9999999 {
@@ -51,17 +51,17 @@ func toEulerYZX(rotation mgl32.Quat) mgl32.Vec3 {
 }
 
 func toEulerZXY(rotation mgl32.Quat) mgl32.Vec3 {
-	var x, y, z float32
+	var x, y, z, w float32
 
 	r := rotation.Normalize()
-	te := r.Mat4()
-	m11 := float64(te[0])
-	m12 := float64(te[4])
-	m21 := float64(te[1])
-	m22 := float64(te[5])
-	m31 := float64(te[2])
-	m32 := float64(te[6])
-	m33 := float64(te[10])
+	w, x, y, z = r.W, r.V[0], r.V[1], r.V[2]
+	m11 := float64(1 - 2*y*y - 2*z*z)
+	m12 := float64(2*x*y - 2*w*z)
+	m21 := float64(2*x*y + 2*w*z)
+	m22 := float64(1 - 2*x*x - 2*z*z)
+	m31 := float64(2*x*z - 2*w*y)
+	m32 := float64(2*y*z + 2*w*x)
+	m33 := float64(1 - 2*x*x - 2*y*y)
 
 	x = float32(math.Asin(Clamp(m32, -1, 1)))
 	if math.Abs(m32) < 0.9999999 {
@@ -86,6 +86,5 @@ func ToEuler(rotation mgl32.Quat) mgl32.Vec3 {
 
 func LookAt(position, target mgl32.Vec3) mgl32.Quat {
 	direction := target.Sub(position).Normalize()
-	rotDir := mgl32.QuatBetweenVectors(mgl32.Vec3{0, 0, 1}, direction)
-	return rotDir
+	return mgl32.QuatBetweenVectors(mgl32.Vec3{0, 0, 1}, direction)
 }
