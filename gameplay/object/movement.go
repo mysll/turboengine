@@ -58,8 +58,8 @@ func (t *Transform) Translate(translation Vec3) {
 	t.position = t.position.Add(mgl32.Vec3(translation))
 }
 
-func (t *Transform) LookAt(x float32, y float32, z float32) {
-	t.rotation = mgl32.QuatLookAtV(t.position, mgl32.Vec3{x, y, z}, up)
+func (t *Transform) LookAt(target Vec3) {
+	t.rotation = internal.LookAt(t.position, mgl32.Vec3(target))
 }
 
 func (t *Transform) MoveTo(position Vec3) {
