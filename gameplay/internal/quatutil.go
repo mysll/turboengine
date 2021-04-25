@@ -6,12 +6,20 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
+const order = mgl32.ZXY
+
 func Clamp(value, min, max float64) float64 {
 	return math.Max(min, math.Min(max, value))
 }
 
 func Euler(eulers mgl32.Vec3) mgl32.Quat {
-	return mgl32.AnglesToQuat(mgl32.DegToRad(eulers.Z()), mgl32.DegToRad(eulers.X()), mgl32.DegToRad(eulers.Y()), mgl32.ZXY)
+	switch order {
+	case mgl32.ZXY:
+		return mgl32.AnglesToQuat(mgl32.DegToRad(eulers.Z()), mgl32.DegToRad(eulers.X()), mgl32.DegToRad(eulers.Y()), mgl32.ZXY)
+	case mgl32.YZX:
+		return mgl32.AnglesToQuat(mgl32.DegToRad(eulers.Y()), mgl32.DegToRad(eulers.Z()), mgl32.DegToRad(eulers.X()), mgl32.YZX)
+	}
+	panic("unsupport order")
 }
 
 func QuatMulVec3(q mgl32.Quat, v mgl32.Vec3) mgl32.Vec3 {
@@ -24,16 +32,13 @@ func toEulerYZX(rotation mgl32.Quat) mgl32.Vec3 {
 	r := rotation.Normalize()
 	te := r.Mat4()
 	m11 := float64(te[0])
-	//m12 := float64(te[4])
 	m13 := float64(te[8])
 	m21 := float64(te[1])
 	m22 := float64(te[5])
 	m23 := float64(te[9])
 	m31 := float64(te[2])
-	//m32 := float64(te[6])
 	m33 := float64(te[10])
 
-	// yzx
 	z = float32(math.Asin(Clamp(m21, -1, 1)))
 	if math.Abs(m21) < 0.9999999 {
 		x = float32(math.Atan2(-m23, m22))
@@ -52,15 +57,12 @@ func toEulerZXY(rotation mgl32.Quat) mgl32.Vec3 {
 	te := r.Mat4()
 	m11 := float64(te[0])
 	m12 := float64(te[4])
-	//m13 := float64(te[8])
 	m21 := float64(te[1])
 	m22 := float64(te[5])
-	//m23 := float64(te[9])
 	m31 := float64(te[2])
 	m32 := float64(te[6])
 	m33 := float64(te[10])
 
-	// yzx
 	x = float32(math.Asin(Clamp(m32, -1, 1)))
 	if math.Abs(m32) < 0.9999999 {
 		y = float32(math.Atan2(-m31, m33))
@@ -73,7 +75,13 @@ func toEulerZXY(rotation mgl32.Quat) mgl32.Vec3 {
 }
 
 func ToEuler(rotation mgl32.Quat) mgl32.Vec3 {
-	return toEulerZXY(rotation)
+	switch order {
+	case mgl32.ZXY:
+		return toEulerZXY(rotation)
+	case mgl32.YZX:
+		return toEulerYZX(rotation)
+	}
+	panic("unsupport order")
 }
 
 func LookAt(position, target mgl32.Vec3) mgl32.Quat {
