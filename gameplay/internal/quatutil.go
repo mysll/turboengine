@@ -11,14 +11,14 @@ func Clamp(value, min, max float64) float64 {
 }
 
 func Euler(eulers mgl32.Vec3) mgl32.Quat {
-	return mgl32.AnglesToQuat(mgl32.DegToRad(eulers.Y()), mgl32.DegToRad(eulers.Z()), mgl32.DegToRad(eulers.X()), mgl32.YZX)
+	return mgl32.AnglesToQuat(mgl32.DegToRad(eulers.Y()), mgl32.DegToRad(eulers.Z()), mgl32.DegToRad(eulers.X()), mgl32.ZXY)
 }
 
 func QuatMulVec3(q mgl32.Quat, v mgl32.Vec3) mgl32.Vec3 {
 	return q.Mul(mgl32.Quat{V: v}).Mul(q.Inverse()).V
 }
 
-func ToEuler(rotation mgl32.Quat) mgl32.Vec3 {
+func toEulerYZX(rotation mgl32.Quat) mgl32.Vec3 {
 	var x, y, z float32
 
 	r := rotation.Normalize()
@@ -43,6 +43,10 @@ func ToEuler(rotation mgl32.Quat) mgl32.Vec3 {
 		y = 0
 	}
 	return mgl32.Vec3{mgl32.RadToDeg(x), mgl32.RadToDeg(y), mgl32.RadToDeg(z)}
+}
+
+func ToEuler(rotation mgl32.Quat) mgl32.Vec3 {
+	return toEulerYZX(rotation)
 }
 
 func LookAt(position, target mgl32.Vec3) mgl32.Quat {
