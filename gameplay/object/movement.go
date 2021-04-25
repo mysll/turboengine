@@ -1,6 +1,10 @@
 package object
 
-import "github.com/go-gl/mathgl/mgl32"
+import (
+	"math"
+
+	"github.com/go-gl/mathgl/mgl32"
+)
 
 type Movement interface{}
 
@@ -13,9 +17,9 @@ type Transform struct {
 }
 
 type EulerAngles struct {
-	roll  float32
-	pitch float32
-	yaw   float32
+	roll  float32 // x
+	pitch float32 // y
+	yaw   float32 // z
 }
 
 func NewTransform(owner GameObject) *Transform {
@@ -31,8 +35,28 @@ func (t *Transform) Position() Vec3 {
 }
 
 // Rotation get euler angle (roll pitch yaw)
+// see https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
 func (t *Transform) Rotation() (roll, pitch, yaw float32) {
+	sinr_cosp := 2.0 * float64(t.rotation.W*t.rotation.X()+t.rotation.Y()*t.rotation.Z())
+	cosr_cosp := 1.0 - 2.0*float64(t.rotation.X()*t.rotation.X()+t.rotation.Y()*t.rotation.Y())
+	roll = mgl32.RadToDeg(float32(math.Atan2(sinr_cosp, cosr_cosp)))
+
+	sinp := float64(2.0 * (t.rotation.W*t.rotation.Y() - t.rotation.Z()*t.rotation.X()))
+	if math.Abs(sinp) >= 1.0 {
+		pitch = float32(math.Copysign(math.Pi/2.0, sinp))
+	} else {
+		pitch = float32(math.Asin(sinp))
+	}
+	pitch = mgl32.RadToDeg(pitch)
+
+	siny_cosp := 2.0 * float64(t.rotation.W*t.rotation.Z()+t.rotation.X()*t.rotation.Y())
+	cosy_cosp := 1.0 - 2.0*float64(t.rotation.Y()*t.rotation.Y()+t.rotation.Z()*t.rotation.Z())
+	yaw = mgl32.RadToDeg(float32(math.Atan2(siny_cosp, cosy_cosp)))
 	return
+}
+
+func (t *Transform) SetRotation(angles EulerAngles) {
+	t.rotation = mgl32.AnglesToQuat(mgl32.DegToRad(angles.yaw), mgl32.DegToRad(angles.pitch), mgl32.DegToRad(angles.roll), mgl32.ZYX)
 }
 
 func (t *Transform) Forward() Vec3 {
@@ -52,7 +76,7 @@ func (t *Transform) Translate(x float32, y float32, z float32) {
 }
 
 func (t *Transform) LookAt(x float32, y float32, z float32) {
-
+	t.rotation = mgl32.QuatLookAtV(t.position, mgl32.Vec3{x, y, z}, mgl32.Vec3{0, 1, 0})
 }
 
 func (t *Transform) MoveTo(x float32, y float32, z float32) {
@@ -60,5 +84,4 @@ func (t *Transform) MoveTo(x float32, y float32, z float32) {
 }
 
 func (t *Transform) Rotate(angle Vec3) {
-
 }
