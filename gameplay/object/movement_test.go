@@ -6,5 +6,7 @@ import (
 
 func TestNewTransform(t *testing.T) {
 	tr := NewTransform(nil)
-	t.Log(tr.Position())
+	tr.SetRotation(EulerAngles{90, 90, 0})
+	t.Log(tr.rotation)
+	t.Log(tr.Rotation())
 }
