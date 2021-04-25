@@ -1,6 +1,8 @@
 package object
 
 import (
+	"turboengine/gameplay/internal"
+
 	"github.com/go-gl/mathgl/mgl32"
 )
 
@@ -13,6 +15,12 @@ type Transform struct {
 	rotation mgl32.Quat // 四元数
 	owner    GameObject
 }
+
+var (
+	forward = mgl32.Vec3{0, 0, 1}
+	up      = mgl32.Vec3{0, 1, 0}
+	right   = mgl32.Vec3{1, 0, 0}
+)
 
 type EulerAngles struct {
 	pitch float32 // x
@@ -32,39 +40,39 @@ func (t *Transform) Position() Vec3 {
 	return Vec3(t.position)
 }
 
-// Rotation get euler angle (roll pitch yaw)
-// see https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
-func (t *Transform) Rotation() (pitch, yaw, roll float32) {
-	return
+func (t *Transform) EulerAngles() Vec3 {
+	return Vec3(internal.ToEuler(t.rotation))
 }
 
-func (t *Transform) SetRotation(pitch, yaw, roll float32) {
-	t.rotation = mgl32.AnglesToQuat(mgl32.DegToRad(roll), mgl32.DegToRad(yaw), mgl32.DegToRad(pitch), mgl32.ZYX)
+func (t *Transform) SetRotation(eulers Vec3) {
+	t.rotation = internal.Euler(mgl32.Vec3(eulers))
 }
 
 func (t *Transform) Forward() Vec3 {
-	return Vec3{}
+	return Vec3(internal.QuatMulVec3(t.rotation, forward))
 }
 
 func (t *Transform) Up() Vec3 {
-	return Vec3{}
+	return Vec3(internal.QuatMulVec3(t.rotation, up))
 }
 
 func (t *Transform) Right() Vec3 {
-	return Vec3{}
+	return Vec3(internal.QuatMulVec3(t.rotation, right))
 }
 
-func (t *Transform) Translate(x float32, y float32, z float32) {
-
+func (t *Transform) Translate(translation Vec3) {
+	t.position = t.position.Add(mgl32.Vec3(translation))
 }
 
 func (t *Transform) LookAt(x float32, y float32, z float32) {
-	t.rotation = mgl32.QuatLookAtV(t.position, mgl32.Vec3{x, y, z}, mgl32.Vec3{0, 1, 0})
+	t.rotation = mgl32.QuatLookAtV(t.position, mgl32.Vec3{x, y, z}, up)
 }
 
-func (t *Transform) MoveTo(x float32, y float32, z float32) {
-	t.position = mgl32.Vec3{x, y, z}
+func (t *Transform) MoveTo(position Vec3) {
+	t.position = mgl32.Vec3(position)
 }
 
-func (t *Transform) Rotate(angle Vec3) {
+func (t *Transform) Rotate(eulers Vec3) {
+	eulerRot := internal.Euler(mgl32.Vec3(eulers))
+	t.rotation = t.rotation.Mul(t.rotation.Inverse().Mul(eulerRot).Mul(t.rotation))
 }
