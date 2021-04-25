@@ -11,7 +11,7 @@ func Clamp(value, min, max float64) float64 {
 }
 
 func Euler(eulers mgl32.Vec3) mgl32.Quat {
-	return mgl32.AnglesToQuat(mgl32.DegToRad(eulers.X()), mgl32.DegToRad(eulers.Y()), mgl32.DegToRad(eulers.Z()), mgl32.XYZ)
+	return mgl32.AnglesToQuat(mgl32.DegToRad(eulers.Y()), mgl32.DegToRad(eulers.Z()), mgl32.DegToRad(eulers.X()), mgl32.YZX)
 }
 
 func QuatMulVec3(q mgl32.Quat, v mgl32.Vec3) mgl32.Vec3 {
@@ -24,22 +24,24 @@ func ToEuler(rotation mgl32.Quat) mgl32.Vec3 {
 	r := rotation.Normalize()
 	te := r.Mat4()
 	m11 := float64(te[0])
-	m12 := float64(te[4])
+	//m12 := float64(te[4])
 	m13 := float64(te[8])
+	m21 := float64(te[1])
 	m22 := float64(te[5])
 	m23 := float64(te[9])
-	m32 := float64(te[6])
+	m31 := float64(te[2])
+	//m32 := float64(te[6])
 	m33 := float64(te[10])
 
-	y = float32(math.Asin(Clamp(m13, -1, 1)))
-	if math.Abs(m13) < 0.9999999 {
-		x = float32(math.Atan2(-m23, m33))
-		z = float32(math.Atan2(-m12, m11))
+	// yzx
+	z = float32(math.Asin(Clamp(m21, -1, 1)))
+	if math.Abs(m21) < 0.9999999 {
+		x = float32(math.Atan2(-m23, m22))
+		y = float32(math.Atan2(-m31, m11))
 	} else {
-		x = float32(math.Atan2(m32, m22))
-		z = 0
+		x = float32(math.Atan2(m13, m33))
+		y = 0
 	}
-
 	return mgl32.Vec3{mgl32.RadToDeg(x), mgl32.RadToDeg(y), mgl32.RadToDeg(z)}
 }
 
