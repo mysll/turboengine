@@ -109,8 +109,8 @@ type TowerAOI struct {
 
 func NewTowerAOI(w float32, h float32, tw float32, th float32, limit int, cb Callback) *TowerAOI {
 	aoi := &TowerAOI{
-		width:       w,
-		height:      h,
+		width:       w + 1,
+		height:      h + 1,
 		towerWidth:  tw,
 		towerHeight: th,
 		rangeLimit:  limit,
