@@ -1,6 +1,8 @@
 package tower
 
 import (
+	"errors"
+	"fmt"
 	"math"
 	"turboengine/gameplay/object"
 )
@@ -248,4 +250,41 @@ func (this *TowerAOI) RemoveObject(pos object.Vec3, obj object.ObjectId) bool {
 		}
 	}
 	return false
+}
+
+func (this *TowerAOI) UpdateObject(obj object.ObjectId, oldpos object.Vec3, newpos object.Vec3) error {
+	if !this.checkPos(oldpos) || !this.checkPos(newpos) {
+		return nil
+	}
+	p1 := this.transPos(oldpos)
+	p2 := this.transPos(newpos)
+
+	if p1.X == p2.X && p1.Y == p2.Y {
+		return nil
+	} else {
+		if this.towers[p1.X] == nil || this.towers[p2.X] == nil {
+			return errors.New(fmt.Sprintf("AOI pos error ! oldPos : %v, newPos : %v, p1 : %v, p2 : %v", oldpos, newpos, p1, p2))
+		}
+
+		oldtower := this.towers[p1.X][p1.Y]
+		newtower := this.towers[p2.X][p2.Y]
+		if oldtower.remove(obj) {
+			for _, watcher := range oldtower.getAllWatchers() {
+				if watcher == obj {
+					continue
+				}
+				this.callback.OnLeaveAOI(watcher, obj)
+			}
+		}
+		if newtower.add(obj) {
+			for _, watcher := range newtower.getAllWatchers() {
+				if watcher == obj {
+					continue
+				}
+				this.callback.OnEnterAOI(watcher, obj)
+			}
+		}
+	}
+
+	return nil
 }
