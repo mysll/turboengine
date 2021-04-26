@@ -96,6 +96,67 @@ type TowerAOI struct {
 	towers      [][]*Tower
 }
 
+// Check if the pos is valid;
+func (this *TowerAOI) checkPos(pos object.Vec3) bool {
+	if pos.X() < 0 || pos.Z() < 0 || pos.X() >= this.width || pos.Z() >= this.height {
+		return false
+	}
+	return true
+}
+
+// Trans the absolut pos to tower pos. For example : (210, 110} -> (1, 0), for tower width 200, height 200
+func (this *TowerAOI) transPos(pos object.Vec3) TowerPos {
+	return TowerPos{
+		X: int(math.Floor(float64(pos.X() / this.towerWidth))),
+		Y: int(math.Floor(float64(pos.Z() / this.towerHeight))),
+	}
+}
+
+// getPosLimit Get the postion limit of given range,
+func getPosLimit(pos TowerPos, ranges int, max TowerPos) (start TowerPos, end TowerPos) {
+
+	if pos.X-ranges < 0 {
+		start.X = 0
+		end.X = 2 * ranges
+	} else if pos.X+ranges > max.X {
+		end.X = max.X
+		start.X = max.X - 2*ranges
+	} else {
+		start.X = pos.X - ranges
+		end.X = pos.X + ranges
+	}
+
+	if pos.Y-ranges < 0 {
+		start.Y = 0
+		end.Y = 2 * ranges
+	} else if pos.Y+ranges > max.Y {
+		end.Y = max.Y
+		start.Y = max.Y - 2*ranges
+	} else {
+		start.Y = pos.Y - ranges
+		end.Y = pos.Y + ranges
+	}
+	if start.X < 0 {
+		start.X = 0
+	}
+	if end.X > max.X {
+		end.X = max.X
+	}
+	if start.Y < 0 {
+		start.Y = 0
+	}
+	if end.Y > max.Y {
+		end.Y = max.Y
+	}
+
+	return
+}
+
+// isInRect  Check if the pos is in the rect
+func isInRect(pos TowerPos, start TowerPos, end TowerPos) bool {
+	return (pos.X >= start.X && pos.X <= end.X && pos.Y >= start.Y && pos.Y <= end.Y)
+}
+
 func (this *TowerAOI) Init() {
 	iloop := int(math.Ceil(float64(this.width / this.towerWidth)))
 	jloop := int(math.Ceil(float64(this.height / this.towerHeight)))
