@@ -1,8 +1,6 @@
 package tower
 
 import (
-	"errors"
-	"fmt"
 	"math"
 	"turboengine/gameplay/object"
 )
@@ -93,6 +91,10 @@ type TowerPos struct {
 	X, Y int
 }
 
+func (tp TowerPos) Equal(rhs TowerPos) bool {
+	return tp.X == rhs.X && tp.Y == rhs.Y
+}
+
 type TowerAOI struct {
 	width       float32
 	height      float32
@@ -115,6 +117,34 @@ func NewTowerAOI(w float32, h float32, tw float32, th float32, limit int, cb Cal
 	}
 	aoi.init()
 	return aoi
+}
+
+func (aoi *TowerAOI) Enter(obj object.ObjectId, pos object.Vec3, ranges int) bool {
+	if !aoi.addWatcher(obj, pos, ranges) {
+		return false
+	}
+	return aoi.addObject(pos, obj)
+}
+
+func (aoi *TowerAOI) Level(obj object.ObjectId, pos object.Vec3, ranges int) bool {
+	if !aoi.removeObject(pos, obj) {
+		return false
+	}
+	return aoi.removeWatcher(obj, pos, ranges)
+}
+
+func (aoi *TowerAOI) Move(obj object.ObjectId, oldpos object.Vec3, dest object.Vec3, ranges int) bool {
+	if !aoi.checkPos(oldpos) || !aoi.checkPos(dest) {
+		return false
+	}
+	p1 := aoi.transPos(oldpos)
+	p2 := aoi.transPos(dest)
+
+	if p1.Equal(p2) {
+		return true
+	}
+
+	return false
 }
 
 // Check if the pos is valid;
@@ -223,15 +253,20 @@ func (this *TowerAOI) GetIdsByPos(pos object.Vec3, ranges int) []object.ObjectId
 func (this *TowerAOI) addObject(pos object.Vec3, obj object.ObjectId) bool {
 	if this.checkPos(pos) {
 		p := this.transPos(pos)
-		if this.towers[p.X][p.Y].add(obj) {
-			for _, watcher := range this.towers[p.X][p.Y].getAllWatchers() {
-				if watcher == obj {
-					continue
-				}
-				this.callback.OnEnterAOI(watcher, obj)
+		return this.innerAddObj(this.towers[p.X][p.Y], obj)
+	}
+	return false
+}
+
+func (this *TowerAOI) innerAddObj(t *Tower, obj object.ObjectId) bool {
+	if t.add(obj) {
+		for _, watcher := range t.getAllWatchers() {
+			if watcher == obj {
+				continue
 			}
-			return true
+			this.callback.OnEnterAOI(watcher, obj)
 		}
+		return true
 	}
 	return false
 }
@@ -239,54 +274,22 @@ func (this *TowerAOI) addObject(pos object.Vec3, obj object.ObjectId) bool {
 func (this *TowerAOI) removeObject(pos object.Vec3, obj object.ObjectId) bool {
 	if this.checkPos(pos) {
 		p := this.transPos(pos)
-		if this.towers[p.X][p.Y].remove(obj) {
-			for _, watcher := range this.towers[p.X][p.Y].getAllWatchers() {
-				if watcher == obj {
-					continue
-				}
-				this.callback.OnLeaveAOI(watcher, obj)
-			}
-			return true
-		}
+		return this.innerRemoveObject(this.towers[p.X][p.Y], obj)
 	}
 	return false
 }
 
-func (this *TowerAOI) updateObject(obj object.ObjectId, oldpos object.Vec3, newpos object.Vec3) error {
-	if !this.checkPos(oldpos) || !this.checkPos(newpos) {
-		return nil
-	}
-	p1 := this.transPos(oldpos)
-	p2 := this.transPos(newpos)
-
-	if p1.X == p2.X && p1.Y == p2.Y {
-		return nil
-	} else {
-		if this.towers[p1.X] == nil || this.towers[p2.X] == nil {
-			return errors.New(fmt.Sprintf("AOI pos error ! oldPos : %v, newPos : %v, p1 : %v, p2 : %v", oldpos, newpos, p1, p2))
-		}
-
-		oldtower := this.towers[p1.X][p1.Y]
-		newtower := this.towers[p2.X][p2.Y]
-		if oldtower.remove(obj) {
-			for _, watcher := range oldtower.getAllWatchers() {
-				if watcher == obj {
-					continue
-				}
-				this.callback.OnLeaveAOI(watcher, obj)
+func (this *TowerAOI) innerRemoveObject(t *Tower, obj object.ObjectId) bool {
+	if t.remove(obj) {
+		for _, watcher := range t.getAllWatchers() {
+			if watcher == obj {
+				continue
 			}
+			this.callback.OnLeaveAOI(watcher, obj)
 		}
-		if newtower.add(obj) {
-			for _, watcher := range newtower.getAllWatchers() {
-				if watcher == obj {
-					continue
-				}
-				this.callback.OnEnterAOI(watcher, obj)
-			}
-		}
+		return true
 	}
-
-	return nil
+	return false
 }
 
 func (this *TowerAOI) getWatchers(pos object.Vec3) []object.ObjectId {
@@ -347,7 +350,7 @@ func (this *TowerAOI) removeWatcher(watcher object.ObjectId, pos object.Vec3, ra
 	return true
 }
 
-func (this *TowerAOI) updateWatcher(watcher object.ObjectId, typ int, oldPos object.Vec3, newPos object.Vec3, oldRange int, newRange int) bool {
+func (this *TowerAOI) updateWatcher(watcher object.ObjectId, oldPos object.Vec3, newPos object.Vec3, oldRange int, newRange int) bool {
 	if !this.checkPos(oldPos) || !this.checkPos(newPos) {
 		return false
 	}
