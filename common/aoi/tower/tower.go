@@ -288,3 +288,51 @@ func (this *TowerAOI) UpdateObject(obj object.ObjectId, oldpos object.Vec3, newp
 
 	return nil
 }
+
+func (this *TowerAOI) GetWatchers(pos object.Vec3) []object.ObjectId {
+	if this.checkPos(pos) {
+		p := this.transPos(pos)
+		return this.towers[p.X][p.Y].getAllWatchers()
+	}
+	return nil
+}
+
+func (this *TowerAOI) AddWatcher(watcher object.ObjectId, pos object.Vec3, ranges int) bool {
+	if ranges < 0 {
+		return false
+	}
+	if ranges > this.rangeLimit {
+		ranges = this.rangeLimit
+	}
+	p := this.transPos(pos)
+	start, end := getPosLimit(p, ranges, this.max)
+	for i := start.X; i <= end.X; i++ {
+		for j := start.Y; j <= end.Y; j++ {
+			this.towers[i][j].addWatcher(watcher)
+		}
+	}
+
+	return true
+}
+
+func (this *TowerAOI) RemoveWatcher(watcher object.ObjectId, pos object.Vec3, ranges int) bool {
+	if ranges < 0 {
+		return false
+	}
+
+	if ranges > this.rangeLimit {
+		ranges = this.rangeLimit
+	}
+
+	p := this.transPos(pos)
+
+	start, end := getPosLimit(p, ranges, this.max)
+
+	for i := start.X; i <= end.X; i++ {
+		for j := start.Y; j <= end.Y; j++ {
+			this.towers[i][j].removeWatcher(watcher)
+		}
+	}
+
+	return true
+}
