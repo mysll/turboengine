@@ -1,6 +1,9 @@
 package tower
 
-import "turboengine/gameplay/object"
+import (
+	"math"
+	"turboengine/gameplay/object"
+)
 
 type IdSet map[object.ObjectId]struct{}
 
@@ -77,4 +80,40 @@ func NewTower() *Tower {
 	t.Ids = IdSet{}
 	t.Watchers = IdSet{}
 	return t
+}
+
+type TowerPos struct {
+	X, Y int
+}
+
+type TowerAOI struct {
+	width       float32
+	height      float32
+	towerWidth  float32
+	towerHeight float32
+	rangeLimit  int
+	max         TowerPos
+	towers      [][]*Tower
+}
+
+func (this *TowerAOI) Init() {
+	iloop := int(math.Ceil(float64(this.width / this.towerWidth)))
+	jloop := int(math.Ceil(float64(this.height / this.towerHeight)))
+	this.max.X = iloop - 1
+	this.max.Y = jloop - 1
+	this.towers = make([][]*Tower, iloop)
+	for i := 0; i < iloop; i++ {
+		this.towers[i] = make([]*Tower, jloop)
+		for j := 0; j < jloop; j++ {
+			this.towers[i][j] = NewTower()
+		}
+	}
+}
+
+func (this *TowerAOI) Clear() {
+	for i := 0; i <= this.max.X; i++ {
+		for j := 0; j <= this.max.Y; j++ {
+			this.towers[i][j].clear()
+		}
+	}
 }
