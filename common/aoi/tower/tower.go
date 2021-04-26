@@ -220,7 +220,7 @@ func (this *TowerAOI) GetIdsByPos(pos object.Vec3, ranges int) []object.ObjectId
 	return result
 }
 
-func (this *TowerAOI) AddObject(pos object.Vec3, obj object.ObjectId) bool {
+func (this *TowerAOI) addObject(pos object.Vec3, obj object.ObjectId) bool {
 	if this.checkPos(pos) {
 		p := this.transPos(pos)
 		if this.towers[p.X][p.Y].add(obj) {
@@ -236,7 +236,7 @@ func (this *TowerAOI) AddObject(pos object.Vec3, obj object.ObjectId) bool {
 	return false
 }
 
-func (this *TowerAOI) RemoveObject(pos object.Vec3, obj object.ObjectId) bool {
+func (this *TowerAOI) removeObject(pos object.Vec3, obj object.ObjectId) bool {
 	if this.checkPos(pos) {
 		p := this.transPos(pos)
 		if this.towers[p.X][p.Y].remove(obj) {
@@ -252,7 +252,7 @@ func (this *TowerAOI) RemoveObject(pos object.Vec3, obj object.ObjectId) bool {
 	return false
 }
 
-func (this *TowerAOI) UpdateObject(obj object.ObjectId, oldpos object.Vec3, newpos object.Vec3) error {
+func (this *TowerAOI) updateObject(obj object.ObjectId, oldpos object.Vec3, newpos object.Vec3) error {
 	if !this.checkPos(oldpos) || !this.checkPos(newpos) {
 		return nil
 	}
@@ -289,7 +289,7 @@ func (this *TowerAOI) UpdateObject(obj object.ObjectId, oldpos object.Vec3, newp
 	return nil
 }
 
-func (this *TowerAOI) GetWatchers(pos object.Vec3) []object.ObjectId {
+func (this *TowerAOI) getWatchers(pos object.Vec3) []object.ObjectId {
 	if this.checkPos(pos) {
 		p := this.transPos(pos)
 		return this.towers[p.X][p.Y].getAllWatchers()
@@ -297,7 +297,7 @@ func (this *TowerAOI) GetWatchers(pos object.Vec3) []object.ObjectId {
 	return nil
 }
 
-func (this *TowerAOI) AddWatcher(watcher object.ObjectId, pos object.Vec3, ranges int) bool {
+func (this *TowerAOI) addWatcher(watcher object.ObjectId, pos object.Vec3, ranges int) bool {
 	if ranges < 0 {
 		return false
 	}
@@ -309,13 +309,18 @@ func (this *TowerAOI) AddWatcher(watcher object.ObjectId, pos object.Vec3, range
 	for i := start.X; i <= end.X; i++ {
 		for j := start.Y; j <= end.Y; j++ {
 			this.towers[i][j].addWatcher(watcher)
+			for neighbor := range this.towers[i][j].Ids {
+				if neighbor != watcher {
+					this.callback.OnEnterAOI(watcher, neighbor)
+				}
+			}
 		}
 	}
 
 	return true
 }
 
-func (this *TowerAOI) RemoveWatcher(watcher object.ObjectId, pos object.Vec3, ranges int) bool {
+func (this *TowerAOI) removeWatcher(watcher object.ObjectId, pos object.Vec3, ranges int) bool {
 	if ranges < 0 {
 		return false
 	}
@@ -331,8 +336,83 @@ func (this *TowerAOI) RemoveWatcher(watcher object.ObjectId, pos object.Vec3, ra
 	for i := start.X; i <= end.X; i++ {
 		for j := start.Y; j <= end.Y; j++ {
 			this.towers[i][j].removeWatcher(watcher)
+			for neighbor := range this.towers[i][j].Ids {
+				if neighbor != watcher {
+					this.callback.OnLeaveAOI(watcher, neighbor)
+				}
+			}
 		}
 	}
 
 	return true
+}
+
+func (this *TowerAOI) updateWatcher(watcher object.ObjectId, typ int, oldPos object.Vec3, newPos object.Vec3, oldRange int, newRange int) bool {
+	if !this.checkPos(oldPos) || !this.checkPos(newPos) {
+		return false
+	}
+	p1 := this.transPos(oldPos)
+	p2 := this.transPos(newPos)
+
+	if p1.X == p2.X && p1.Y == p2.Y {
+		return true
+	} else {
+		if oldRange < 0 || newRange < 0 {
+			return false
+		}
+		if oldRange > this.rangeLimit {
+			oldRange = this.rangeLimit
+		}
+		if newRange > this.rangeLimit {
+			newRange = this.rangeLimit
+		}
+		addTowers, removeTowers := this.getChangedTowers(p1, p2, oldRange, newRange)
+		for _, t := range removeTowers {
+			t.removeWatcher(watcher)
+			t.remove(watcher)
+			for _, neighbor := range t.getAllWatchers() {
+				if neighbor != watcher {
+					this.callback.OnLeaveAOI(neighbor, watcher)
+				}
+			}
+		}
+
+		for _, t := range addTowers {
+			t.addWatcher(watcher)
+			t.add(watcher)
+			for _, neighbor := range t.getAllWatchers() {
+				if neighbor != watcher {
+					this.callback.OnEnterAOI(neighbor, watcher)
+				}
+			}
+		}
+
+	}
+	return true
+}
+
+func (this *TowerAOI) getChangedTowers(p1 TowerPos, p2 TowerPos, r1 int, r2 int) ([]*Tower, []*Tower) {
+	var start1, end1 = getPosLimit(p1, r1, this.max)
+	var start2, end2 = getPosLimit(p2, r2, this.max)
+
+	removeTowers := make([]*Tower, 0, 10)
+	addTowers := make([]*Tower, 0, 10)
+
+	for i := start1.X; i <= end1.X; i++ {
+		for j := start1.Y; j <= end1.Y; j++ {
+			if !isInRect(TowerPos{i, j}, start2, end2) {
+				removeTowers = append(removeTowers, this.towers[i][j])
+			}
+		}
+	}
+
+	for i := start2.X; i <= end2.X; i++ {
+		for j := start2.Y; j <= end2.Y; j++ {
+			if !isInRect(TowerPos{i, j}, start1, end1) {
+				addTowers = append(addTowers, this.towers[i][j])
+			}
+		}
+	}
+
+	return addTowers, removeTowers
 }
