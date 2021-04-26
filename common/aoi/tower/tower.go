@@ -7,6 +7,11 @@ import (
 
 type IdSet map[object.ObjectId]struct{}
 
+type Callback interface {
+	OnEnterAOI(watcher, target object.ObjectId)
+	OnLeaveAOI(watcher, target object.ObjectId)
+}
+
 type Tower struct {
 	Ids      IdSet
 	Watchers IdSet
@@ -94,17 +99,19 @@ type TowerAOI struct {
 	rangeLimit  int
 	max         TowerPos
 	towers      [][]*Tower
+	callback    Callback
 }
 
-func NewTowerAOI(w float32, h float32, tw float32, th float32, limit int) *TowerAOI {
+func NewTowerAOI(w float32, h float32, tw float32, th float32, limit int, cb Callback) *TowerAOI {
 	aoi := &TowerAOI{
 		width:       w,
 		height:      h,
 		towerWidth:  tw,
 		towerHeight: th,
 		rangeLimit:  limit,
+		callback:    cb,
 	}
-	aoi.Init()
+	aoi.init()
 	return aoi
 }
 
@@ -169,7 +176,7 @@ func isInRect(pos TowerPos, start TowerPos, end TowerPos) bool {
 	return (pos.X >= start.X && pos.X <= end.X && pos.Y >= start.Y && pos.Y <= end.Y)
 }
 
-func (this *TowerAOI) Init() {
+func (this *TowerAOI) init() {
 	iloop := int(math.Ceil(float64(this.width / this.towerWidth)))
 	jloop := int(math.Ceil(float64(this.height / this.towerHeight)))
 	this.max.X = iloop - 1
@@ -189,4 +196,56 @@ func (this *TowerAOI) Clear() {
 			this.towers[i][j].clear()
 		}
 	}
+}
+
+func (this *TowerAOI) GetIdsByPos(pos object.Vec3, ranges int) []object.ObjectId {
+	if !this.checkPos(pos) || ranges < 0 {
+		return nil
+	}
+
+	result := make([]object.ObjectId, 0, 100)
+	if ranges > this.rangeLimit {
+		ranges = this.rangeLimit
+	}
+	p := this.transPos(pos)
+	start, end := getPosLimit(p, ranges, this.max)
+
+	for i := start.X; i <= end.X; i++ {
+		for j := start.Y; j <= end.Y; j++ {
+			result = append(result, this.towers[i][j].getIds()...)
+		}
+	}
+	return result
+}
+
+func (this *TowerAOI) AddObject(pos object.Vec3, obj object.ObjectId) bool {
+	if this.checkPos(pos) {
+		p := this.transPos(pos)
+		if this.towers[p.X][p.Y].add(obj) {
+			for _, watcher := range this.towers[p.X][p.Y].getAllWatchers() {
+				if watcher == obj {
+					continue
+				}
+				this.callback.OnEnterAOI(watcher, obj)
+			}
+			return true
+		}
+	}
+	return false
+}
+
+func (this *TowerAOI) RemoveObject(pos object.Vec3, obj object.ObjectId) bool {
+	if this.checkPos(pos) {
+		p := this.transPos(pos)
+		if this.towers[p.X][p.Y].remove(obj) {
+			for _, watcher := range this.towers[p.X][p.Y].getAllWatchers() {
+				if watcher == obj {
+					continue
+				}
+				this.callback.OnLeaveAOI(watcher, obj)
+			}
+			return true
+		}
+	}
+	return false
 }
