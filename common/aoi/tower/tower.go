@@ -59,12 +59,13 @@ func (t *Tower) addWatcher(watcher object.ObjectId) bool {
 	return true
 }
 
-func (t *Tower) removeWatcher(watcher object.ObjectId) {
+func (t *Tower) removeWatcher(watcher object.ObjectId) bool {
 	if _, ok := t.Watchers[watcher]; !ok {
-		return
+		return false
 	}
 
 	delete(t.Watchers, watcher)
+	return true
 }
 
 func (t *Tower) getAllWatchers() []object.ObjectId {
@@ -119,18 +120,22 @@ func NewTowerAOI(w float32, h float32, tw float32, th float32, limit int, cb Cal
 	return aoi
 }
 
-func (aoi *TowerAOI) Enter(obj object.ObjectId, pos object.Vec3, ranges int) bool {
-	if !aoi.addWatcher(obj, pos, ranges) {
-		return false
+func (aoi *TowerAOI) Enter(obj object.ObjectId, pos object.Vec3, ranges int) {
+	if !aoi.checkPos(pos) {
+		panic("pos invalid")
 	}
-	return aoi.addObject(pos, obj)
+	aoi.addWatcher(obj, pos, ranges)
+	aoi.addObject(pos, obj)
 }
 
-func (aoi *TowerAOI) Level(obj object.ObjectId, pos object.Vec3, ranges int) bool {
-	if !aoi.removeObject(pos, obj) {
-		return false
+func (aoi *TowerAOI) Level(obj object.ObjectId, pos object.Vec3, ranges int) {
+	if aoi.checkPos(pos) {
+		panic("pos invalid")
 	}
-	return aoi.removeWatcher(obj, pos, ranges)
+	if aoi.removeObject(pos, obj) {
+		return
+	}
+	aoi.removeWatcher(obj, pos, ranges)
 }
 
 func (aoi *TowerAOI) Move(obj object.ObjectId, oldpos object.Vec3, dest object.Vec3, ranges int) bool {
@@ -144,7 +149,19 @@ func (aoi *TowerAOI) Move(obj object.ObjectId, oldpos object.Vec3, dest object.V
 		return true
 	}
 
-	return false
+	t1 := aoi.towers[p1.X][p1.Y]
+	t2 := aoi.towers[p2.X][p2.Y]
+
+	aoi.innerRemoveObject(t1, obj)
+	aoi.innerAddObj(t2, obj)
+	addTowers, removeTowers := aoi.getChangedTowers(p1, p2, ranges, ranges)
+	for _, t := range removeTowers {
+		aoi.innerRemoveWatcher(t, obj)
+	}
+	for _, t := range addTowers {
+		aoi.innerAddWatch(t, obj)
+	}
+	return true
 }
 
 // Check if the pos is valid;
@@ -251,11 +268,8 @@ func (this *TowerAOI) GetIdsByPos(pos object.Vec3, ranges int) []object.ObjectId
 }
 
 func (this *TowerAOI) addObject(pos object.Vec3, obj object.ObjectId) bool {
-	if this.checkPos(pos) {
-		p := this.transPos(pos)
-		return this.innerAddObj(this.towers[p.X][p.Y], obj)
-	}
-	return false
+	p := this.transPos(pos)
+	return this.innerAddObj(this.towers[p.X][p.Y], obj)
 }
 
 func (this *TowerAOI) innerAddObj(t *Tower, obj object.ObjectId) bool {
@@ -272,11 +286,8 @@ func (this *TowerAOI) innerAddObj(t *Tower, obj object.ObjectId) bool {
 }
 
 func (this *TowerAOI) removeObject(pos object.Vec3, obj object.ObjectId) bool {
-	if this.checkPos(pos) {
-		p := this.transPos(pos)
-		return this.innerRemoveObject(this.towers[p.X][p.Y], obj)
-	}
-	return false
+	p := this.transPos(pos)
+	return this.innerRemoveObject(this.towers[p.X][p.Y], obj)
 }
 
 func (this *TowerAOI) innerRemoveObject(t *Tower, obj object.ObjectId) bool {
@@ -300,9 +311,9 @@ func (this *TowerAOI) getWatchers(pos object.Vec3) []object.ObjectId {
 	return nil
 }
 
-func (this *TowerAOI) addWatcher(watcher object.ObjectId, pos object.Vec3, ranges int) bool {
-	if ranges < 0 {
-		return false
+func (this *TowerAOI) addWatcher(watcher object.ObjectId, pos object.Vec3, ranges int) {
+	if ranges <= 0 {
+		panic("ranges <= 0")
 	}
 	if ranges > this.rangeLimit {
 		ranges = this.rangeLimit
@@ -311,21 +322,24 @@ func (this *TowerAOI) addWatcher(watcher object.ObjectId, pos object.Vec3, range
 	start, end := getPosLimit(p, ranges, this.max)
 	for i := start.X; i <= end.X; i++ {
 		for j := start.Y; j <= end.Y; j++ {
-			this.towers[i][j].addWatcher(watcher)
-			for neighbor := range this.towers[i][j].Ids {
-				if neighbor != watcher {
-					this.callback.OnEnterAOI(watcher, neighbor)
-				}
+			this.innerAddWatch(this.towers[i][j], watcher)
+		}
+	}
+}
+
+func (this *TowerAOI) innerAddWatch(t *Tower, watcher object.ObjectId) {
+	if t.addWatcher(watcher) {
+		for neighbor := range t.Ids {
+			if neighbor != watcher {
+				this.callback.OnEnterAOI(watcher, neighbor)
 			}
 		}
 	}
-
-	return true
 }
 
-func (this *TowerAOI) removeWatcher(watcher object.ObjectId, pos object.Vec3, ranges int) bool {
-	if ranges < 0 {
-		return false
+func (this *TowerAOI) removeWatcher(watcher object.ObjectId, pos object.Vec3, ranges int) {
+	if ranges <= 0 {
+		panic("ranges <= 0")
 	}
 
 	if ranges > this.rangeLimit {
@@ -338,60 +352,19 @@ func (this *TowerAOI) removeWatcher(watcher object.ObjectId, pos object.Vec3, ra
 
 	for i := start.X; i <= end.X; i++ {
 		for j := start.Y; j <= end.Y; j++ {
-			this.towers[i][j].removeWatcher(watcher)
-			for neighbor := range this.towers[i][j].Ids {
-				if neighbor != watcher {
-					this.callback.OnLeaveAOI(watcher, neighbor)
-				}
-			}
+			this.innerRemoveWatcher(this.towers[i][j], watcher)
 		}
 	}
-
-	return true
 }
 
-func (this *TowerAOI) updateWatcher(watcher object.ObjectId, oldPos object.Vec3, newPos object.Vec3, oldRange int, newRange int) bool {
-	if !this.checkPos(oldPos) || !this.checkPos(newPos) {
-		return false
-	}
-	p1 := this.transPos(oldPos)
-	p2 := this.transPos(newPos)
-
-	if p1.X == p2.X && p1.Y == p2.Y {
-		return true
-	} else {
-		if oldRange < 0 || newRange < 0 {
-			return false
-		}
-		if oldRange > this.rangeLimit {
-			oldRange = this.rangeLimit
-		}
-		if newRange > this.rangeLimit {
-			newRange = this.rangeLimit
-		}
-		addTowers, removeTowers := this.getChangedTowers(p1, p2, oldRange, newRange)
-		for _, t := range removeTowers {
-			t.removeWatcher(watcher)
-			t.remove(watcher)
-			for _, neighbor := range t.getAllWatchers() {
-				if neighbor != watcher {
-					this.callback.OnLeaveAOI(neighbor, watcher)
-				}
+func (this *TowerAOI) innerRemoveWatcher(t *Tower, watcher object.ObjectId) {
+	if t.removeWatcher(watcher) {
+		for neighbor := range t.Ids {
+			if neighbor != watcher {
+				this.callback.OnLeaveAOI(watcher, neighbor)
 			}
 		}
-
-		for _, t := range addTowers {
-			t.addWatcher(watcher)
-			t.add(watcher)
-			for _, neighbor := range t.getAllWatchers() {
-				if neighbor != watcher {
-					this.callback.OnEnterAOI(neighbor, watcher)
-				}
-			}
-		}
-
 	}
-	return true
 }
 
 func (this *TowerAOI) getChangedTowers(p1 TowerPos, p2 TowerPos, r1 int, r2 int) ([]*Tower, []*Tower) {
