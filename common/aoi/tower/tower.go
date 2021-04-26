@@ -71,3 +71,10 @@ func (t *Tower) getAllWatchers() []object.ObjectId {
 	}
 	return result
 }
+
+func NewTower() *Tower {
+	t := &Tower{}
+	t.Ids = IdSet{}
+	t.Watchers = IdSet{}
+	return t
+}
