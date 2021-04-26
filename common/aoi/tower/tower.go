@@ -129,7 +129,7 @@ func (aoi *TowerAOI) Enter(obj object.ObjectId, pos object.Vec3, ranges int) {
 }
 
 func (aoi *TowerAOI) Level(obj object.ObjectId, pos object.Vec3, ranges int) {
-	if aoi.checkPos(pos) {
+	if !aoi.checkPos(pos) {
 		panic("pos invalid")
 	}
 	if aoi.removeObject(pos, obj) {
@@ -162,6 +162,34 @@ func (aoi *TowerAOI) Move(obj object.ObjectId, oldpos object.Vec3, dest object.V
 		aoi.innerAddWatch(t, obj)
 	}
 	return true
+}
+
+func (this *TowerAOI) Clear() {
+	for i := 0; i <= this.max.X; i++ {
+		for j := 0; j <= this.max.Y; j++ {
+			this.towers[i][j].clear()
+		}
+	}
+}
+
+func (this *TowerAOI) GetIdsByRange(pos object.Vec3, ranges int) []object.ObjectId {
+	if !this.checkPos(pos) || ranges < 0 {
+		return nil
+	}
+
+	result := make([]object.ObjectId, 0, 100)
+	if ranges > this.rangeLimit {
+		ranges = this.rangeLimit
+	}
+	p := this.transPos(pos)
+	start, end := getPosLimit(p, ranges, this.max)
+
+	for i := start.X; i <= end.X; i++ {
+		for j := start.Y; j <= end.Y; j++ {
+			result = append(result, this.towers[i][j].getIds()...)
+		}
+	}
+	return result
 }
 
 // Check if the pos is valid;
@@ -237,34 +265,6 @@ func (this *TowerAOI) init() {
 			this.towers[i][j] = NewTower()
 		}
 	}
-}
-
-func (this *TowerAOI) Clear() {
-	for i := 0; i <= this.max.X; i++ {
-		for j := 0; j <= this.max.Y; j++ {
-			this.towers[i][j].clear()
-		}
-	}
-}
-
-func (this *TowerAOI) GetIdsByPos(pos object.Vec3, ranges int) []object.ObjectId {
-	if !this.checkPos(pos) || ranges < 0 {
-		return nil
-	}
-
-	result := make([]object.ObjectId, 0, 100)
-	if ranges > this.rangeLimit {
-		ranges = this.rangeLimit
-	}
-	p := this.transPos(pos)
-	start, end := getPosLimit(p, ranges, this.max)
-
-	for i := start.X; i <= end.X; i++ {
-		for j := start.Y; j <= end.Y; j++ {
-			result = append(result, this.towers[i][j].getIds()...)
-		}
-	}
-	return result
 }
 
 func (this *TowerAOI) addObject(pos object.Vec3, obj object.ObjectId) bool {
