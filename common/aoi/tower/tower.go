@@ -96,6 +96,18 @@ type TowerAOI struct {
 	towers      [][]*Tower
 }
 
+func NewTowerAOI(w float32, h float32, tw float32, th float32, limit int) *TowerAOI {
+	aoi := &TowerAOI{
+		width:       w,
+		height:      h,
+		towerWidth:  tw,
+		towerHeight: th,
+		rangeLimit:  limit,
+	}
+	aoi.Init()
+	return aoi
+}
+
 // Check if the pos is valid;
 func (this *TowerAOI) checkPos(pos object.Vec3) bool {
 	if pos.X() < 0 || pos.Z() < 0 || pos.X() >= this.width || pos.Z() >= this.height {
