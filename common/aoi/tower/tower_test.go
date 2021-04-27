@@ -46,6 +46,6 @@ func TestNewTowerAOI(t *testing.T) {
 	drawAoi(toi)
 	toi.Move(2, V3(125, 0, 250), V3(75, 0, 75), 100)
 	drawAoi(toi)
-	toi.Level(1, V3(100, 0, 125), 100)
+	toi.Leave(1, V3(100, 0, 125), 100)
 	drawAoi(toi)
 }

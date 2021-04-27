@@ -30,6 +30,16 @@ const (
 var typeToObject = make(map[int]func(string) Attr)
 
 type GameObject interface {
+	Type() int
+	SetType(int)
+	IsMovement() bool
+	IsReplicate() bool
+	HasView() bool
+	hasCollider() bool
+	Movement() Movement
+	Collider() Collider
+	AOI() AOI
+	Replicate() Replicate
 	Id() ObjectId
 	Dirty() bool
 	SetDirty()
@@ -45,13 +55,6 @@ type GameObject interface {
 	AttrCount() int
 	GetAttr(index int) Attr
 	GetAttrByName(name string) Attr
-	IsMovement() bool
-	IsReplicate() bool
-	HasView() bool
-	Movement() Movement
-	Collider() Collider
-	AOI() AOI
-	Replicate() Replicate
 }
 
 // 基础对象，所以游戏内的对象基类
@@ -71,6 +74,7 @@ type Object struct {
 	priDirty  bool
 	holder    GameObject
 	features  int
+	typ       int
 }
 
 func (o *Object) SetFeature(features int) {
@@ -98,6 +102,14 @@ func (o *Object) SetFeature(features int) {
 	} else {
 		o.Collision = nil
 	}
+}
+
+func (o *Object) Type() int {
+	return o.typ
+}
+
+func (o *Object) SetType(t int) {
+	o.typ = t
 }
 
 func (o *Object) IsMovement() bool {
