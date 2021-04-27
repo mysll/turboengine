@@ -11,11 +11,11 @@ type aoi struct {
 }
 
 func (a *aoi) OnEnterAOI(watcher, target object.ObjectId) {
-	a.t.Logf("[%d] :%d enter \n", watcher, target)
+	fmt.Printf("[%d] :%d enter \n", watcher, target)
 }
 
 func (a *aoi) OnLeaveAOI(watcher, target object.ObjectId) {
-	a.t.Logf("[%d] :%d leave \n", watcher, target)
+	fmt.Printf("[%d] :%d leave \n", watcher, target)
 }
 
 func drawAoi(toi *TowerAOI) {
@@ -36,15 +36,15 @@ func drawAoi(toi *TowerAOI) {
 	}
 }
 func TestNewTowerAOI(t *testing.T) {
-	toi := NewTowerAOI(500, 500, 50, 50, 10, &aoi{t})
-	toi.Enter(1, object.Vec3{75, 0, 75}, 2)
-	toi.Enter(2, object.Vec3{125, 0, 500}, 2)
-	toi.Enter(3, object.Vec3{200, 0, 150}, 2)
+	toi := NewTowerAOI(-250, -250, 250, 250, 50, 50, 200, &aoi{t})
+	toi.Enter(1, object.Vec3{75, 0, 75}, 100)
+	toi.Enter(2, object.Vec3{125, 0, 250}, 100)
+	toi.Enter(3, object.Vec3{200, 0, 150}, 100)
 	drawAoi(toi)
-	toi.Move(1, object.Vec3{75, 0, 75}, object.Vec3{25, 0, 125}, 2)
+	toi.Move(1, object.Vec3{75, 0, 75}, object.Vec3{100, 0, 125}, 100)
 	drawAoi(toi)
-	toi.Move(2, object.Vec3{125, 0, 500}, object.Vec3{75, 0, 75}, 2)
+	toi.Move(2, object.Vec3{125, 0, 250}, object.Vec3{75, 0, 75}, 100)
 	drawAoi(toi)
-	toi.Level(1, object.Vec3{25, 0, 125}, 2)
+	toi.Level(1, object.Vec3{100, 0, 125}, 100)
 	drawAoi(toi)
 }
