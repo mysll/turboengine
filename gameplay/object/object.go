@@ -23,6 +23,7 @@ const (
 	FEATURES_MOVEMENT  = 1
 	FEATURES_REPLICATE = 1 << 1
 	FEATURES_AOI       = 1<<2 | FEATURES_MOVEMENT
+	FEATURES_COLLIDER  = 1 << 3
 	FEATURES_ALL       = -1
 )
 
@@ -51,6 +52,7 @@ type GameObject interface {
 
 // 基础对象，所以游戏内的对象基类
 type Object struct {
+	*Collider
 	*Transform
 	*Replication
 	*View
@@ -69,17 +71,28 @@ type Object struct {
 
 func (o *Object) SetFeature(features int) {
 	o.features = features
-	o.Transform = nil
 	if o.features|FEATURES_MOVEMENT != 0 {
 		o.Transform = NewTransform(o.holder)
+	} else {
+		o.Transform = nil
 	}
-	o.Replication = nil
+
 	if o.features|FEATURES_REPLICATE != 0 {
 		o.Replication = NewReplication(o.holder)
+	} else {
+		o.Replication = nil
 	}
-	o.View = nil
+
 	if o.features|FEATURES_AOI != 0 {
 		o.View = NewView(o.holder)
+	} else {
+		o.View = nil
+	}
+
+	if o.features|FEATURES_COLLIDER != 0 {
+		o.Collider = NewCollider(o.holder)
+	} else {
+		o.Collider = nil
 	}
 }
 
@@ -93,6 +106,10 @@ func (o *Object) IsReplicate() bool {
 
 func (o *Object) HasView() bool {
 	return o.features|FEATURES_AOI != 0
+}
+
+func (o *Object) hasCollider() bool {
+	return o.features|FEATURES_COLLIDER != 0
 }
 
 func (o *Object) new(cap int) {

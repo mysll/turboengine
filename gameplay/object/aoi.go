@@ -5,8 +5,9 @@ import (
 )
 
 type AOI interface {
-	AddObj(obj ObjectId)
-	RemoveObj(obj ObjectId)
+	ViewRange() float32
+	AddViewObj(obj ObjectId)
+	RemoveViewObj(obj ObjectId)
 	Clear()
 }
 
@@ -18,32 +19,37 @@ type ViewChange struct {
 }
 
 type View struct {
-	around   []GameObject
-	owner    GameObject
-	interest ViewMap
+	around    []GameObject
+	owner     GameObject
+	neighbor  ViewMap
+	viewRange float32
 }
 
 func NewView(owner GameObject) *View {
 	return &View{
 		owner:    owner,
 		around:   make([]GameObject, 30),
-		interest: make(ViewMap),
+		neighbor: make(ViewMap),
 	}
 }
 
 func (v *View) Clear() {
-	v.interest = ViewMap{}
+	v.neighbor = ViewMap{}
 }
 
-func (v *View) AddObj(obj ObjectId) {
-	if _, ok := v.interest[obj]; ok {
+func (v *View) AddViewObj(obj ObjectId) {
+	if _, ok := v.neighbor[obj]; ok {
 		return
 	}
-	v.interest[obj] = struct{}{}
+	v.neighbor[obj] = struct{}{}
 }
 
-func (v *View) RemoveObj(obj ObjectId) {
-	if _, ok := v.interest[obj]; ok {
-		delete(v.interest, obj)
+func (v *View) RemoveViewObj(obj ObjectId) {
+	if _, ok := v.neighbor[obj]; ok {
+		delete(v.neighbor, obj)
 	}
+}
+
+func (v *View) ViewRange() float32 {
+	return v.viewRange
 }

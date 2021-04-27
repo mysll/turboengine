@@ -67,7 +67,7 @@ func (t *Transform) MoveTo(position Vec3) {
 	t.position = mgl32.Vec3(position)
 }
 
-func (t *Transform) Rotate(eulers Vec3) {
-	eulerRot := internal.Euler(mgl32.Vec3(eulers))
+func (t *Transform) Rotate(eulerAngle Vec3) {
+	eulerRot := internal.Euler(mgl32.Vec3(eulerAngle))
 	t.rotation = t.rotation.Mul(t.rotation.Inverse().Mul(eulerRot).Mul(t.rotation))
 }
