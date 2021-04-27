@@ -7,7 +7,18 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-type Movement interface{}
+type Movement interface {
+	Forward() Vec3
+	Up() Vec3
+	Right() Vec3
+	Position() Vec3
+	SetRotation(eulers Vec3)
+	EulerAngles() Vec3
+	LookAt(target Vec3)
+	Translate(translation Vec3)
+	MoveTo(position Vec3)
+	Rotate(eulerAngle Vec3)
+}
 
 // Transform 使用左手坐标系
 

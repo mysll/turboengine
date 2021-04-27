@@ -48,9 +48,9 @@ type GameObject interface {
 	IsMovement() bool
 	IsReplicate() bool
 	HasView() bool
-	GetTransform() *Transform
-	GetCollision() *Collision
-	GetView() *View
+	Movement() Movement
+	Collider() Collider
+	AOI() AOI
 }
 
 // 基础对象，所以游戏内的对象基类
@@ -115,15 +115,15 @@ func (o *Object) hasCollider() bool {
 	return o.features|FEATURES_COLLIDER != 0
 }
 
-func (o *Object) GetTransform() *Transform {
+func (o *Object) Movement() Movement {
 	return o.Transform
 }
 
-func (o *Object) GetCollision() *Collision {
+func (o *Object) Collider() Collider {
 	return o.Collision
 }
 
-func (o *Object) GetView() *View {
+func (o *Object) AOI() AOI {
 	return o.View
 }
 

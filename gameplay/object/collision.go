@@ -28,7 +28,7 @@ func NewCollision(owner GameObject) *Collision {
 
 func (c *Collision) Shape() Shape {
 	if c.shape != nil {
-		c.shape.SetCenter(c.owner.GetTransform().Position())
+		c.shape.SetCenter(c.owner.Movement().Position())
 	}
 	return c.shape
 }
