@@ -32,42 +32,42 @@ func NewTransform(owner GameObject) *Transform {
 }
 
 func (t *Transform) Position() Vec3 {
-	return Vec3(t.position)
+	return Vec3{Vec3: t.position}
 }
 
 func (t *Transform) EulerAngles() Vec3 {
-	return Vec3(internal.ToEuler(t.rotation))
+	return Vec3{Vec3: internal.ToEuler(t.rotation)}
 }
 
 func (t *Transform) SetRotation(eulers Vec3) {
-	t.rotation = internal.Euler(mgl32.Vec3(eulers))
+	t.rotation = internal.Euler(mgl32.Vec3(eulers.Vec3))
 }
 
 func (t *Transform) Forward() Vec3 {
-	return Vec3(internal.QuatMulVec3(t.rotation, forward))
+	return Vec3{Vec3: internal.QuatMulVec3(t.rotation, forward)}
 }
 
 func (t *Transform) Up() Vec3 {
-	return Vec3(internal.QuatMulVec3(t.rotation, up))
+	return Vec3{Vec3: internal.QuatMulVec3(t.rotation, up)}
 }
 
 func (t *Transform) Right() Vec3 {
-	return Vec3(internal.QuatMulVec3(t.rotation, right))
+	return Vec3{Vec3: internal.QuatMulVec3(t.rotation, right)}
 }
 
 func (t *Transform) Translate(translation Vec3) {
-	t.position = t.position.Add(mgl32.Vec3(translation))
+	t.position = t.position.Add(translation.Vec3)
 }
 
 func (t *Transform) LookAt(target Vec3) {
-	t.rotation = internal.LookAt(t.position, mgl32.Vec3(target))
+	t.rotation = internal.LookAt(t.position, target.Vec3)
 }
 
 func (t *Transform) MoveTo(position Vec3) {
-	t.position = mgl32.Vec3(position)
+	t.position = position.Vec3
 }
 
 func (t *Transform) Rotate(eulers Vec3) {
-	eulerRot := internal.Euler(mgl32.Vec3(eulers))
+	eulerRot := internal.Euler(mgl32.Vec3(eulers.Vec3))
 	t.rotation = t.rotation.Mul(t.rotation.Inverse().Mul(eulerRot).Mul(t.rotation))
 }

@@ -183,8 +183,8 @@ func (aoi *TowerAOI) GetIdsByRange(pos Vec3, ranges float32) []ObjectId {
 	if ranges > aoi.rangeLimit {
 		ranges = aoi.rangeLimit
 	}
-	min := aoi.transPos(Vec3{pos.X() - ranges, 0, pos.Z() - ranges})
-	max := aoi.transPos(Vec3{pos.X() + ranges, 0, pos.Z() + ranges})
+	min := aoi.transPos(V3(pos.X()-ranges, 0, pos.Z()-ranges))
+	max := aoi.transPos(V3(pos.X()+ranges, 0, pos.Z()+ranges))
 	for i := min.X; i <= max.X; i++ {
 		for j := min.Y; j <= max.Y; j++ {
 			result = append(result, aoi.towers[i][j].getIds()...)
@@ -289,8 +289,8 @@ func (aoi *TowerAOI) addWatcher(watcher ObjectId, pos Vec3, ranges float32) {
 	if ranges > aoi.rangeLimit {
 		ranges = aoi.rangeLimit
 	}
-	min := aoi.transPos(Vec3{pos.X() - ranges, 0, pos.Z() - ranges})
-	max := aoi.transPos(Vec3{pos.X() + ranges, 0, pos.Z() + ranges})
+	min := aoi.transPos(V3(pos.X()-ranges, 0, pos.Z()-ranges))
+	max := aoi.transPos(V3(pos.X()+ranges, 0, pos.Z()+ranges))
 	for i := min.X; i <= max.X; i++ {
 		for j := min.Y; j <= max.Y; j++ {
 			aoi.innerAddWatch(aoi.towers[i][j], watcher)
@@ -317,8 +317,8 @@ func (aoi *TowerAOI) removeWatcher(watcher ObjectId, pos Vec3, ranges float32) {
 		ranges = aoi.rangeLimit
 	}
 
-	min := aoi.transPos(Vec3{pos.X() - ranges, 0, pos.Z() - ranges})
-	max := aoi.transPos(Vec3{pos.X() + ranges, 0, pos.Z() + ranges})
+	min := aoi.transPos(V3(pos.X()-ranges, 0, pos.Z()-ranges))
+	max := aoi.transPos(V3(pos.X()+ranges, 0, pos.Z()+ranges))
 	for i := min.X; i <= max.X; i++ {
 		for j := min.Y; j <= max.Y; j++ {
 			aoi.innerRemoveWatcher(aoi.towers[i][j], watcher)
@@ -337,10 +337,10 @@ func (aoi *TowerAOI) innerRemoveWatcher(t *tower, watcher ObjectId) {
 }
 
 func (aoi *TowerAOI) getChangedTowers(p1, p2 Vec3, r1 float32, r2 float32) ([]*tower, []*tower) {
-	oldmin := aoi.transPos(Vec3{p1.X() - r1, 0, p1.Z() - r1})
-	oldmax := aoi.transPos(Vec3{p1.X() + r1, 0, p1.Z() + r1})
-	destmin := aoi.transPos(Vec3{p2.X() - r2, 0, p2.Z() - r2})
-	destmax := aoi.transPos(Vec3{p2.X() + r2, 0, p2.Z() + r2})
+	oldmin := aoi.transPos(V3(p1.X()-r1, 0, p1.Z()-r1))
+	oldmax := aoi.transPos(V3(p1.X()+r1, 0, p1.Z()+r1))
+	destmin := aoi.transPos(V3(p2.X()-r2, 0, p2.Z()-r2))
+	destmax := aoi.transPos(V3(p2.X()+r2, 0, p2.Z()+r2))
 	removeTowers := make([]*tower, 0, 10)
 	addTowers := make([]*tower, 0, 10)
 

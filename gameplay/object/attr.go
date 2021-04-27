@@ -425,17 +425,17 @@ func (v *Vector2Holder) Type() int {
 }
 
 func (v *Vector2Holder) SetData(val Vec2) bool {
-	if toolkit.IsEqual32(v.data[0], val[0]) && toolkit.IsEqual32(v.data[1], val[1]) {
+	if v.data.ApproxEqual(val.Vec2) {
 		return false
 	}
 	old := v.data
-	v.data[0], v.data[1] = val[0], val[1]
+	v.data = val
 
 	if v.change != nil {
 		v.change(v.index, old)
 	}
 
-	if toolkit.IsEqual32(v.data[0], old[0]) && toolkit.IsEqual32(v.data[1], old[1]) {
+	if v.data.ApproxEqual(old.Vec2) {
 		return false
 	}
 	return true
@@ -464,8 +464,7 @@ func (v *Vector2Holder) Read(reader io.Reader) (int, error) {
 func (v *Vector2Holder) Equal(other Attr) bool {
 	if other.Type() == v.Type() {
 		if o, ok := other.(*Vector2Holder); ok {
-			return toolkit.IsEqual32(v.data[0], o.data[0]) &&
-				toolkit.IsEqual32(v.data[1], o.data[1])
+			return v.data.ApproxEqual(o.data.Vec2)
 		}
 	}
 	return false
@@ -487,21 +486,17 @@ func (v *Vector3Holder) Type() int {
 }
 
 func (v *Vector3Holder) SetData(val Vec3) bool {
-	if toolkit.IsEqual32(v.data[0], val[0]) &&
-		toolkit.IsEqual32(v.data[1], val[1]) &&
-		toolkit.IsEqual32(v.data[2], val[2]) {
+	if v.data.ApproxEqual(val.Vec3) {
 		return false
 	}
 	old := v.data
-	v.data[0], v.data[1], v.data[2] = val[0], val[1], val[2]
+	v.data = val
 
 	if v.change != nil {
 		v.change(v.index, old)
 	}
 
-	if toolkit.IsEqual32(v.data[0], old[0]) &&
-		toolkit.IsEqual32(v.data[1], old[1]) &&
-		toolkit.IsEqual32(v.data[2], val[2]) {
+	if v.data.ApproxEqual(old.Vec3) {
 		return false
 	}
 	return true
@@ -530,9 +525,7 @@ func (v *Vector3Holder) Read(reader io.Reader) (int, error) {
 func (v *Vector3Holder) Equal(other Attr) bool {
 	if other.Type() == v.Type() {
 		if o, ok := other.(*Vector3Holder); ok {
-			return toolkit.IsEqual32(v.data[0], o.data[0]) &&
-				toolkit.IsEqual32(v.data[1], o.data[1]) &&
-				toolkit.IsEqual32(v.data[2], o.data[2])
+			return v.data.ApproxEqual(o.data.Vec3)
 		}
 	}
 	return false
