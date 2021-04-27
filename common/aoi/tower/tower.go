@@ -97,20 +97,22 @@ func (tp towerPos) equal(rhs towerPos) bool {
 }
 
 type TowerAOI struct {
-	width       float32
-	height      float32
-	towerWidth  float32
-	towerHeight float32
-	rangeLimit  int
-	max         towerPos
-	towers      [][]*tower
-	callback    Callback
+	minX, minY, maxX, maxY float32
+	width, height          float32
+	towerWidth             float32
+	towerHeight            float32
+	rangeLimit             float32
+	max                    towerPos
+	towers                 [][]*tower
+	callback               Callback
 }
 
-func NewTowerAOI(w float32, h float32, tw float32, th float32, limit int, cb Callback) *TowerAOI {
+func NewTowerAOI(minx, miny, maxx, maxy float32, tw float32, th float32, limit float32, cb Callback) *TowerAOI {
 	aoi := &TowerAOI{
-		width:       w + 1,
-		height:      h + 1,
+		minX:        minx,
+		minY:        miny,
+		maxX:        maxx,
+		maxY:        maxy,
 		towerWidth:  tw,
 		towerHeight: th,
 		rangeLimit:  limit,
@@ -120,7 +122,7 @@ func NewTowerAOI(w float32, h float32, tw float32, th float32, limit int, cb Cal
 	return aoi
 }
 
-func (aoi *TowerAOI) Enter(obj object.ObjectId, pos object.Vec3, ranges int) {
+func (aoi *TowerAOI) Enter(obj object.ObjectId, pos object.Vec3, ranges float32) {
 	if !aoi.checkPos(pos) {
 		panic("pos invalid")
 	}
@@ -128,7 +130,7 @@ func (aoi *TowerAOI) Enter(obj object.ObjectId, pos object.Vec3, ranges int) {
 	aoi.addObject(pos, obj)
 }
 
-func (aoi *TowerAOI) Level(obj object.ObjectId, pos object.Vec3, ranges int) {
+func (aoi *TowerAOI) Level(obj object.ObjectId, pos object.Vec3, ranges float32) {
 	if !aoi.checkPos(pos) {
 		panic("pos invalid")
 	}
@@ -138,7 +140,7 @@ func (aoi *TowerAOI) Level(obj object.ObjectId, pos object.Vec3, ranges int) {
 	aoi.removeWatcher(obj, pos, ranges)
 }
 
-func (aoi *TowerAOI) Move(obj object.ObjectId, oldpos object.Vec3, dest object.Vec3, ranges int) bool {
+func (aoi *TowerAOI) Move(obj object.ObjectId, oldpos object.Vec3, dest object.Vec3, ranges float32) bool {
 	if !aoi.checkPos(oldpos) || !aoi.checkPos(dest) {
 		return false
 	}
@@ -154,7 +156,7 @@ func (aoi *TowerAOI) Move(obj object.ObjectId, oldpos object.Vec3, dest object.V
 
 	aoi.innerRemoveObject(t1, obj)
 	aoi.innerAddObj(t2, obj)
-	addTowers, removeTowers := aoi.getChangedTowers(p1, p2, ranges, ranges)
+	addTowers, removeTowers := aoi.getChangedTowers(oldpos, dest, ranges, ranges)
 	for _, t := range removeTowers {
 		aoi.innerRemoveWatcher(t, obj)
 	}
@@ -172,7 +174,7 @@ func (aoi *TowerAOI) Clear() {
 	}
 }
 
-func (aoi *TowerAOI) GetIdsByRange(pos object.Vec3, ranges int) []object.ObjectId {
+func (aoi *TowerAOI) GetIdsByRange(pos object.Vec3, ranges float32) []object.ObjectId {
 	if !aoi.checkPos(pos) || ranges < 0 {
 		return nil
 	}
@@ -181,11 +183,10 @@ func (aoi *TowerAOI) GetIdsByRange(pos object.Vec3, ranges int) []object.ObjectI
 	if ranges > aoi.rangeLimit {
 		ranges = aoi.rangeLimit
 	}
-	p := aoi.transPos(pos)
-	start, end := getPosLimit(p, ranges, aoi.max)
-
-	for i := start.X; i <= end.X; i++ {
-		for j := start.Y; j <= end.Y; j++ {
+	min := aoi.transPos(object.Vec3{pos.X() - ranges, 0, pos.Z() - ranges})
+	max := aoi.transPos(object.Vec3{pos.X() + ranges, 0, pos.Z() + ranges})
+	for i := min.X; i <= max.X; i++ {
+		for j := min.Y; j <= max.Y; j++ {
 			result = append(result, aoi.towers[i][j].getIds()...)
 		}
 	}
@@ -194,7 +195,7 @@ func (aoi *TowerAOI) GetIdsByRange(pos object.Vec3, ranges int) []object.ObjectI
 
 // Check if the pos is valid;
 func (aoi *TowerAOI) checkPos(pos object.Vec3) bool {
-	if pos.X() < 0 || pos.Z() < 0 || pos.X() >= aoi.width || pos.Z() >= aoi.height {
+	if pos.X() < aoi.minX || pos.Z() < aoi.minY || pos.X() > aoi.maxX || pos.Z() > aoi.maxY {
 		return false
 	}
 	return true
@@ -202,50 +203,23 @@ func (aoi *TowerAOI) checkPos(pos object.Vec3) bool {
 
 // Trans the absolut pos to tower pos. For example : (210, 110} -> (1, 0), for tower width 200, height 200
 func (aoi *TowerAOI) transPos(pos object.Vec3) towerPos {
+	tx, ty := int(math.Floor(float64((pos.X()-aoi.minX)/aoi.towerWidth))),
+		int(math.Floor(float64((pos.Z()-aoi.minY)/aoi.towerHeight)))
+	if tx < 0 {
+		tx = 0
+	} else if tx > aoi.max.X {
+		tx = aoi.max.X
+	}
+
+	if ty < 0 {
+		ty = 0
+	} else if ty > aoi.max.Y {
+		ty = aoi.max.Y
+	}
 	return towerPos{
-		X: int(math.Floor(float64(pos.X() / aoi.towerWidth))),
-		Y: int(math.Floor(float64(pos.Z() / aoi.towerHeight))),
+		X: tx,
+		Y: ty,
 	}
-}
-
-// getPosLimit Get the postion limit of given range,
-func getPosLimit(pos towerPos, ranges int, max towerPos) (start towerPos, end towerPos) {
-
-	if pos.X-ranges < 0 {
-		start.X = 0
-		end.X = 2 * ranges
-	} else if pos.X+ranges > max.X {
-		end.X = max.X
-		start.X = max.X - 2*ranges
-	} else {
-		start.X = pos.X - ranges
-		end.X = pos.X + ranges
-	}
-
-	if pos.Y-ranges < 0 {
-		start.Y = 0
-		end.Y = 2 * ranges
-	} else if pos.Y+ranges > max.Y {
-		end.Y = max.Y
-		start.Y = max.Y - 2*ranges
-	} else {
-		start.Y = pos.Y - ranges
-		end.Y = pos.Y + ranges
-	}
-	if start.X < 0 {
-		start.X = 0
-	}
-	if end.X > max.X {
-		end.X = max.X
-	}
-	if start.Y < 0 {
-		start.Y = 0
-	}
-	if end.Y > max.Y {
-		end.Y = max.Y
-	}
-
-	return
 }
 
 // isInRect  Check if the pos is in the rect
@@ -254,6 +228,8 @@ func isInRect(pos towerPos, start towerPos, end towerPos) bool {
 }
 
 func (aoi *TowerAOI) init() {
+	aoi.width = aoi.maxX - aoi.minX + 1
+	aoi.height = aoi.maxY - aoi.minY + 1
 	iloop := int(math.Ceil(float64(aoi.width / aoi.towerWidth)))
 	jloop := int(math.Ceil(float64(aoi.height / aoi.towerHeight)))
 	aoi.max.X = iloop - 1
@@ -311,17 +287,18 @@ func (aoi *TowerAOI) getWatchers(pos object.Vec3) []object.ObjectId {
 	return nil
 }
 
-func (aoi *TowerAOI) addWatcher(watcher object.ObjectId, pos object.Vec3, ranges int) {
+func (aoi *TowerAOI) addWatcher(watcher object.ObjectId, pos object.Vec3, ranges float32) {
 	if ranges <= 0 {
 		panic("ranges <= 0")
 	}
 	if ranges > aoi.rangeLimit {
 		ranges = aoi.rangeLimit
 	}
-	p := aoi.transPos(pos)
-	start, end := getPosLimit(p, ranges, aoi.max)
-	for i := start.X; i <= end.X; i++ {
-		for j := start.Y; j <= end.Y; j++ {
+	min := aoi.transPos(object.Vec3{pos.X() - ranges, 0, pos.Z() - ranges})
+	max := aoi.transPos(object.Vec3{pos.X() + ranges, 0, pos.Z() + ranges})
+	//start, end := getPosLimit(p, ranges, aoi.max)
+	for i := min.X; i <= max.X; i++ {
+		for j := min.Y; j <= max.Y; j++ {
 			aoi.innerAddWatch(aoi.towers[i][j], watcher)
 		}
 	}
@@ -337,7 +314,7 @@ func (aoi *TowerAOI) innerAddWatch(t *tower, watcher object.ObjectId) {
 	}
 }
 
-func (aoi *TowerAOI) removeWatcher(watcher object.ObjectId, pos object.Vec3, ranges int) {
+func (aoi *TowerAOI) removeWatcher(watcher object.ObjectId, pos object.Vec3, ranges float32) {
 	if ranges <= 0 {
 		panic("ranges <= 0")
 	}
@@ -346,12 +323,11 @@ func (aoi *TowerAOI) removeWatcher(watcher object.ObjectId, pos object.Vec3, ran
 		ranges = aoi.rangeLimit
 	}
 
-	p := aoi.transPos(pos)
-
-	start, end := getPosLimit(p, ranges, aoi.max)
-
-	for i := start.X; i <= end.X; i++ {
-		for j := start.Y; j <= end.Y; j++ {
+	min := aoi.transPos(object.Vec3{pos.X() - ranges, 0, pos.Z() - ranges})
+	max := aoi.transPos(object.Vec3{pos.X() + ranges, 0, pos.Z() + ranges})
+	//start, end := getPosLimit(p, ranges, aoi.max)
+	for i := min.X; i <= max.X; i++ {
+		for j := min.Y; j <= max.Y; j++ {
 			aoi.innerRemoveWatcher(aoi.towers[i][j], watcher)
 		}
 	}
@@ -367,26 +343,29 @@ func (aoi *TowerAOI) innerRemoveWatcher(t *tower, watcher object.ObjectId) {
 	}
 }
 
-func (aoi *TowerAOI) getChangedTowers(p1 towerPos, p2 towerPos, r1 int, r2 int) ([]*tower, []*tower) {
-	var start1, end1 = getPosLimit(p1, r1, aoi.max)
-	var start2, end2 = getPosLimit(p2, r2, aoi.max)
-
+func (aoi *TowerAOI) getChangedTowers(p1, p2 object.Vec3, r1 float32, r2 float32) ([]*tower, []*tower) {
+	oldmin := aoi.transPos(object.Vec3{p1.X() - r1, 0, p1.Z() - r1})
+	oldmax := aoi.transPos(object.Vec3{p1.X() + r1, 0, p1.Z() + r1})
+	destmin := aoi.transPos(object.Vec3{p2.X() - r2, 0, p2.Z() - r2})
+	destmax := aoi.transPos(object.Vec3{p2.X() + r2, 0, p2.Z() + r2})
 	removeTowers := make([]*tower, 0, 10)
 	addTowers := make([]*tower, 0, 10)
 
-	for i := start1.X; i <= end1.X; i++ {
-		for j := start1.Y; j <= end1.Y; j++ {
-			if !isInRect(towerPos{i, j}, start2, end2) {
-				removeTowers = append(removeTowers, aoi.towers[i][j])
+	for x := oldmin.X; x <= oldmax.X; x++ {
+		for y := oldmin.Y; y <= oldmax.Y; y++ {
+			if x >= destmin.X && x <= destmax.X && y >= destmin.Y && y <= destmax.Y {
+				continue
 			}
+			removeTowers = append(removeTowers, aoi.towers[x][y])
 		}
 	}
 
-	for i := start2.X; i <= end2.X; i++ {
-		for j := start2.Y; j <= end2.Y; j++ {
-			if !isInRect(towerPos{i, j}, start1, end1) {
-				addTowers = append(addTowers, aoi.towers[i][j])
+	for x := destmin.X; x <= destmax.X; x++ {
+		for y := destmin.Y; y <= destmax.Y; y++ {
+			if x >= oldmin.X && x <= oldmax.X && y >= oldmin.Y && y <= oldmax.Y {
+				continue
 			}
+			addTowers = append(addTowers, aoi.towers[x][y])
 		}
 	}
 
