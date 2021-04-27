@@ -425,7 +425,7 @@ func (v *Vector2Holder) Type() int {
 }
 
 func (v *Vector2Holder) SetData(val Vec2) bool {
-	if v.data.ApproxEqual(val.Vec2) {
+	if v.data.Equal(val) {
 		return false
 	}
 	old := v.data
@@ -435,7 +435,7 @@ func (v *Vector2Holder) SetData(val Vec2) bool {
 		v.change(v.index, old)
 	}
 
-	if v.data.ApproxEqual(old.Vec2) {
+	if v.data.Equal(old) {
 		return false
 	}
 	return true
@@ -464,7 +464,7 @@ func (v *Vector2Holder) Read(reader io.Reader) (int, error) {
 func (v *Vector2Holder) Equal(other Attr) bool {
 	if other.Type() == v.Type() {
 		if o, ok := other.(*Vector2Holder); ok {
-			return v.data.ApproxEqual(o.data.Vec2)
+			return v.data.Equal(o.data)
 		}
 	}
 	return false
@@ -486,7 +486,7 @@ func (v *Vector3Holder) Type() int {
 }
 
 func (v *Vector3Holder) SetData(val Vec3) bool {
-	if v.data.ApproxEqual(val.Vec3) {
+	if v.data.Equal(val) {
 		return false
 	}
 	old := v.data
@@ -496,7 +496,7 @@ func (v *Vector3Holder) SetData(val Vec3) bool {
 		v.change(v.index, old)
 	}
 
-	if v.data.ApproxEqual(old.Vec3) {
+	if v.data.Equal(old) {
 		return false
 	}
 	return true
@@ -525,7 +525,7 @@ func (v *Vector3Holder) Read(reader io.Reader) (int, error) {
 func (v *Vector3Holder) Equal(other Attr) bool {
 	if other.Type() == v.Type() {
 		if o, ok := other.(*Vector3Holder); ok {
-			return v.data.ApproxEqual(o.data.Vec3)
+			return v.data.Equal(o.data)
 		}
 	}
 	return false

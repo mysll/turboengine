@@ -1,9 +1,10 @@
 package datatype
 
 import (
+	"math"
+
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/mysll/toolkit"
-	"math"
 )
 
 type ObjectId uint64
@@ -68,4 +69,13 @@ type Vec2 mgl32.Vec2
 
 func V2(x float32, y float32) Vec2 {
 	return Vec2{x, y}
+}
+
+func (v Vec2) Equal(rhs Vec2) bool {
+	for i := 0; i < 2; i++ {
+		if !toolkit.IsEqual32(v[i], rhs[i]) {
+			return false
+		}
+	}
+	return true
 }
