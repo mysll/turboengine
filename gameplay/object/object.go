@@ -127,6 +127,10 @@ func (o *Object) InitOnce(self GameObject, cap int) {
 	o.inited = true
 }
 
+func (o *Object) SetOwner(self GameObject) {
+	o.holder = self
+}
+
 func (o *Object) Id() ObjectId {
 	return o.id
 }
