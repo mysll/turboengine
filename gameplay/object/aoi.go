@@ -1,5 +1,9 @@
 package object
 
+import (
+	. "turboengine/common/datatype"
+)
+
 type AOI interface {
 	AddObj(obj ObjectId)
 	RemoveObj(obj ObjectId)

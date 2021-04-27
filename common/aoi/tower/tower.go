@@ -2,14 +2,14 @@ package tower
 
 import (
 	"math"
-	"turboengine/gameplay/object"
+	. "turboengine/common/datatype"
 )
 
-type IdSet map[object.ObjectId]struct{}
+type IdSet map[ObjectId]struct{}
 
 type Callback interface {
-	OnEnterAOI(watcher, target object.ObjectId)
-	OnLeaveAOI(watcher, target object.ObjectId)
+	OnEnterAOI(watcher, target ObjectId)
+	OnLeaveAOI(watcher, target ObjectId)
 }
 
 type tower struct {
@@ -22,7 +22,7 @@ func (t *tower) clear() {
 	t.Watchers = IdSet{}
 }
 
-func (t *tower) add(obj object.ObjectId) bool {
+func (t *tower) add(obj ObjectId) bool {
 	if _, ok := t.Ids[obj]; ok {
 		return false
 	}
@@ -30,7 +30,7 @@ func (t *tower) add(obj object.ObjectId) bool {
 	return true
 }
 
-func (t *tower) remove(obj object.ObjectId) bool {
+func (t *tower) remove(obj ObjectId) bool {
 	if _, ok := t.Ids[obj]; !ok {
 		return false
 	}
@@ -38,19 +38,19 @@ func (t *tower) remove(obj object.ObjectId) bool {
 	return true
 }
 
-func (t *tower) getIds() []object.ObjectId {
+func (t *tower) getIds() []ObjectId {
 	if len(t.Ids) == 0 {
 		return nil
 	}
 
-	objs := make([]object.ObjectId, 0, len(t.Ids))
+	objs := make([]ObjectId, 0, len(t.Ids))
 	for o := range t.Ids {
 		objs = append(objs, o)
 	}
 	return objs
 }
 
-func (t *tower) addWatcher(watcher object.ObjectId) bool {
+func (t *tower) addWatcher(watcher ObjectId) bool {
 
 	if _, ok := t.Watchers[watcher]; ok {
 		return false
@@ -59,7 +59,7 @@ func (t *tower) addWatcher(watcher object.ObjectId) bool {
 	return true
 }
 
-func (t *tower) removeWatcher(watcher object.ObjectId) bool {
+func (t *tower) removeWatcher(watcher ObjectId) bool {
 	if _, ok := t.Watchers[watcher]; !ok {
 		return false
 	}
@@ -68,12 +68,12 @@ func (t *tower) removeWatcher(watcher object.ObjectId) bool {
 	return true
 }
 
-func (t *tower) getAllWatchers() []object.ObjectId {
+func (t *tower) getAllWatchers() []ObjectId {
 	if len(t.Watchers) == 0 {
 		return nil
 	}
 
-	result := make([]object.ObjectId, 0, len(t.Watchers))
+	result := make([]ObjectId, 0, len(t.Watchers))
 
 	for o := range t.Watchers {
 		result = append(result, o)
@@ -122,7 +122,7 @@ func NewTowerAOI(minx, miny, maxx, maxy float32, tw float32, th float32, limit f
 	return aoi
 }
 
-func (aoi *TowerAOI) Enter(obj object.ObjectId, pos object.Vec3, ranges float32) {
+func (aoi *TowerAOI) Enter(obj ObjectId, pos Vec3, ranges float32) {
 	if !aoi.checkPos(pos) {
 		panic("pos invalid")
 	}
@@ -130,7 +130,7 @@ func (aoi *TowerAOI) Enter(obj object.ObjectId, pos object.Vec3, ranges float32)
 	aoi.addObject(pos, obj)
 }
 
-func (aoi *TowerAOI) Level(obj object.ObjectId, pos object.Vec3, ranges float32) {
+func (aoi *TowerAOI) Level(obj ObjectId, pos Vec3, ranges float32) {
 	if !aoi.checkPos(pos) {
 		panic("pos invalid")
 	}
@@ -140,7 +140,7 @@ func (aoi *TowerAOI) Level(obj object.ObjectId, pos object.Vec3, ranges float32)
 	aoi.removeWatcher(obj, pos, ranges)
 }
 
-func (aoi *TowerAOI) Move(obj object.ObjectId, oldpos object.Vec3, dest object.Vec3, ranges float32) bool {
+func (aoi *TowerAOI) Move(obj ObjectId, oldpos Vec3, dest Vec3, ranges float32) bool {
 	if !aoi.checkPos(oldpos) || !aoi.checkPos(dest) {
 		return false
 	}
@@ -174,17 +174,17 @@ func (aoi *TowerAOI) Clear() {
 	}
 }
 
-func (aoi *TowerAOI) GetIdsByRange(pos object.Vec3, ranges float32) []object.ObjectId {
+func (aoi *TowerAOI) GetIdsByRange(pos Vec3, ranges float32) []ObjectId {
 	if !aoi.checkPos(pos) || ranges < 0 {
 		return nil
 	}
 
-	result := make([]object.ObjectId, 0, 100)
+	result := make([]ObjectId, 0, 100)
 	if ranges > aoi.rangeLimit {
 		ranges = aoi.rangeLimit
 	}
-	min := aoi.transPos(object.Vec3{pos.X() - ranges, 0, pos.Z() - ranges})
-	max := aoi.transPos(object.Vec3{pos.X() + ranges, 0, pos.Z() + ranges})
+	min := aoi.transPos(Vec3{pos.X() - ranges, 0, pos.Z() - ranges})
+	max := aoi.transPos(Vec3{pos.X() + ranges, 0, pos.Z() + ranges})
 	for i := min.X; i <= max.X; i++ {
 		for j := min.Y; j <= max.Y; j++ {
 			result = append(result, aoi.towers[i][j].getIds()...)
@@ -194,7 +194,7 @@ func (aoi *TowerAOI) GetIdsByRange(pos object.Vec3, ranges float32) []object.Obj
 }
 
 // Check if the pos is valid;
-func (aoi *TowerAOI) checkPos(pos object.Vec3) bool {
+func (aoi *TowerAOI) checkPos(pos Vec3) bool {
 	if pos.X() < aoi.minX || pos.Z() < aoi.minY || pos.X() > aoi.maxX || pos.Z() > aoi.maxY {
 		return false
 	}
@@ -202,7 +202,7 @@ func (aoi *TowerAOI) checkPos(pos object.Vec3) bool {
 }
 
 // Trans the absolut pos to tower pos. For example : (210, 110} -> (1, 0), for tower width 200, height 200
-func (aoi *TowerAOI) transPos(pos object.Vec3) towerPos {
+func (aoi *TowerAOI) transPos(pos Vec3) towerPos {
 	tx, ty := int(math.Floor(float64((pos.X()-aoi.minX)/aoi.towerWidth))),
 		int(math.Floor(float64((pos.Z()-aoi.minY)/aoi.towerHeight)))
 	if tx < 0 {
@@ -238,12 +238,12 @@ func (aoi *TowerAOI) init() {
 	}
 }
 
-func (aoi *TowerAOI) addObject(pos object.Vec3, obj object.ObjectId) bool {
+func (aoi *TowerAOI) addObject(pos Vec3, obj ObjectId) bool {
 	p := aoi.transPos(pos)
 	return aoi.innerAddObj(aoi.towers[p.X][p.Y], obj)
 }
 
-func (aoi *TowerAOI) innerAddObj(t *tower, obj object.ObjectId) bool {
+func (aoi *TowerAOI) innerAddObj(t *tower, obj ObjectId) bool {
 	if t.add(obj) {
 		for _, watcher := range t.getAllWatchers() {
 			if watcher == obj {
@@ -256,12 +256,12 @@ func (aoi *TowerAOI) innerAddObj(t *tower, obj object.ObjectId) bool {
 	return false
 }
 
-func (aoi *TowerAOI) removeObject(pos object.Vec3, obj object.ObjectId) bool {
+func (aoi *TowerAOI) removeObject(pos Vec3, obj ObjectId) bool {
 	p := aoi.transPos(pos)
 	return aoi.innerRemoveObject(aoi.towers[p.X][p.Y], obj)
 }
 
-func (aoi *TowerAOI) innerRemoveObject(t *tower, obj object.ObjectId) bool {
+func (aoi *TowerAOI) innerRemoveObject(t *tower, obj ObjectId) bool {
 	if t.remove(obj) {
 		for _, watcher := range t.getAllWatchers() {
 			if watcher == obj {
@@ -274,7 +274,7 @@ func (aoi *TowerAOI) innerRemoveObject(t *tower, obj object.ObjectId) bool {
 	return false
 }
 
-func (aoi *TowerAOI) getWatchers(pos object.Vec3) []object.ObjectId {
+func (aoi *TowerAOI) getWatchers(pos Vec3) []ObjectId {
 	if aoi.checkPos(pos) {
 		p := aoi.transPos(pos)
 		return aoi.towers[p.X][p.Y].getAllWatchers()
@@ -282,15 +282,15 @@ func (aoi *TowerAOI) getWatchers(pos object.Vec3) []object.ObjectId {
 	return nil
 }
 
-func (aoi *TowerAOI) addWatcher(watcher object.ObjectId, pos object.Vec3, ranges float32) {
+func (aoi *TowerAOI) addWatcher(watcher ObjectId, pos Vec3, ranges float32) {
 	if ranges <= 0 {
 		panic("ranges <= 0")
 	}
 	if ranges > aoi.rangeLimit {
 		ranges = aoi.rangeLimit
 	}
-	min := aoi.transPos(object.Vec3{pos.X() - ranges, 0, pos.Z() - ranges})
-	max := aoi.transPos(object.Vec3{pos.X() + ranges, 0, pos.Z() + ranges})
+	min := aoi.transPos(Vec3{pos.X() - ranges, 0, pos.Z() - ranges})
+	max := aoi.transPos(Vec3{pos.X() + ranges, 0, pos.Z() + ranges})
 	for i := min.X; i <= max.X; i++ {
 		for j := min.Y; j <= max.Y; j++ {
 			aoi.innerAddWatch(aoi.towers[i][j], watcher)
@@ -298,7 +298,7 @@ func (aoi *TowerAOI) addWatcher(watcher object.ObjectId, pos object.Vec3, ranges
 	}
 }
 
-func (aoi *TowerAOI) innerAddWatch(t *tower, watcher object.ObjectId) {
+func (aoi *TowerAOI) innerAddWatch(t *tower, watcher ObjectId) {
 	if t.addWatcher(watcher) {
 		for neighbor := range t.Ids {
 			if neighbor != watcher {
@@ -308,7 +308,7 @@ func (aoi *TowerAOI) innerAddWatch(t *tower, watcher object.ObjectId) {
 	}
 }
 
-func (aoi *TowerAOI) removeWatcher(watcher object.ObjectId, pos object.Vec3, ranges float32) {
+func (aoi *TowerAOI) removeWatcher(watcher ObjectId, pos Vec3, ranges float32) {
 	if ranges <= 0 {
 		panic("ranges <= 0")
 	}
@@ -317,8 +317,8 @@ func (aoi *TowerAOI) removeWatcher(watcher object.ObjectId, pos object.Vec3, ran
 		ranges = aoi.rangeLimit
 	}
 
-	min := aoi.transPos(object.Vec3{pos.X() - ranges, 0, pos.Z() - ranges})
-	max := aoi.transPos(object.Vec3{pos.X() + ranges, 0, pos.Z() + ranges})
+	min := aoi.transPos(Vec3{pos.X() - ranges, 0, pos.Z() - ranges})
+	max := aoi.transPos(Vec3{pos.X() + ranges, 0, pos.Z() + ranges})
 	for i := min.X; i <= max.X; i++ {
 		for j := min.Y; j <= max.Y; j++ {
 			aoi.innerRemoveWatcher(aoi.towers[i][j], watcher)
@@ -326,7 +326,7 @@ func (aoi *TowerAOI) removeWatcher(watcher object.ObjectId, pos object.Vec3, ran
 	}
 }
 
-func (aoi *TowerAOI) innerRemoveWatcher(t *tower, watcher object.ObjectId) {
+func (aoi *TowerAOI) innerRemoveWatcher(t *tower, watcher ObjectId) {
 	if t.removeWatcher(watcher) {
 		for neighbor := range t.Ids {
 			if neighbor != watcher {
@@ -336,11 +336,11 @@ func (aoi *TowerAOI) innerRemoveWatcher(t *tower, watcher object.ObjectId) {
 	}
 }
 
-func (aoi *TowerAOI) getChangedTowers(p1, p2 object.Vec3, r1 float32, r2 float32) ([]*tower, []*tower) {
-	oldmin := aoi.transPos(object.Vec3{p1.X() - r1, 0, p1.Z() - r1})
-	oldmax := aoi.transPos(object.Vec3{p1.X() + r1, 0, p1.Z() + r1})
-	destmin := aoi.transPos(object.Vec3{p2.X() - r2, 0, p2.Z() - r2})
-	destmax := aoi.transPos(object.Vec3{p2.X() + r2, 0, p2.Z() + r2})
+func (aoi *TowerAOI) getChangedTowers(p1, p2 Vec3, r1 float32, r2 float32) ([]*tower, []*tower) {
+	oldmin := aoi.transPos(Vec3{p1.X() - r1, 0, p1.Z() - r1})
+	oldmax := aoi.transPos(Vec3{p1.X() + r1, 0, p1.Z() + r1})
+	destmin := aoi.transPos(Vec3{p2.X() - r2, 0, p2.Z() - r2})
+	destmax := aoi.transPos(Vec3{p2.X() + r2, 0, p2.Z() + r2})
 	removeTowers := make([]*tower, 0, 10)
 	addTowers := make([]*tower, 0, 10)
 
