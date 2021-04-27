@@ -1,5 +1,8 @@
 package {{.Pkg}}
-import "turboengine/gameplay/object"
+import (
+    . "turboengine/common/datatype"
+    "turboengine/gameplay/object"
+)
 
 type {{.Name}} struct {
 	object.Object

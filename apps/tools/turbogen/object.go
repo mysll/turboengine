@@ -31,9 +31,6 @@ type ObjectDesc struct {
 }
 
 func getTypeAlias(typ string) string {
-	if typ == "Vec2" || typ == "Vec3" {
-		return "object." + typ
-	}
 	if typ == "[]uint8" {
 		return "[]byte"
 	}
