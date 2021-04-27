@@ -1,6 +1,7 @@
 package object
 
 import (
+	. "turboengine/common/datatype"
 	"turboengine/gameplay/internal"
 
 	"github.com/go-gl/mathgl/mgl32"

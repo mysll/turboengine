@@ -2,6 +2,7 @@ package object
 
 import (
 	"fmt"
+	. "turboengine/common/datatype"
 )
 
 const (
@@ -26,8 +27,6 @@ const (
 )
 
 var typeToObject = make(map[int]func(string) Attr)
-
-type ObjectId uint64
 
 type GameObject interface {
 	Id() ObjectId

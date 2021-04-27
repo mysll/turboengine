@@ -2,6 +2,7 @@ package object
 
 import (
 	"testing"
+	. "turboengine/common/datatype"
 )
 
 func TestNewTransform(t *testing.T) {
