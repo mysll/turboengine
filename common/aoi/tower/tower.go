@@ -130,7 +130,7 @@ func (aoi *TowerAOI) Enter(obj ObjectId, pos Vec3, ranges float32) {
 	aoi.addObject(pos, obj)
 }
 
-func (aoi *TowerAOI) Level(obj ObjectId, pos Vec3, ranges float32) {
+func (aoi *TowerAOI) Leave(obj ObjectId, pos Vec3, ranges float32) {
 	if !aoi.checkPos(pos) {
 		panic("pos invalid")
 	}

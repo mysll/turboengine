@@ -51,6 +51,7 @@ type GameObject interface {
 	Movement() Movement
 	Collider() Collider
 	AOI() AOI
+	Replicate() Replicate
 }
 
 // 基础对象，所以游戏内的对象基类
@@ -125,6 +126,10 @@ func (o *Object) Collider() Collider {
 
 func (o *Object) AOI() AOI {
 	return o.View
+}
+
+func (o *Object) Replicate() Replicate {
+	return o.Replication
 }
 
 func (o *Object) new(cap int) {
