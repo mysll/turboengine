@@ -37,11 +37,12 @@ func drawAoi(toi *TowerAOI) {
 }
 func TestNewTowerAOI(t *testing.T) {
 	toi := NewTowerAOI(-250, -250, 250, 250, 50, 50, 200, &aoi{t})
-	toi.Enter(1, object.Vec3{75, 0, 75}, 100)
+	fmt.Println("info:", toi.max)
+	toi.Enter(1, object.Vec3{0, 0, 0}, 100)
 	toi.Enter(2, object.Vec3{125, 0, 250}, 100)
 	toi.Enter(3, object.Vec3{200, 0, 150}, 100)
 	drawAoi(toi)
-	toi.Move(1, object.Vec3{75, 0, 75}, object.Vec3{100, 0, 125}, 100)
+	toi.Move(1, object.Vec3{0, 0, 0}, object.Vec3{100, 0, 125}, 100)
 	drawAoi(toi)
 	toi.Move(2, object.Vec3{125, 0, 250}, object.Vec3{75, 0, 75}, 100)
 	drawAoi(toi)

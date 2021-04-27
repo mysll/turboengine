@@ -222,11 +222,6 @@ func (aoi *TowerAOI) transPos(pos object.Vec3) towerPos {
 	}
 }
 
-// isInRect  Check if the pos is in the rect
-func isInRect(pos towerPos, start towerPos, end towerPos) bool {
-	return (pos.X >= start.X && pos.X <= end.X && pos.Y >= start.Y && pos.Y <= end.Y)
-}
-
 func (aoi *TowerAOI) init() {
 	aoi.width = aoi.maxX - aoi.minX + 1
 	aoi.height = aoi.maxY - aoi.minY + 1
@@ -296,7 +291,6 @@ func (aoi *TowerAOI) addWatcher(watcher object.ObjectId, pos object.Vec3, ranges
 	}
 	min := aoi.transPos(object.Vec3{pos.X() - ranges, 0, pos.Z() - ranges})
 	max := aoi.transPos(object.Vec3{pos.X() + ranges, 0, pos.Z() + ranges})
-	//start, end := getPosLimit(p, ranges, aoi.max)
 	for i := min.X; i <= max.X; i++ {
 		for j := min.Y; j <= max.Y; j++ {
 			aoi.innerAddWatch(aoi.towers[i][j], watcher)
@@ -325,7 +319,6 @@ func (aoi *TowerAOI) removeWatcher(watcher object.ObjectId, pos object.Vec3, ran
 
 	min := aoi.transPos(object.Vec3{pos.X() - ranges, 0, pos.Z() - ranges})
 	max := aoi.transPos(object.Vec3{pos.X() + ranges, 0, pos.Z() + ranges})
-	//start, end := getPosLimit(p, ranges, aoi.max)
 	for i := min.X; i <= max.X; i++ {
 		for j := min.Y; j <= max.Y; j++ {
 			aoi.innerRemoveWatcher(aoi.towers[i][j], watcher)
