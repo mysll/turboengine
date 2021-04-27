@@ -23,7 +23,7 @@ const (
 	FEATURES_MOVEMENT  = 1
 	FEATURES_REPLICATE = 1 << 1
 	FEATURES_AOI       = 1<<2 | FEATURES_MOVEMENT
-	FEATURES_COLLIDER  = 1 << 3
+	FEATURES_COLLIDER  = 1<<3 | FEATURES_MOVEMENT
 	FEATURES_ALL       = -1
 )
 
@@ -48,11 +48,14 @@ type GameObject interface {
 	IsMovement() bool
 	IsReplicate() bool
 	HasView() bool
+	GetTransform() *Transform
+	GetCollision() *Collision
+	GetView() *View
 }
 
 // 基础对象，所以游戏内的对象基类
 type Object struct {
-	*Collider
+	*Collision
 	*Transform
 	*Replication
 	*View
@@ -90,9 +93,9 @@ func (o *Object) SetFeature(features int) {
 	}
 
 	if o.features|FEATURES_COLLIDER != 0 {
-		o.Collider = NewCollider(o.holder)
+		o.Collision = NewCollision(o.holder)
 	} else {
-		o.Collider = nil
+		o.Collision = nil
 	}
 }
 
@@ -110,6 +113,18 @@ func (o *Object) HasView() bool {
 
 func (o *Object) hasCollider() bool {
 	return o.features|FEATURES_COLLIDER != 0
+}
+
+func (o *Object) GetTransform() *Transform {
+	return o.Transform
+}
+
+func (o *Object) GetCollision() *Collision {
+	return o.Collision
+}
+
+func (o *Object) GetView() *View {
+	return o.View
 }
 
 func (o *Object) new(cap int) {
