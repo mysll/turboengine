@@ -28,12 +28,6 @@ type Transform struct {
 	owner    GameObject
 }
 
-var (
-	forward = mgl32.Vec3{0, 0, 1}
-	up      = mgl32.Vec3{0, 1, 0}
-	right   = mgl32.Vec3{1, 0, 0}
-)
-
 func NewTransform(owner GameObject) *Transform {
 	return &Transform{
 		owner:    owner,
@@ -55,15 +49,15 @@ func (t *Transform) SetRotation(eulers Vec3) {
 }
 
 func (t *Transform) Forward() Vec3 {
-	return Vec3(internal.QuatMulVec3(t.rotation, forward))
+	return Vec3(internal.QuatMulVec3(t.rotation, mgl32.Vec3(Forward)))
 }
 
 func (t *Transform) Up() Vec3 {
-	return Vec3(internal.QuatMulVec3(t.rotation, up))
+	return Vec3(internal.QuatMulVec3(t.rotation, mgl32.Vec3(Up)))
 }
 
 func (t *Transform) Right() Vec3 {
-	return Vec3(internal.QuatMulVec3(t.rotation, right))
+	return Vec3(internal.QuatMulVec3(t.rotation, mgl32.Vec3(Right)))
 }
 
 func (t *Transform) Translate(translation Vec3) Vec3 {

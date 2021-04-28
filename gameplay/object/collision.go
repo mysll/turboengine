@@ -8,7 +8,65 @@ type Shape interface {
 	Init(args ...interface{})
 	Type() int
 	SetCenter(pos Vec3)
+	Center() Vec3
+	Collider(Shape) bool
 }
+
+const (
+	SHAPE_BOX = 1 + iota
+	SHAPE_CYLINDER
+	SHAPE_CAPSULE
+	SHAPE_CIRCLE_2D
+)
+
+type shape struct {
+	center Vec3
+}
+
+func (s *shape) SetCenter(c Vec3) {
+	s.center = c
+}
+
+func (s *shape) Center() Vec3 {
+	return s.center
+}
+
+type Circle2DShape struct {
+	shape
+	radius float32
+}
+
+func (s *Circle2DShape) Init(args ...interface{}) {
+	switch v := args[0].(type) {
+	case float32:
+		s.radius = v
+	}
+}
+
+func (s *Circle2DShape) Type() int {
+	return SHAPE_CIRCLE_2D
+}
+
+func (s *Circle2DShape) Collider(other Shape) bool {
+	if other.Type() == SHAPE_CIRCLE_2D {
+		return s.radius < s.center.Sub(other.Center()).Len()
+	}
+
+	//TODO check other shape
+	return false
+}
+
+//TODO boxshape
+type BoxShape struct {
+	shape
+}
+
+//TODO CylinderShape
+type CylinderShape struct {
+	shape
+}
+
+// TODO other
 
 type Collider interface {
 	Collide(other Collider) bool
@@ -34,5 +92,7 @@ func (c *Collision) Shape() Shape {
 }
 
 func (c *Collision) Collide(other Collider) bool {
-	return false
+	lhs := c.Shape()
+	rhs := other.Shape()
+	return lhs.Collider(rhs)
 }
