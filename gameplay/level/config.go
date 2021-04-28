@@ -6,8 +6,8 @@ type Config struct {
 	MinX, MinY, MaxX, MaxY float32
 	TileWidth, TileHeight  float32
 	ViewMaxRange           float32
-	mapData                string
-	terrainType            string
+	MapData                string
+	TerrainType            string
 }
 
 func (c *Config) LoadFromFile(f string) {

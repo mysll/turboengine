@@ -32,7 +32,7 @@ type Terrain interface {
 }
 
 func (l *Level) LoadTerrain(path string) {
-	f, ok := mapType[l.config.terrainType]
+	f, ok := mapType[l.config.TerrainType]
 	if !ok {
 		panic("map type not found")
 	}
