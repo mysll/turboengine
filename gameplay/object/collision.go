@@ -47,6 +47,10 @@ func (s *Circle2DShape) Type() int {
 	return SHAPE_CIRCLE_2D
 }
 
+func (s *Circle2DShape) SetCenter(c Vec3) {
+	s.center = Vec3{c.X(), 0, c.Z()}
+}
+
 func (s *Circle2DShape) Collider(other Shape) bool {
 	if other.Type() == SHAPE_CIRCLE_2D {
 		return s.radius < s.center.Sub(other.Center()).Len()
