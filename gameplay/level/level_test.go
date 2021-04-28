@@ -10,19 +10,19 @@ import (
 //go:embed level.toml
 var l string
 
-type GO struct {
+type player struct {
 	object.Object
 }
 
 func TestCreateFromFile(t *testing.T) {
 	l := CreateFromData(l)
-	ent := &GO{}
+	ent := &player{}
 	ent.SetId(1)
 	ent.InitOnce(ent, 1)
 	ent.SetFeature(object.FEATURES_ALL)
 	ent.AOI().SetViewRange(100)
 	l.AddEntity(ent)
-	ent1 := &GO{}
+	ent1 := &player{}
 	ent1.SetId(2)
 	ent1.InitOnce(ent, 1)
 	ent1.SetFeature(object.FEATURES_ALL)
