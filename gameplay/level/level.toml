@@ -5,3 +5,5 @@ MaxY = 250.0
 TileWidth = 50.0
 TileHeight = 50.0
 ViewMaxRange = 100.0
+mapData = "level.map"
+terrainType = "tile"

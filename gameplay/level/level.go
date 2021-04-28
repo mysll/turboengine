@@ -13,6 +13,7 @@ type Level struct {
 	aoi      aoi.AOIMgr
 	entities EntityContainer
 	config   *Config
+	terrain  Terrain
 }
 
 func NewLevel(config *Config) *Level {
