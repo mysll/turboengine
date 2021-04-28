@@ -37,14 +37,6 @@ func CreateFromFile(f string) *Level {
 	return NewLevel(config)
 }
 
-func (l *Level) OnEnterAOI(watcher, target ObjectId) {
-
-}
-
-func (l *Level) OnLeaveAOI(watcher, target ObjectId) {
-
-}
-
 func (l *Level) AddEntity(obj object.GameObject) {
 	if _, ok := l.entities[obj.Id()]; ok {
 		return
@@ -52,7 +44,10 @@ func (l *Level) AddEntity(obj object.GameObject) {
 
 	l.entities[obj.Id()] = obj
 	if obj.HasView() {
-		l.aoi.Enter(obj.Id(), obj.Movement().Position(), obj.AOI().ViewRange())
+		obj.AOI().Clear()
+		pos := obj.Movement().Position()
+		l.aoi.Enter(obj.Id(), pos, obj.AOI().ViewRange())
+		obj.AOI().CachePosition(pos)
 	}
 }
 
@@ -62,7 +57,8 @@ func (l *Level) RemoveEntity(obj object.GameObject) {
 	}
 
 	if obj.HasView() {
-		l.aoi.Leave(obj.Id(), obj.Movement().Position(), obj.AOI().ViewRange())
+		l.aoi.Leave(obj.Id(), obj.AOI().Position(), obj.AOI().ViewRange())
+		obj.AOI().Clear()
 	}
 
 	delete(l.entities, obj.Id())
