@@ -9,6 +9,8 @@ type AOI interface {
 	AddViewObj(obj ObjectId)
 	RemoveViewObj(obj ObjectId)
 	Clear()
+	CachePosition(pos Vec3)
+	Position() Vec3
 }
 
 type ViewMap map[ObjectId]struct{}
@@ -23,6 +25,7 @@ type View struct {
 	owner     GameObject
 	neighbor  ViewMap
 	viewRange float32
+	position  Vec3
 }
 
 func NewView(owner GameObject) *View {
@@ -52,4 +55,12 @@ func (v *View) RemoveViewObj(obj ObjectId) {
 
 func (v *View) ViewRange() float32 {
 	return v.viewRange
+}
+
+func (v *View) CachePosition(pos Vec3) {
+	v.position = pos
+}
+
+func (v *View) Position() Vec3 {
+	return v.position
 }
