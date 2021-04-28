@@ -9,6 +9,13 @@ type {{.Name}} struct {
 	{{range .Attrs}}{{tolower .Name}} *{{getType .ArgType}}
     {{end}}
 }
+
+type {{.Name}}Data struct {
+    Id uint64
+    ObjectId ObjectId
+    ObjectType string{{range .Attrs}}{{if eq .Save true}}
+    {{.Name}} {{.ArgType}}{{end}}{{end}}
+}
 {{$obj := tolower $.Name}}
 func New{{.Name}}() *{{.Name}} {
     {{$obj}}:=&{{.Name}}{
@@ -48,3 +55,17 @@ func ({{$obj}} *{{$.Name}}) {{.Name}}Change(callback object.OnChange) {
     {{$obj}}.Change({{$obj}}.{{tolower .Name}}.Index(), callback)
 }
 {{end}}
+
+func ({{$obj}} *{{$.Name}}) GetSaveData() {{.Name}}Data {
+    return {{.Name}}Data {
+        Id:{{$obj}}.DBId(),
+        ObjectId:{{$obj}}.Id(),
+        ObjectType:"{{$.Name}}", {{range .Attrs}}{{if eq .Save true}}
+        {{.Name}}: {{$obj}}.{{tolower .Name}}.Data(), {{end}} {{end}}
+    }
+}
+
+func ({{$obj}} *{{$.Name}}) RestoreFromData(data {{.Name}}Data) {
+    {{$obj}}.SetDBId(data.Id) {{range .Attrs}}{{if eq .Save true}}
+    {{$obj}}.Set{{.Name}}(data.{{.Name}}) {{end}}{{end}}
+}
