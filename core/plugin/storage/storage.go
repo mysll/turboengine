@@ -10,6 +10,9 @@ const (
 	Name = "Storage"
 )
 
+type Driver interface {
+}
+
 type ResultCallback func(interface{}, error)
 
 type Request struct {
@@ -29,6 +32,7 @@ type Storage struct {
 	id      uint64
 	pending chan *Request
 	done    chan *Response
+	driver  Driver
 }
 
 func (s *Storage) Prepare(srv api.Service, args ...interface{}) {
