@@ -15,7 +15,7 @@ type Movement interface {
 	SetRotation(eulers Vec3)
 	EulerAngles() Vec3
 	LookAt(target Vec3)
-	Translate(translation Vec3)
+	Translate(translation Vec3) Vec3
 	MoveTo(position Vec3)
 	Rotate(eulerAngle Vec3)
 }
@@ -66,8 +66,9 @@ func (t *Transform) Right() Vec3 {
 	return Vec3(internal.QuatMulVec3(t.rotation, right))
 }
 
-func (t *Transform) Translate(translation Vec3) {
+func (t *Transform) Translate(translation Vec3) Vec3 {
 	t.position = t.position.Add(mgl32.Vec3(translation))
+	return Vec3(t.position)
 }
 
 func (t *Transform) LookAt(target Vec3) {
