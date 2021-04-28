@@ -6,6 +6,7 @@ import (
 
 type AOI interface {
 	ViewRange() float32
+	SetViewRange(f float32)
 	AddViewObj(obj ObjectId)
 	RemoveViewObj(obj ObjectId)
 	Clear()
@@ -55,6 +56,10 @@ func (v *View) RemoveViewObj(obj ObjectId) {
 
 func (v *View) ViewRange() float32 {
 	return v.viewRange
+}
+
+func (v *View) SetViewRange(f float32) {
+	v.viewRange = f
 }
 
 func (v *View) CachePosition(pos Vec3) {

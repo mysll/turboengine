@@ -37,6 +37,12 @@ func CreateFromFile(f string) *Level {
 	return NewLevel(config)
 }
 
+func CreateFromData(data string) *Level {
+	config := &Config{}
+	config.LoadFromData(data)
+	return NewLevel(config)
+}
+
 func (l *Level) AddEntity(obj object.GameObject) {
 	if _, ok := l.entities[obj.Id()]; ok {
 		return

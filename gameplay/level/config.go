@@ -14,3 +14,10 @@ func (c *Config) LoadFromFile(f string) {
 		panic(err)
 	}
 }
+
+func (c *Config) LoadFromData(data string) {
+	_, err := toml.Decode(data, c)
+	if err != nil {
+		panic(err)
+	}
+}

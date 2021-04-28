@@ -1,0 +1,7 @@
+MinX = -200.0
+MinY = -250.0
+MaxX = 250.0
+MaxY = 250.0
+TileWidth = 50.0
+TileHeight = 50.0
+ViewMaxRange = 100.0

@@ -41,6 +41,7 @@ type GameObject interface {
 	AOI() AOI
 	Replicate() Replicate
 	Id() ObjectId
+	SetId(id ObjectId)
 	Dirty() bool
 	SetDirty()
 	ClearDirty()
@@ -165,6 +166,10 @@ func (o *Object) SetOwner(self GameObject) {
 
 func (o *Object) Id() ObjectId {
 	return o.id
+}
+
+func (o *Object) SetId(id ObjectId) {
+	o.id = id
 }
 
 func (o *Object) Dirty() bool {
