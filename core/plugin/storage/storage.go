@@ -23,11 +23,14 @@ const (
 
 type Driver interface {
 	Connect(dsn string) error
-	Create(name string, model interface{}) error
-	Select(id uint64, data interface{}) error
-	Insert(id uint64, data interface{}) (uint64, error)
-	Update(id uint64, data interface{}) error
-	Del(name string, id uint64) error
+	Create(name string, model dao.Persistent) error
+	Find(id uint64, data dao.Persistent) error
+	FindBy(data dao.Persistent, where string, args ...interface{}) error
+	FindAll(data interface{}, where string, args ...interface{}) error
+	Save(data dao.Persistent) (uint64, error)
+	Update(data dao.Persistent) error
+	Del(data dao.Persistent) error
+	DelBy(data dao.Persistent, where string, args ...interface{}) error
 }
 
 type ResultCallback func(interface{}, error)
