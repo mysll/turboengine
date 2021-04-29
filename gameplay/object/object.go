@@ -41,6 +41,7 @@ type GameObject interface {
 	AOI() AOI
 	Replicate() Replicate
 	Id() ObjectId
+	DBId() uint64
 	SetId(id ObjectId)
 	Dirty() bool
 	SetDirty()
@@ -64,6 +65,7 @@ type Object struct {
 	*Transform
 	*Replication
 	*View
+	dbId      uint64
 	id        ObjectId
 	attrs     []Attr
 	nameToIdx map[string]int
@@ -166,6 +168,14 @@ func (o *Object) SetOwner(self GameObject) {
 
 func (o *Object) Id() ObjectId {
 	return o.id
+}
+
+func (o *Object) DBId() uint64 {
+	return o.dbId
+}
+
+func (o *Object) SetDBId(id uint64) {
+	o.dbId = id
 }
 
 func (o *Object) SetId(id ObjectId) {
