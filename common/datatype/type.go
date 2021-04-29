@@ -1,6 +1,10 @@
 package datatype
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"math"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -10,6 +14,17 @@ import (
 type ObjectId uint64
 
 type Vec3 mgl32.Vec3
+
+var (
+	Forward = Vec3{0, 0, 1}
+	Back    = Vec3{0, 0, -1}
+	Up      = Vec3{0, 1, 0}
+	Down    = Vec3{0, -1, 0}
+	Left    = Vec3{-1, 0, 0}
+	Right   = Vec3{1, 0, 0}
+	Zero    = Vec3{}
+	One     = Vec3{1, 1, 1}
+)
 
 func V3(x float32, y float32, z float32) Vec3 {
 	return Vec3{x, y, z}
@@ -67,6 +82,25 @@ func (v Vec3) LenSqr() float32 {
 func (v Vec3) Normalize() Vec3 {
 	l := 1.0 / v.Len()
 	return Vec3{v[0] * l, v[1] * l, v[2] * l}
+}
+
+// gorm
+func (v *Vec3) Scan(value interface{}) error {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New(fmt.Sprint("Failed to unmarsh Vec3", value))
+	}
+	result := Vec3{}
+	err := json.Unmarshal(bytes, &result)
+	if err != nil {
+		return err
+	}
+	*v = result
+	return nil
+}
+
+func (v Vec3) Value() (driver.Value, error) {
+	return json.Marshal(v)
 }
 
 type Vec2 mgl32.Vec2
