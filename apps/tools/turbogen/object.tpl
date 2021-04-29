@@ -3,6 +3,7 @@ import (
     . "turboengine/common/datatype"
     "turboengine/gameplay/dao"
     "turboengine/gameplay/object"
+    "time"
 )
 
 type {{.Name}} struct {
@@ -13,6 +14,8 @@ type {{.Name}} struct {
 
 type {{.Name}}Data struct {
     ID uint64 `gorm:"primaryKey"`
+    CreatedAt time.Time
+    UpdatedAt time.Time
     ObjectId ObjectId `gorm:"uniqueIndex"`
     ObjectType string `gorm:"size:64"`{{range .Attrs}}{{if eq .Save true}}
     {{.Name}} {{.ArgType}} `gorm:"{{.Orm}}"`{{end}}{{end}}
