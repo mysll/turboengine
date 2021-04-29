@@ -1,14 +1,18 @@
 package dao
 
-var models = make(map[string]interface{})
+var models = make(map[string]Persistent)
 
-func RegisterModel(name string, model interface{}) {
+type Persistent interface {
+	DBId() uint64
+}
+
+func RegisterModel(name string, model Persistent) {
 	if _, ok := models[name]; ok {
 		panic("register model dup")
 	}
 	models[name] = model
 }
 
-func GetAllModel() map[string]interface{} {
+func GetAllModel() map[string]Persistent {
 	return models
 }

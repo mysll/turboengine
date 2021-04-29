@@ -1,6 +1,7 @@
 package {{.Pkg}}
 import (
     . "turboengine/common/datatype"
+    "turboengine/gameplay/dao"
     "turboengine/gameplay/object"
 )
 
@@ -11,11 +12,16 @@ type {{.Name}} struct {
 }
 
 type {{.Name}}Data struct {
-    Id uint64
-    ObjectId ObjectId
-    ObjectType string{{range .Attrs}}{{if eq .Save true}}
-    {{.Name}} {{.ArgType}}{{end}}{{end}}
+    ID uint64 `gorm:"primaryKey"`
+    ObjectId ObjectId `gorm:"uniqueIndex"`
+    ObjectType string `gorm:"size:64"`{{range .Attrs}}{{if eq .Save true}}
+    {{.Name}} {{.ArgType}} `gorm:"{{.Orm}}"`{{end}}{{end}}
 }
+
+func (v {{.Name}}Data) DBId() uint64 {
+    return v.ID
+}
+
 {{$obj := tolower $.Name}}
 func New{{.Name}}() *{{.Name}} {
     {{$obj}}:=&{{.Name}}{
@@ -56,16 +62,20 @@ func ({{$obj}} *{{$.Name}}) {{.Name}}Change(callback object.OnChange) {
 }
 {{end}}
 
-func ({{$obj}} *{{$.Name}}) GetSaveData() {{.Name}}Data {
+func ({{$obj}} *{{.Name}}) GetSaveData() {{.Name}}Data {
     return {{.Name}}Data {
-        Id:{{$obj}}.DBId(),
+        ID:{{$obj}}.DBId(),
         ObjectId:{{$obj}}.Id(),
         ObjectType:"{{$.Name}}", {{range .Attrs}}{{if eq .Save true}}
         {{.Name}}: {{$obj}}.{{tolower .Name}}.Data(), {{end}} {{end}}
     }
 }
 
-func ({{$obj}} *{{$.Name}}) RestoreFromData(data {{.Name}}Data) {
-    {{$obj}}.SetDBId(data.Id) {{range .Attrs}}{{if eq .Save true}}
+func ({{$obj}} *{{.Name}}) RestoreFromData(data {{.Name}}Data) {
+    {{$obj}}.SetDBId(data.ID) {{range .Attrs}}{{if eq .Save true}}
     {{$obj}}.Set{{.Name}}(data.{{.Name}}) {{end}}{{end}}
+}
+
+func init() {
+	dao.RegisterModel("{{.Name}}", new({{.Name}}Data))
 }

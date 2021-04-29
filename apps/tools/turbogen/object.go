@@ -21,6 +21,7 @@ type AttrDecl struct {
 	Public   bool
 	Private  bool
 	Realtime bool
+	Orm      string
 }
 
 type ObjectDesc struct {
@@ -117,8 +118,10 @@ func ObjectWrap(s interface{}, pkgpath string, pkg string, path string) {
 				case "realtime":
 					decl.Realtime = true
 				}
-
 			}
+		}
+		if value, ok := m.Tag.Lookup("orm"); ok {
+			decl.Orm = value
 		}
 
 		desc.Attrs = append(desc.Attrs, decl)
