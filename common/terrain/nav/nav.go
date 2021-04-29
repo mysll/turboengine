@@ -1,9 +1,8 @@
-package terrain
+package nav
 
 import (
 	"math"
 	. "turboengine/common/datatype"
-	"turboengine/gameplay/level"
 )
 
 // nav mesh
@@ -22,7 +21,7 @@ func (n *NavMesh) CanWalk(pos Vec3) bool {
 }
 
 // LineCanWalk 两个点之间是否可以行走
-func (n *NavMesh) LineCanWalk(start, end Vec3) bool {
+func (n *NavMesh) LineCanWalk(step float32, start, end Vec3) bool {
 	return false
 }
 
@@ -33,11 +32,5 @@ func (n *NavMesh) Height(pos Vec3) float32 {
 
 // 某个点的地图类型(MAP_TYPE)
 func (n *NavMesh) MapType(pos Vec3) int {
-	return level.MAP_TYPE_NONE
-}
-
-func init() {
-	level.RegMap("navmesh", func() level.Terrain {
-		return &NavMesh{}
-	})
+	return 0
 }
