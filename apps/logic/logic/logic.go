@@ -1,7 +1,9 @@
 package logic
 
 import (
+	_ "turboengine/apps/logic/internal/entity"
 	coreapi "turboengine/core/api"
+	"turboengine/core/plugin/storage"
 	"turboengine/core/service"
 )
 
@@ -16,6 +18,7 @@ type Logic struct {
 func (s *Logic) OnPrepare(srv coreapi.Service, args map[string]string) error {
 	s.Service.OnPrepare(srv, args)
 	// use plugin
+	srv.UsePlugin(storage.Name, "mysql", "root:123456@tcp(127.0.0.1:3306)/turbo?charset=utf8mb4&parseTime=True&loc=Local")
 	// use plugin end
 
 	// add module

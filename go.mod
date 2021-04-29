@@ -14,4 +14,6 @@ require (
 	github.com/sirupsen/logrus v1.8.0
 	github.com/urfave/cli v1.22.5
 	google.golang.org/protobuf v1.25.0 // indirect
+	gorm.io/driver/mysql v1.0.6 // indirect
+	gorm.io/gorm v1.21.9 // indirect
 )
