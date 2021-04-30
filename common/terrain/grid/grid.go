@@ -76,7 +76,7 @@ func clampHeight(min, max, height, limit float32) uint32 {
 
 // 映射回[min, max]
 func getClampHeight(min, max, limit float32, height uint32) float32 {
-	return float32(height)*(max-min)/0xFFFF + min
+	return float32(height)*(max-min)/limit + min
 }
 
 type GridMap struct {
