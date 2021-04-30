@@ -1,33 +1,54 @@
 package grid
 
 import (
+	"encoding/binary"
 	"math"
 	. "turboengine/common/datatype"
 	. "turboengine/common/terrain"
 )
 
-type IdSet map[ObjectId]struct{}
-
-type Callback interface {
-	OnEnterGrid(g *Grid, target ObjectId)
-	OnLeaveGrid(g *Grid, target ObjectId)
-}
-
 type GridPos struct {
-	Row, Col int
+	Row, Col uint16
 }
 
 // rectangle
 type Grid struct {
 	pos    GridPos                // 格子坐标(行,列)
-	gtype  int                    // 格子类型
-	height float32                // 格子高度
+	gtype  byte                   // 格子类型
+	height [3]byte                // 格子高度  3byte
 	data   map[string]interface{} // 附加数据
-	ids    IdSet                  // 格子中的玩家
 }
 
 func NewGrid() *Grid {
 	return &Grid{}
+}
+
+func (g *Grid) setType(t int) {
+	g.gtype = byte(t)
+}
+
+func (g *Grid) getType() int {
+	return int(g.gtype)
+}
+
+func (g *Grid) setHeight(f float32) {
+	bits := math.Float32bits(f)
+	b := make([]byte, 4)
+	binary.LittleEndian.PutUint32(b, bits)
+	g.height[0] = b[1]
+	g.height[1] = b[2]
+	g.height[2] = b[3]
+}
+
+func (g *Grid) getHeight() float32 {
+	b := make([]byte, 4)
+	b[0] = 0
+	b[1] = g.height[0]
+	b[2] = g.height[1]
+	b[3] = g.height[2]
+	bits := binary.LittleEndian.Uint32(b)
+	float := math.Float32frombits(bits)
+	return float
 }
 
 type GridMap struct {
@@ -38,11 +59,10 @@ type GridMap struct {
 	origin Vec2      // 原点坐标
 	size   Vec2      // 格子大小
 	grids  [][]*Grid // 格子数据
-	cb     Callback
 }
 
-func NewGridMap() *GridMap {
-	return &GridMap{}
+func NewGridMap(pixel, zone, unit Vec2, grids [][]*Grid) *GridMap {
+	return &GridMap{pixel: pixel, zone: zone, unit: unit, grids: grids}
 }
 
 func (g *GridMap) init() {
@@ -50,12 +70,10 @@ func (g *GridMap) init() {
 	g.size = V2(g.zone.X()*g.unit.X(), g.zone.Y()*g.unit.Y())
 }
 
-// Load 从文件加载
 func (g *GridMap) LoadFromFile(f string) {
 
 }
 
-// CanWalk 某个点是否可以行走
 func (g *GridMap) CanWalk(pos Vec3) (b bool) {
 	grid := g.getGrid(pos)
 	if grid == nil {
@@ -64,20 +82,6 @@ func (g *GridMap) CanWalk(pos Vec3) (b bool) {
 	return grid.gtype|MAP_TYPE_WATER|MAP_TYPE_TREE|MAP_TYPE_BUILD != 0
 }
 
-// Walk
-func (g *GridMap) Walk(obj ObjectId, old Vec3, new Vec3) {
-	/*ngrid := g.grids[new.Row][new.Col]
-	if old == new {
-		return
-	}
-	ogrid := g.grids[old.Row][old.Col]
-	g.cb.OnLeaveGrid(ogrid, obj)
-	delete(ogrid.ids, obj)
-	g.cb.OnEnterGrid(ngrid, obj)
-	ngrid.ids[obj] = struct{}{}*/
-}
-
-// LineCanWalk 两个点之间是否可以行走
 func (g *GridMap) LineCanWalk(step float32, start, end Vec3) bool {
 	sx := end.X() - start.X()
 	sz := end.Z() - start.Z()
@@ -100,29 +104,27 @@ func (g *GridMap) LineCanWalk(step float32, start, end Vec3) bool {
 	return false
 }
 
-// Height 获取高度
 func (g *GridMap) Height(pos Vec3) float32 {
 	grid := g.getGrid(pos)
 	if grid == nil {
 		return float32(math.NaN())
 	}
-	return grid.height
+	return grid.getHeight()
 }
 
-// 某个点的地图类型(MAP_TYPE)
 func (g *GridMap) MapType(pos Vec3) int {
 	grid := g.getGrid(pos)
 	if grid == nil {
 		return MAP_TYPE_NONE
 	}
-	return grid.gtype
+	return grid.getType()
 }
 
 func (g *GridMap) getGrid(pos Vec3) *Grid {
 	x := (pos.X() - g.origin.X()) / g.size.X()
 	y := (pos.Z() - g.origin.Y()) / g.size.Y()
-	row := int(math.Ceil(float64(x)))
-	col := int(math.Ceil(float64(y)))
+	row := uint16(math.Ceil(float64(x)))
+	col := uint16(math.Ceil(float64(y)))
 	if row > g.max.Row || col > g.max.Col {
 		return nil
 	}
