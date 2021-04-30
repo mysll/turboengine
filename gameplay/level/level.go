@@ -4,6 +4,7 @@ import (
 	"turboengine/common/aoi"
 	"turboengine/common/aoi/tower"
 	. "turboengine/common/datatype"
+	"turboengine/common/terrain"
 	"turboengine/gameplay/object"
 )
 
@@ -13,7 +14,7 @@ type Level struct {
 	aoi      aoi.AOIMgr
 	entities EntityContainer
 	config   *Config
-	terrain  Terrain
+	terrain  terrain.Terrain
 }
 
 func NewLevel(config *Config) *Level {

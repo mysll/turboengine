@@ -154,3 +154,22 @@ func (v Vec2) Normalize() Vec2 {
 	l := 1.0 / v.Len()
 	return Vec2{v[0] * l, v[1] * l}
 }
+
+// gorm
+func (v *Vec2) Scan(value interface{}) error {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New(fmt.Sprint("Failed to unmarsh Vec3", value))
+	}
+	result := Vec2{}
+	err := json.Unmarshal(bytes, &result)
+	if err != nil {
+		return err
+	}
+	*v = result
+	return nil
+}
+
+func (v Vec2) Value() (driver.Value, error) {
+	return json.Marshal(v)
+}

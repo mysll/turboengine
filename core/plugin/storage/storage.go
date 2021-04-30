@@ -15,8 +15,8 @@ const (
 
 const (
 	DB_OP_CREATE = 1 + iota
-	DB_OP_SELECT
-	DB_OP_INSERT
+	DB_OP_FIND
+	DB_OP_SAVE
 	DB_OP_UPDATE
 	DB_OP_DEL
 )
@@ -36,10 +36,13 @@ type Driver interface {
 type ResultCallback func(interface{}, error)
 
 type Request struct {
-	op   int
-	id   uint64
-	data interface{}
-	cb   ResultCallback
+	op    int
+	id    uint64
+	multi bool
+	data  interface{}
+	where string
+	args  []interface{}
+	cb    ResultCallback
 }
 
 type Response struct {
@@ -100,6 +103,105 @@ func (s *Storage) roundInvoke(t *utils.Time) {
 			return
 		}
 	}
+}
+
+func (s *Storage) Find(id uint64, data dao.Persistent, cb ResultCallback) error {
+	if cb == nil {
+		return s.driver.Find(id, data)
+	}
+	req := &Request{
+		op:   DB_OP_FIND,
+		id:   id,
+		data: data,
+		cb:   cb,
+	}
+	s.pending <- req
+	return nil
+}
+
+func (s *Storage) FindBy(data dao.Persistent, where string, args []interface{}, cb ResultCallback) error {
+	if cb == nil {
+		return s.driver.FindBy(data, where, args...)
+	}
+	req := &Request{
+		op:    DB_OP_FIND,
+		data:  data,
+		where: where,
+		args:  args,
+		cb:    cb,
+	}
+	s.pending <- req
+	return nil
+}
+
+func (s *Storage) FindAll(data interface{}, where string, args []interface{}, cb ResultCallback) error {
+	if cb == nil {
+		return s.driver.FindAll(data, where, args...)
+	}
+	req := &Request{
+		op:    DB_OP_FIND,
+		data:  data,
+		multi: true,
+		where: where,
+		args:  args,
+		cb:    cb,
+	}
+	s.pending <- req
+	return nil
+}
+
+func (s *Storage) Save(data dao.Persistent, cb ResultCallback) (uint64, error) {
+	if cb == nil {
+		return s.driver.Save(data)
+	}
+	req := &Request{
+		op:   DB_OP_SAVE,
+		data: data,
+		cb:   cb,
+	}
+	s.pending <- req
+	return 0, nil
+}
+
+func (s *Storage) Update(data dao.Persistent, cb ResultCallback) error {
+	if cb == nil {
+		return s.driver.Update(data)
+	}
+	req := &Request{
+		op:   DB_OP_UPDATE,
+		data: data,
+		cb:   cb,
+	}
+	s.pending <- req
+	return nil
+}
+
+func (s *Storage) Del(data dao.Persistent, cb ResultCallback) error {
+	if cb == nil {
+		return s.driver.Del(data)
+	}
+	req := &Request{
+		op:   DB_OP_DEL,
+		data: data,
+		cb:   cb,
+	}
+	s.pending <- req
+	return nil
+}
+
+func (s *Storage) DelBy(data dao.Persistent, where string, args []interface{}, cb ResultCallback) error {
+	if cb == nil {
+		return s.driver.DelBy(data, where, args...)
+	}
+	req := &Request{
+		op:    DB_OP_DEL,
+		data:  data,
+		where: where,
+		args:  args,
+		cb:    cb,
+	}
+	s.pending <- req
+	return nil
 }
 
 func init() {

@@ -2,6 +2,16 @@ package terrain
 
 import . "turboengine/common/datatype"
 
+/* 地图的坐标系 */
+//                (0, z)   (x, z)
+//                ___________
+//   y  z         |         |
+//   | /          |         |
+//   |/           |         |
+//   +-------x    |_________|
+//
+//               (0, 0)    (x, 0)
+
 const (
 	MAP_TYPE_NONE  = iota
 	MAP_TYPE_LAND  = 1      // 陆地
