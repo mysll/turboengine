@@ -10,4 +10,5 @@ func TestNewGridMap(t *testing.T) {
 	x := clampHeight(0, 1000, f, 0xFFFFFF)
 	y := getClampHeight(0, 1000, 0xFFFFFF, x)
 	t.Log(f, x, y)
+	// output: 0.84147096 14117 0.84143883
 }
