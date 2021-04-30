@@ -18,8 +18,8 @@ import (
 
 const (
 	SERVICE_TAG = "turbo.service"
-	SERVICE_TTL = time.Second * 2 // TTL
-	DEREG_TIME  = time.Second * 10
+	SERVICE_TTL = time.Second * 30 // TTL
+	DEREG_TIME  = time.Second * 90
 )
 
 const (
