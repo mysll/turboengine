@@ -1,92 +1,57 @@
 package grid
 
 import (
-	"encoding/binary"
 	"math"
 	. "turboengine/common/datatype"
 	. "turboengine/common/terrain"
 )
 
-type GridPos struct {
-	Row, Col uint16
-}
+const limit float32 = 0xFFFFFF
 
-// rectangle
 type Grid struct {
-	pos    GridPos                // 格子坐标(行,列)
-	gtype  byte                   // 格子类型
-	height [3]byte                // 格子高度  3byte
-	data   map[string]interface{} // 附加数据
+	flag uint32                 // [8bit类型][24bit高度]
+	data map[string]interface{} // 附加数据
 }
 
 func NewGrid() *Grid {
 	return &Grid{}
 }
 
-func (g *Grid) setType(t int) {
-	g.gtype = byte(t)
+func (g *Grid) SetHeight(h uint32) {
+	g.flag = (g.flag & 0xFF000000) | (h & 0xFFFFFF)
+}
+
+func (g *Grid) SetType(t uint32) {
+	g.flag = (t << 24) | (g.flag & 0xFFFFFF)
+}
+
+func (g *Grid) Height() uint32 {
+	return g.flag & 0xFFFFFF
 }
 
 func (g *Grid) Type() uint32 {
-	return uint32(g.gtype)
+	return g.flag >> 24
 }
 
-func (g *Grid) setHeight(f float32) {
-	bits := math.Float32bits(f)
-	b := make([]byte, 4)
-	binary.LittleEndian.PutUint32(b, bits)
-	g.height[0] = b[1]
-	g.height[1] = b[2]
-	g.height[2] = b[3]
-}
-
-func (g *Grid) Height() float32 {
-	b := make([]byte, 4)
-	b[0] = 0
-	b[1] = g.height[0]
-	b[2] = g.height[1]
-	b[3] = g.height[2]
-	bits := binary.LittleEndian.Uint32(b)
-	float := math.Float32frombits(bits)
-	return float
-}
-
-type grid uint32
-
-func (g *grid) SetHeight(h uint32) {
-	*g = grid(uint32(*g)&0xFF000000 | (h & 0xFFFFFF))
-}
-
-func (g *grid) SetType(t uint32) {
-	*g = grid((t << 24) | (uint32(*g) & 0xFFFFFF))
-}
-
-func (g grid) Height() uint32 {
-	return uint32(g) & 0xFFFFFF
-}
-
-func (g grid) Type() uint32 {
-	return uint32(g) >> 24
-}
-
-// 映射到[0,0xFFFFFF]
-func clampHeight(min, max, height, limit float32) uint32 {
+// 映射到[0,limit]
+func (g *Grid) clampHeight(min, max, height float32) uint32 {
 	return uint32((height - min) / (max - min) * limit)
 }
 
 // 映射回[min, max]
-func getClampHeight(min, max, limit float32, height uint32) float32 {
-	return float32(height)*(max-min)/limit + min
+func (g *Grid) getClampHeight(min, max float32) float32 {
+	return float32(g.Height())*(max-min)/limit + min
 }
 
 type GridMap struct {
 	pixel     Vec2     // 原点坐标(像素)
 	zone      Vec2     // 格子长和宽(像素)
 	unit      Vec2     // n坐标单位=1像素单位
-	max       GridPos  // 格子最大(行,列)
+	row       uint32   // 格子最大行
+	col       uint32   // 格子最大列
 	origin    Vec2     // 原点坐标
 	size      Vec2     // 格子大小
-	grids     [][]grid // 格子数据
+	grids     [][]Grid // 格子数据
 	maxHeight float32
 	minHeight float32
 }
@@ -136,7 +101,7 @@ func (g *GridMap) Height(pos Vec3) float32 {
 	if grid == nil {
 		return float32(math.NaN())
 	}
-	return getClampHeight(g.minHeight, g.maxHeight, 0xFFFFFF, grid.Height())
+	return grid.getClampHeight(g.minHeight, g.maxHeight)
 }
 
 func (g *GridMap) MapType(pos Vec3) int {
@@ -147,12 +112,12 @@ func (g *GridMap) MapType(pos Vec3) int {
 	return int(grid.Type())
 }
 
-func (g *GridMap) getGrid(pos Vec3) *grid {
+func (g *GridMap) getGrid(pos Vec3) *Grid {
 	x := (pos.X() - g.origin.X()) / g.size.X()
 	y := (pos.Z() - g.origin.Y()) / g.size.Y()
-	row := uint16(math.Ceil(float64(x)))
-	col := uint16(math.Ceil(float64(y)))
-	if row > g.max.Row || col > g.max.Col {
+	row := uint32(math.Ceil(float64(x)))
+	col := uint32(math.Ceil(float64(y)))
+	if row > g.row || col > g.col {
 		return nil
 	}
 	return &g.grids[row][col]
