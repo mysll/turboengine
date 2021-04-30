@@ -11,7 +11,7 @@ type LoginServer struct {
 
 func (l *LoginServer) Login(user string, pass string) (bool, error) {
 	var account dao.Account
-	if err := l.storage.FindBy(&account, "account=? and password=?", []interface{}{user, pass}, nil); err != nil {
+	if err := l.storage.FindBy(&account, "account=? and password=?", user, pass); err != nil {
 		return false, err
 	}
 	if account.Account == user {

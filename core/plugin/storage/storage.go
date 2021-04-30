@@ -105,7 +105,11 @@ func (s *Storage) roundInvoke(t *utils.Time) {
 	}
 }
 
-func (s *Storage) Find(id uint64, data dao.Persistent, cb ResultCallback) error {
+func (s *Storage) Find(id uint64, data dao.Persistent) error {
+	return s.driver.Find(id, data)
+}
+
+func (s *Storage) FindWithCallback(id uint64, data dao.Persistent, cb ResultCallback) error {
 	if cb == nil {
 		return s.driver.Find(id, data)
 	}
@@ -119,7 +123,11 @@ func (s *Storage) Find(id uint64, data dao.Persistent, cb ResultCallback) error 
 	return nil
 }
 
-func (s *Storage) FindBy(data dao.Persistent, where string, args []interface{}, cb ResultCallback) error {
+func (s *Storage) FindBy(data dao.Persistent, where string, args ...interface{}) error {
+	return s.driver.FindBy(data, where, args...)
+}
+
+func (s *Storage) FindByWithCallback(data dao.Persistent, where string, args []interface{}, cb ResultCallback) error {
 	if cb == nil {
 		return s.driver.FindBy(data, where, args...)
 	}
@@ -134,7 +142,11 @@ func (s *Storage) FindBy(data dao.Persistent, where string, args []interface{}, 
 	return nil
 }
 
-func (s *Storage) FindAll(data interface{}, where string, args []interface{}, cb ResultCallback) error {
+func (s *Storage) FindAll(data interface{}, where string, args ...interface{}) error {
+	return s.driver.FindAll(data, where, args...)
+}
+
+func (s *Storage) FindAllWithCallback(data interface{}, where string, args []interface{}, cb ResultCallback) error {
 	if cb == nil {
 		return s.driver.FindAll(data, where, args...)
 	}
@@ -150,7 +162,11 @@ func (s *Storage) FindAll(data interface{}, where string, args []interface{}, cb
 	return nil
 }
 
-func (s *Storage) Save(data dao.Persistent, cb ResultCallback) (uint64, error) {
+func (s *Storage) Save(data dao.Persistent) (uint64, error) {
+	return s.driver.Save(data)
+}
+
+func (s *Storage) SaveWithCallback(data dao.Persistent, cb ResultCallback) (uint64, error) {
 	if cb == nil {
 		return s.driver.Save(data)
 	}
@@ -163,7 +179,11 @@ func (s *Storage) Save(data dao.Persistent, cb ResultCallback) (uint64, error) {
 	return 0, nil
 }
 
-func (s *Storage) Update(data dao.Persistent, cb ResultCallback) error {
+func (s *Storage) Update(data dao.Persistent) error {
+	return s.driver.Update(data)
+}
+
+func (s *Storage) UpdateWithCallback(data dao.Persistent, cb ResultCallback) error {
 	if cb == nil {
 		return s.driver.Update(data)
 	}
@@ -176,7 +196,11 @@ func (s *Storage) Update(data dao.Persistent, cb ResultCallback) error {
 	return nil
 }
 
-func (s *Storage) Del(data dao.Persistent, cb ResultCallback) error {
+func (s *Storage) Del(data dao.Persistent) error {
+	return s.driver.Del(data)
+}
+
+func (s *Storage) DelWithCallback(data dao.Persistent, cb ResultCallback) error {
 	if cb == nil {
 		return s.driver.Del(data)
 	}
@@ -189,7 +213,11 @@ func (s *Storage) Del(data dao.Persistent, cb ResultCallback) error {
 	return nil
 }
 
-func (s *Storage) DelBy(data dao.Persistent, where string, args []interface{}, cb ResultCallback) error {
+func (s *Storage) DelBy(data dao.Persistent, where string, args ...interface{}) error {
+	return s.driver.DelBy(data, where, args...)
+}
+
+func (s *Storage) DelByWithCallback(data dao.Persistent, where string, args []interface{}, cb ResultCallback) error {
 	if cb == nil {
 		return s.driver.DelBy(data, where, args...)
 	}
