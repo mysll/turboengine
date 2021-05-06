@@ -4,7 +4,7 @@ import "gorm.io/gorm"
 
 type Account struct {
 	gorm.Model
-	Account  string `gorm:"uniqueIndex;size:64""`
+	Account  string `gorm:"uniqueIndex;size:64"`
 	Password string `gorm:"size:128"`
 }
 
