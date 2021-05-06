@@ -52,12 +52,13 @@ func (s *Circle2DShape) SetCenter(c Vec3) {
 }
 
 func (s *Circle2DShape) Collider(other Shape) bool {
-	if other.Type() == SHAPE_CIRCLE_2D {
-		return s.radius < s.center.Sub(other.Center()).Len()
+	switch rhs := other.(type) {
+	case *Circle2DShape:
+		return s.center.Sub(rhs.center).Len() < s.radius+rhs.radius
+		//TODO check other shape
+	default:
+		return false
 	}
-
-	//TODO check other shape
-	return false
 }
 
 //TODO boxshape
