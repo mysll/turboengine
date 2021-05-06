@@ -9,8 +9,7 @@ import (
 const limit float32 = 0xFFFFFF
 
 type Grid struct {
-	flag uint32      // [8bit类型][24bit高度]
-	data interface{} // 附加数据
+	flag uint32 // [8bit类型][24bit高度]
 }
 
 func NewGrid() *Grid {
