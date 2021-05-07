@@ -1,10 +1,9 @@
-package navmesh
+package tests
 
 import (
 	"math/rand"
 	"testing"
 	"time"
-
 	"turboengine/common/navmesh/aoi"
 )
 
@@ -27,7 +26,7 @@ func test1() {
 
 	// 测试删除
 	itemsNum := len(items)
-	_test_delete(scn, &items, itemsNum)
+	Testdelete(scn, &items, itemsNum)
 	items = nil
 	//fmt.Printf("delete obj count:%d, total count:%d\n", itemsNum, scn.GetItemCount())
 }
@@ -45,7 +44,7 @@ func test2() {
 			Add(scn, &items)
 		} else if op <= 8 {
 			itemsNum := len(items)
-			_test_delete(scn, &items, itemsNum%3+1)
+			Testdelete(scn, &items, itemsNum%3+1)
 		} else {
 			Query(scn, items)
 			Query_by_radius(scn, items, float32(rand.Int()%200+50))

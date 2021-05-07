@@ -1,9 +1,10 @@
-package navmesh
+package tests
 
 import (
 	"fmt"
 	"math"
 	"math/rand"
+	"turboengine/common/navmesh"
 
 	"turboengine/common/navmesh/aoi"
 )
@@ -37,7 +38,7 @@ func Add(scn *aoi.QuadTree, items *[]*A) {
 	*items = append(*items, temp)
 }
 
-func _test_delete(scn *aoi.QuadTree, items *[]*A, count int) {
+func Testdelete(scn *aoi.QuadTree, items *[]*A, count int) {
 	itemsNum := len(*items)
 	if itemsNum == 0 {
 		return
@@ -109,12 +110,12 @@ func Query_by_radius(scn *aoi.QuadTree, items []*A, radius float32) {
 /// =========================================
 
 type Player struct {
-	*Agent
+	*navmesh.Agent
 }
 
 func NewPlayer() *Player {
 	this := &Player{}
-	this.Agent = NewAgent()
+	this.Agent = navmesh.NewAgent()
 	this.Agent.OnHit = this.OnHit
 	return this
 }
@@ -134,7 +135,7 @@ func (this *Player) ChangeDir() {
 	this.Velocity = v
 }
 
-func InitScene(scene *Scene, path string) {
+func InitScene(scene *navmesh.Scene, path string) {
 	const PLAYER_COUNT = 5000
 	if ec := scene.Load(path); ec != 0 {
 		panic(ec)
