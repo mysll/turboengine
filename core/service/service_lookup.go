@@ -203,7 +203,7 @@ func (sd *LookupService) SetNotify(fn NotifyFn) {
 }
 
 func (sd *LookupService) discover(ctx context.Context, healthyOnly bool) {
-	t := time.NewTicker(time.Second)
+	t := time.NewTicker(time.Second * 10)
 	sd.discoverServer(healthyOnly)
 L:
 	for {
