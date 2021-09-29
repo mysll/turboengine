@@ -1,6 +1,11 @@
 .PHONY: all prepare build run gotool install clean help
 
 BINARY_NAME=logic_service
+ifeq (${target}, windows)
+BINARY_EXT=.exe
+else
+BINARY_EXT=
+endif
 BIN_DIR=../../bin/
 LAN_FILE=.go
 GO_FILE:=main.go
@@ -8,7 +13,7 @@ GO_FILE:=main.go
 all: prepare gotool build
 
 build:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o  ${BINARY_NAME}  ${GO_FILE}
+	CGO_ENABLED=0 GOOS=${target} GOARCH=amd64 go build -ldflags="-w -s" -o  ${BINARY_NAME}${BINARY_EXT} ${GO_FILE}
 
 prepare:
 	go test ./api/proto
