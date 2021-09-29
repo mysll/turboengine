@@ -30,11 +30,11 @@ func (m *Module) OnStop() error {
 	return nil
 }
 
-func (m *Module) OnConnected(session uint64) {
+func (m *Module) OnConnected(session protocol.Mailbox) {
 
 }
 
-func (m *Module) OnDisconnected(session uint64) {
+func (m *Module) OnDisconnected(session protocol.Mailbox) {
 
 }
 

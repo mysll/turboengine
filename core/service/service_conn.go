@@ -33,14 +33,14 @@ type NetHandle struct {
 
 func (h *NetHandle) Handle(conn Conn) {
 	n := h.svr.connPool.NewNode(conn)
-	h.svr.event.AsyncEmit(EVENT_CONNECTED, n.session)
+	h.svr.event.Emit(EVENT_CONNECTED, n.mailbox)
 	if n == nil {
 		conn.Close()
 		return
 	}
 	go n.send()
 	n.input(h.svr.connPool.inMsg)
-	h.svr.event.AsyncEmit(EVENT_DISCONNECTED, n.session)
+	h.svr.event.Emit(EVENT_DISCONNECTED, n.mailbox)
 	h.svr.connPool.RemoveNode(n.session, true)
 }
 
@@ -256,20 +256,20 @@ func (c *ConnPool) Inmsg() chan *protocol.ProtoMsg {
 }
 
 func (s *service) onConnEvent(event string, args interface{}) {
-	session := args.(uint64)
+	mailbox := args.(protocol.Mailbox)
 	switch event {
 	case EVENT_CONNECTED:
-		s.handler.OnConnected(session)
+		s.handler.OnConnected(mailbox)
 		for _, m := range s.mods {
 			if m.Interest(api.INTEREST_CONNECTION_EVENT) {
-				m.Handler().OnConnected(session)
+				m.Handler().OnConnected(mailbox)
 			}
 		}
 	case EVENT_DISCONNECTED:
-		s.handler.OnDisconnected(session)
+		s.handler.OnDisconnected(mailbox)
 		for _, m := range s.mods {
 			if m.Interest(api.INTEREST_CONNECTION_EVENT) {
-				m.Handler().OnDisconnected(session)
+				m.Handler().OnDisconnected(mailbox)
 			}
 		}
 	}

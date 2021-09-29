@@ -76,11 +76,11 @@ func (s *Service) OnServiceOffline(id uint16) {
 
 }
 
-func (s *Service) OnConnected(session uint64) {
+func (s *Service) OnConnected(session protocol.Mailbox) {
 
 }
 
-func (s *Service) OnDisconnected(session uint64) {
+func (s *Service) OnDisconnected(session protocol.Mailbox) {
 
 }
 
