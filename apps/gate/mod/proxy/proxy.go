@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"context"
-	"turboengine/apps/gate/api/proto"
 	"turboengine/common/log"
 	"turboengine/common/protocol"
 	"turboengine/common/utils"
@@ -18,6 +17,7 @@ import (
 type Proxy struct {
 	module.Module
 	workQueue *workqueue.WorkQueue
+	users     map[protocol.Mailbox]*User
 }
 
 func (m *Proxy) Name() string {
@@ -25,12 +25,13 @@ func (m *Proxy) Name() string {
 }
 
 func (m *Proxy) OnPrepare(s api.Service) error {
+	m.users = make(map[protocol.Mailbox]*User)
 	m.Module.OnPrepare(s)
 	// load module resource
 	s.SetProtoEncoder(protocol.NewJsonEncoder())
 	s.SetProtoDecoder(protocol.NewJsonDecoder())
 	// load module resource end
-
+	InitLogin(s)
 	return nil
 }
 
@@ -50,26 +51,19 @@ func (m *Proxy) OnStop() error {
 	return nil
 }
 
-func (m *Proxy) OnConnected(session uint64) {
+func (m *Proxy) OnConnected(mailbox protocol.Mailbox) {
+	m.users[mailbox] = NewUser(mailbox, m)
 	log.Info("new client")
 }
 
-func (m *Proxy) OnDisconnected(session uint64) {
+func (m *Proxy) OnDisconnected(mailbox protocol.Mailbox) {
+	delete(m.users, mailbox)
 	log.Info("remove client")
 }
 
 func (m *Proxy) OnMessage(msg *protocol.ProtoMsg) {
 	log.Infof("recv msg %d, from %s", msg.Id, msg.Src)
-	switch msg.Id {
-	case proto.LOGIN:
-		login := msg.Data.(*proto.Login)
-		task := &Login{l: login, proxy: m, m: msg}
-		if !m.Schedule(login.User, task) {
-			task.SendResult(false)
-		}
+	if user, ok := m.users[msg.Src]; ok {
+		go user.OnMessage(msg)
 	}
-}
-
-func (m *Proxy) Schedule(key string, task workqueue.Task) bool {
-	return m.workQueue.Schedule(utils.Hash64(key), task)
 }
