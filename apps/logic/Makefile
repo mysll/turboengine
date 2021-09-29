@@ -3,8 +3,12 @@
 BINARY_NAME=logic_service
 ifeq (${target}, windows)
 BINARY_EXT=.exe
-else
+ENV=
+MV=move
+else ifeq (${target}, linux)
 BINARY_EXT=
+ENV=CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+MV=mv
 endif
 BIN_DIR=../../bin/
 LAN_FILE=.go
@@ -13,7 +17,7 @@ GO_FILE:=main.go
 all: prepare gotool build
 
 build:
-	CGO_ENABLED=0 GOOS=${target} GOARCH=amd64 go build -ldflags="-w -s" -o  ${BINARY_NAME}${BINARY_EXT} ${GO_FILE}
+	${ENV} go build -ldflags="-w -s" -o  ${BINARY_NAME}${BINARY_EXT} ${GO_FILE}
 
 prepare:
 	go test ./api/proto
@@ -27,7 +31,7 @@ gotool:
 
 install:
 	make prepare build
-	mv ${BINARY_NAME} ${BIN_DIR}
+	${MV} ${BINARY_NAME}${BINARY_EXT} ${BIN_DIR}
 
 clean:
-	@if [ -f ${BINARY_NAME} ] ; then rm ${BINARY_NAME} ; fi
+	@if [ -f ${BINARY_NAME}${BINARY_EXT} ] ; then rm ${BINARY_NAME}${BINARY_EXT} ; fi
