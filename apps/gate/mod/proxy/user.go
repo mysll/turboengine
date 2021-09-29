@@ -22,11 +22,19 @@ func NewUser(mailbox protocol.Mailbox, proxy *Proxy) *User {
 	}
 }
 
+func (user *User) onDisconnect() {
+
+}
+
 func (user *User) OnMessage(msg *protocol.ProtoMsg) {
 	switch msg.Id {
 	case proto.LOGIN:
 		loginMsg := msg.Data.(*proto.Login)
-		user.login(loginMsg.User, loginMsg.Pass)
+		if user.logging || user.logged {
+			return
+		}
+		user.logging = true
+		go user.login(loginMsg.User, loginMsg.Pass)
 	}
 }
 
@@ -43,4 +51,6 @@ func (user *User) login(account, pass string) {
 		},
 	}
 	user.proxy.Srv.SendToClient(user.mailbox, outMsg)
+	user.logging = false
+	user.logged = res
 }

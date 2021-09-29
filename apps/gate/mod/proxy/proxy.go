@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"context"
+	"turboengine/apps/gate/api/rpc"
 	"turboengine/common/log"
 	"turboengine/common/protocol"
 	"turboengine/common/utils"
@@ -39,6 +40,7 @@ func (m *Proxy) OnStart(ctx context.Context) error {
 	m.Module.OnStart(ctx)
 	m.workQueue = m.Srv.Plugin(workqueue.Name).(*workqueue.WorkQueue)
 	// subscribe subject
+	rpc.SetPushProvider(m.Srv, "", &PushServer{m.Srv})
 	// subscribe subject end
 	return nil
 }
@@ -57,6 +59,9 @@ func (m *Proxy) OnConnected(mailbox protocol.Mailbox) {
 }
 
 func (m *Proxy) OnDisconnected(mailbox protocol.Mailbox) {
+	if user, ok := m.users[mailbox]; ok {
+		user.onDisconnect()
+	}
 	delete(m.users, mailbox)
 	log.Info("remove client")
 }
@@ -64,6 +69,6 @@ func (m *Proxy) OnDisconnected(mailbox protocol.Mailbox) {
 func (m *Proxy) OnMessage(msg *protocol.ProtoMsg) {
 	log.Infof("recv msg %d, from %s", msg.Id, msg.Src)
 	if user, ok := m.users[msg.Src]; ok {
-		go user.OnMessage(msg)
+		user.OnMessage(msg)
 	}
 }
