@@ -14,13 +14,16 @@ BIN_DIR=../../bin/
 LAN_FILE=.go
 GO_FILE:=main.go
 
-all: prepare gotool build
+all: proto gotool build
 
 build:
 	${ENV} go build -ldflags="-w -s" -o  ${BINARY_NAME}${BINARY_EXT} ${GO_FILE}
 
-prepare:
+proto:
 	@go test ./api/proto
+
+entity:
+	@go test ./internal/def
 
 run:
 	@go run ./
