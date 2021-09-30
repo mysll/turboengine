@@ -37,6 +37,9 @@ var server_main string
 //go:embed config.tpl
 var config string
 
+//go:embed Makefile
+var makefile string
+
 type ServiceInfo struct {
 	Pkg  string
 	Name string
@@ -44,7 +47,7 @@ type ServiceInfo struct {
 	Time time.Time
 }
 
-func makeFile(tpl string, name, path, file string, data interface{}) {
+func makeSourceFile(tpl string, name, path, file string, data interface{}) {
 	t := template.Must(template.New(name).Funcs(template.FuncMap{
 		"tolower": strings.ToLower,
 	}).Parse(tpl))
@@ -80,6 +83,45 @@ func makeFile(tpl string, name, path, file string, data interface{}) {
 
 	cmd := exec.Command("gofmt", "--w", outfile)
 	cmd.Run()
+	cmd = exec.Command("goimports", "-w", outfile)
+	cmd.Run()
+	fmt.Println("File created successfully! location: ", outfile)
+}
+
+func makeFile(tpl string, name, path, file string, data interface{}) {
+	t := template.Must(template.New(name).Funcs(template.FuncMap{
+		"tolower": strings.ToLower,
+	}).Parse(tpl))
+
+	outfile := fmt.Sprintf("%s/%s", path, file)
+	if ok, _ := toolkit.PathExists(path); !ok {
+		err := os.MkdirAll(path, 0777)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	if ok, _ := toolkit.PathExists(outfile); ok {
+		fmt.Print(outfile, " file already exists, overwite it?[y/n]:")
+		var confirm string
+		fmt.Scanln(&confirm)
+		if strings.ToLower(confirm) != "y" {
+			fmt.Println("abort")
+			return
+		}
+	}
+
+	f, err := os.Create(outfile)
+	if err != nil {
+		panic(err)
+	}
+
+	defer f.Close()
+	err = t.Execute(f, data)
+	if err != nil {
+		panic(err)
+	}
+
 	fmt.Println("File created successfully! location: ", outfile)
 }
 
@@ -148,15 +190,17 @@ func createService(pkg, name, auth, path string) {
 		Auth: auth,
 		Time: time.Now(),
 	}
-	makeFile(service_tpl, name, fmt.Sprintf("%s/%s", path, pkg), strings.ToLower(name), info)
+	makeSourceFile(service_tpl, name, fmt.Sprintf("%s/%s", path, pkg), strings.ToLower(name), info)
 
-	makeFile(server_main, "main", path, "main", info)
+	makeSourceFile(server_main, "main", path, "main", info)
 
-	makeFile(server_rpc, "proto", proto, "proto", info)
-	makeFile(server_rpc_test, "proto_test", proto, "proto_test", info)
+	makeSourceFile(server_rpc, "proto", proto, "proto", info)
+	makeSourceFile(server_rpc_test, "proto_test", proto, "proto_test", info)
 
-	makeFile(server_entity, "entity", entity_def, "entity", info)
-	makeFile(server_entity_test, "entity_test", entity_def, "entity_test", info)
+	makeSourceFile(server_entity, "entity", entity_def, "entity", info)
+	makeSourceFile(server_entity_test, "entity_test", entity_def, "entity_test", info)
+
+	makeFile(makefile, "makefile", path, "Makefile", info)
 }
 
 func CreateService(c *cli.Context) error {

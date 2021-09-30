@@ -171,7 +171,7 @@ func CreateEntity(c *cli.Context) error {
 	var name string
 	fmt.Scanln(&name)
 
-	makeFile(entityDesc, "def", path, strings.ToLower(name), map[string]interface{}{
+	makeSourceFile(entityDesc, "def", path, strings.ToLower(name), map[string]interface{}{
 		"Name": name,
 		"Pkg":  pkg,
 	})
