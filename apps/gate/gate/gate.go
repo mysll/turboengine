@@ -1,3 +1,7 @@
+//@auth 	 	sll
+//@create	  	2019-08-07 11:21:24
+//@desc
+
 package gate
 
 import (
@@ -9,10 +13,6 @@ import (
 	"turboengine/core/service"
 )
 
-// Service: 	Gate
-// Auth: 	 	sll
-// Data:	  	2019-08-07 11:21:24
-// Desc:
 type Gate struct {
 	service.Service
 	proxy api.Module

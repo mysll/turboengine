@@ -1,3 +1,7 @@
+//@auth 	 	sll
+//@create	  	2019-08-09 10:50:55
+//@desc
+
 package login
 
 import (
@@ -10,10 +14,6 @@ import (
 	"turboengine/core/plugin/storage"
 )
 
-// Module: 		Login
-// Auth: 	 	sll
-// Data:	  	2019-08-09 10:50:55
-// Desc:
 type Login struct {
 	module.Module
 	dislock *lock.DisLocker

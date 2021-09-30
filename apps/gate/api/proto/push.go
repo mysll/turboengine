@@ -6,7 +6,7 @@ type Push struct {
 	Ver string `version:"1.0.0"`
 	XXX interface{}
 	// custom method begin
-	PushToUser func(dest protocol.Mailbox, message protocol.Message) error
+	PushToUser func(dest protocol.Mailbox, message []byte) error
 	// custom method end
 }
 

@@ -1,3 +1,7 @@
+//@auth 	 	sll
+//@create	  	2019-08-14 17:08:18
+//@desc
+
 package global
 
 import (
@@ -10,10 +14,6 @@ import (
 	"turboengine/core/plugin/event"
 )
 
-// Module: 		GlobalData
-// Auth: 	 	sll
-// Data:	  	2019-08-14 17:08:18
-// Desc:
 type GlobalData struct {
 	module.Module
 	election *election.Election

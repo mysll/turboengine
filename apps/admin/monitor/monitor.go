@@ -1,3 +1,7 @@
+//@auth 	 	sll
+//@create	  	2019-08-07 09:34:16
+//@desc
+
 package monitor
 
 import (
@@ -5,10 +9,6 @@ import (
 	"turboengine/core/service"
 )
 
-// Service: 	Monitor
-// Auth: 	 	sll
-// Data:	  	2019-08-07 09:34:16
-// Desc:
 type Monitor struct {
 	service.Service
 }

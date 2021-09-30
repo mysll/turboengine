@@ -1,3 +1,7 @@
+//@auth 	 	sll
+//@create	  	2019-08-08 19:03:37
+//@desc
+
 package login
 
 import (
@@ -9,10 +13,6 @@ import (
 	"turboengine/core/service"
 )
 
-// Service: 	Login
-// Auth: 	 	sll
-// Data:	  	2019-08-08 19:03:37
-// Desc:
 type Login struct {
 	service.Service
 	login api.Module

@@ -1,3 +1,7 @@
+//@auth 	 	sll
+//@create	  	2019-08-08 15:16:00
+//@desc
+
 package proxy
 
 import (
@@ -11,10 +15,6 @@ import (
 	"turboengine/core/plugin/workqueue"
 )
 
-// Module: 		Proxy
-// Auth: 	 	sll
-// Data:	  	2019-08-08 15:16:00
-// Desc:
 type Proxy struct {
 	module.Module
 	workQueue *workqueue.WorkQueue

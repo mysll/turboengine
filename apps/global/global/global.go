@@ -1,3 +1,7 @@
+//@auth 	 	sll
+//@create	  	2019-08-14 17:05:45
+//@desc
+
 package global
 
 import (
@@ -9,10 +13,6 @@ import (
 	"turboengine/core/service"
 )
 
-// Service: 	Global
-// Auth: 	 	sll
-// Data:	  	2019-08-14 17:05:45
-// Desc:
 type Global struct {
 	service.Service
 	globalData api.Module
