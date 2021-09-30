@@ -39,6 +39,10 @@ func TypeName(t reflect.Type) (pkg string, typ string) {
 		ptr = "*"
 		t = t.Elem()
 	}
+	if t.Kind() == reflect.Slice {
+		ptr = "[]"
+		t = t.Elem()
+	}
 
 	pkg = t.PkgPath()
 	var base string
