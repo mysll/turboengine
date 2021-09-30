@@ -1,6 +1,6 @@
 .PHONY: all prepare build run gotool install clean help
 
-BINARY_NAME=cli
+BINARY_NAME=admin
 ifeq ($(OS),Windows_NT)
 BINARY_EXT=.exe
 ENV=
