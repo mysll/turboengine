@@ -1,11 +1,11 @@
 .PHONY: all prepare build run gotool install clean help
 
 BINARY_NAME=logic_service
-ifeq (${target}, windows)
+ifeq ($(OS),Windows_NT)
 BINARY_EXT=.exe
 ENV=
 MV=move
-else ifeq (${target}, linux)
+else
 BINARY_EXT=
 ENV=CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 MV=mv
@@ -20,7 +20,7 @@ build:
 	${ENV} go build -ldflags="-w -s" -o  ${BINARY_NAME}${BINARY_EXT} ${GO_FILE}
 
 prepare:
-	go test ./api/proto
+	@go test ./api/proto
 
 run:
 	@go run ./

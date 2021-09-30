@@ -12,7 +12,7 @@ for %%A in %service_source_root% do (
 cd %begin_path%
 cd %%A
 @echo on
-make install target=windows
+make install
 @echo off
 )
 cd %begin_path%
