@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/consul/api v1.8.1
 	github.com/mysll/toolkit v1.0.5
 	github.com/nats-io/nats-server/v2 v2.3.4 // indirect
-	github.com/nats-io/nats.go v1.11.1-0.20210623165838-4b75fc59ae30
+	github.com/nats-io/nats.go v1.13.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.0
 	github.com/urfave/cli v1.22.5
