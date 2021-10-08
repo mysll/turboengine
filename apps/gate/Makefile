@@ -33,7 +33,7 @@ gotool:
 	go vet ./
 
 install:
-	make prepare build
+	make proto build
 	${MV} ${BINARY_NAME}${BINARY_EXT} ${BIN_DIR}
 
 clean: 
