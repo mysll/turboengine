@@ -33,11 +33,11 @@ type NetHandle struct {
 
 func (h *NetHandle) Handle(conn Conn) {
 	n := h.svr.connPool.NewNode(conn)
-	h.svr.event.Emit(EVENT_CONNECTED, n.mailbox)
 	if n == nil {
 		conn.Close()
 		return
 	}
+	h.svr.event.Emit(EVENT_CONNECTED, n.mailbox)
 	go n.send()
 	n.input(h.svr.connPool.inMsg)
 	h.svr.event.Emit(EVENT_DISCONNECTED, n.mailbox)
