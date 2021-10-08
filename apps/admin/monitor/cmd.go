@@ -15,8 +15,8 @@ import (
 func run(srv api.Service) {
 
 	app := cli.NewApp()
-	app.Name = "management"
-	app.Usage = "management tools"
+	app.Name = "admin"
+	app.Usage = "admin tools"
 	app.Version = "1.0.0"
 
 	app.Commands = []cli.Command{

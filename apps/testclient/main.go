@@ -19,7 +19,7 @@ func Test() {
 		return
 	}
 	defer c.Close()
-	if !c.Login(fmt.Sprintf("sll%d", toolkit.RandRange(0, 10000)), "123") {
+	if !c.Login(fmt.Sprintf("test%d", toolkit.RandRange(0, 1000)), "123") {
 		atomic.AddInt64(&failed, 1)
 		return
 	}

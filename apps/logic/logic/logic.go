@@ -1,3 +1,7 @@
+//@auth 	 	sll
+//@create	  	2021-04-08 15:35:07
+//@desc
+
 package logic
 
 import (
@@ -7,10 +11,6 @@ import (
 	"turboengine/core/service"
 )
 
-// Service: 	Logic
-// Auth: 	 	sll
-// Data:	  	2021-04-08 15:35:07
-// Desc:
 type Logic struct {
 	service.Service
 }

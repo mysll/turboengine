@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"turboengine/apps/management/monitor"
+	"turboengine/apps/admin/monitor"
 	"turboengine/common/log"
 	"turboengine/core/service"
 )

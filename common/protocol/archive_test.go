@@ -1,6 +1,7 @@
 package protocol_test
 
 import (
+	"bytes"
 	"testing"
 	"turboengine/common/protocol"
 )
@@ -21,6 +22,7 @@ func TestLoadArchive(t *testing.T) {
 	v41 := &v4
 	v51 := &v5
 	v61 := &v6
+	v71 := []uint8{1, 2, 3}
 
 	store.Put(v1)
 	store.Put(v2)
@@ -39,6 +41,8 @@ func TestLoadArchive(t *testing.T) {
 	var str = "test"
 	store.Put(str)
 	store.Put(&str)
+
+	store.Put(v71)
 
 	var x1 int8
 	var x2 int16
@@ -97,6 +101,19 @@ func TestLoadArchive(t *testing.T) {
 	if xstr != str {
 		t.Fatalf("not match")
 	}
+
+	var xstr1 string
+	load.Get(&xstr1)
+	if xstr1 != str {
+		t.Fatalf("not match")
+	}
+
+	var xbyte []uint8
+	load.Get(&xbyte)
+	if !bytes.Equal(xbyte, v71) {
+		t.Fatalf("not match")
+	}
+
 }
 
 func TestLoadArchive_GetDataNonCopy(t *testing.T) {

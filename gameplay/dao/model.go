@@ -16,3 +16,8 @@ func RegisterModel(name string, model Persistent) {
 func GetAllModel() map[string]Persistent {
 	return models
 }
+
+func init() {
+	RegisterModel("Account", new(Account))
+	RegisterModel("RoleInfo", new(RoleInfo))
+}

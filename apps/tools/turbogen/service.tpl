@@ -1,14 +1,14 @@
-package {{tolower .Pkg}} 
+//@author 	 	{{.Auth}}
+//@create	  	{{.Time.Format "2006-01-02 15:04:05"}}
+//@desc
+
+package {{tolower .Pkg}}
 
 import (
 	coreapi "turboengine/core/api"
 	"turboengine/core/service"
 )
- 
-// Service: 	{{.Name}}
-// Auth: 	 	{{.Auth}}
-// Data:	  	{{.Time.Format "2006-01-02 15:04:05"}}
-// Desc:
+
 type {{.Name}} struct{
 	service.Service
 }

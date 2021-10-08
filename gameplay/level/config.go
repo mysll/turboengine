@@ -8,6 +8,7 @@ type Config struct {
 	ViewMaxRange           float32
 	MapData                string
 	TerrainType            string
+	OpenAOI                bool
 }
 
 func (c *Config) LoadFromFile(f string) {

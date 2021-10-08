@@ -39,6 +39,10 @@ func TypeName(t reflect.Type) (pkg string, typ string) {
 		ptr = "*"
 		t = t.Elem()
 	}
+	if t.Kind() == reflect.Slice {
+		ptr = "[]"
+		t = t.Elem()
+	}
 
 	pkg = t.PkgPath()
 	var base string
@@ -139,7 +143,7 @@ func CreateProto(c *cli.Context) error {
 	var auth string
 	fmt.Scanln(&auth)
 
-	makeFile(tpl_proto, "proto", path, strings.ToLower(name), map[string]interface{}{
+	makeSourceFile(tpl_proto, "proto", path, strings.ToLower(name), map[string]interface{}{
 		"Name": name,
 		"Pkg":  pkg,
 		"Tag":  "`version:\"1.0.0\"`",

@@ -128,9 +128,9 @@ type ServiceHandler interface {
 	// 服务离线
 	OnServiceOffline(id uint16)
 	// 新客户端连接
-	OnConnected(session uint64)
+	OnConnected(session protocol.Mailbox)
 	// 客户端断线
-	OnDisconnected(session uint64)
+	OnDisconnected(session protocol.Mailbox)
 	// 收到客户端消息
 	OnMessage(*protocol.ProtoMsg)
 }

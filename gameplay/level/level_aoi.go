@@ -38,6 +38,9 @@ func (l *Level) Move(obj ObjectId, step Vec3) {
 	}
 	// TODO: 检查是否能够移动，地形和碰撞检查，不通过则回退到上一步的位置
 
+	if !l.config.OpenAOI {
+		return
+	}
 	if entity.HasView() {
 		if l.aoi.Move(obj, entity.AOI().Position(), pos, entity.AOI().ViewRange()) {
 			entity.AOI().CachePosition(pos)
@@ -60,6 +63,9 @@ func (l *Level) Locate(obj ObjectId, pos Vec3) {
 	entity.Movement().MoveTo(pos)
 	// TODO: 检查是否能够移动，地形和碰撞检查，不通过则回退到上一步的位置
 
+	if !l.config.OpenAOI {
+		return
+	}
 	if entity.HasView() {
 		if l.aoi.Move(obj, entity.AOI().Position(), pos, entity.AOI().ViewRange()) {
 			entity.AOI().CachePosition(pos)

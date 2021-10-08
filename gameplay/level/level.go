@@ -26,10 +26,12 @@ func NewLevel(config *Config) *Level {
 		entities: EntityContainer{},
 	}
 
-	aoi := tower.NewTowerAOI(config.MinX, config.MinY, config.MaxX, config.MaxY,
-		config.TileWidth, config.TileHeight,
-		config.ViewMaxRange, l)
-	l.aoi = aoi
+	if config.OpenAOI {
+		aoi := tower.NewTowerAOI(config.MinX, config.MinY, config.MaxX, config.MaxY,
+			config.TileWidth, config.TileHeight,
+			config.ViewMaxRange, l)
+		l.aoi = aoi
+	}
 	return l
 }
 
