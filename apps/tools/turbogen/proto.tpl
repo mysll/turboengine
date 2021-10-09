@@ -20,7 +20,7 @@ type {{.Name}}_RPC_Go_{{.Ver}} struct {
 
 {{range .Methods}}
 func (p *{{$.Name}}_RPC_Go_{{$.Ver}}) {{.Name}}(id uint16, data []byte) (ret *protocol.Message, err error) {
-	ar := protocol.NewLoadArchive(data)
+	{{$al := len .ArgType}}{{if gt $al 0}}ar := protocol.NewLoadArchive(data){{end}}
 	{{range $k, $v := .ArgType}}
 	var arg{{$k}} {{$v}}
 	err = ar.Get(&arg{{$k}})

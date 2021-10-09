@@ -15,7 +15,7 @@ func main() {
 	app.Commands = []cli.Command{
 		{
 			Name:  "create",
-			Usage: "create (service | module) --path output",
+			Usage: "create (service | module | proto | entity) --path output",
 
 			Subcommands: []cli.Command{
 				{
