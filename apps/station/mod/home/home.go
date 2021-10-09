@@ -6,6 +6,7 @@ package home
 
 import (
 	"context"
+	"turboengine/apps/station/api/rpc"
 	"turboengine/common/utils"
 	"turboengine/core/api"
 	"turboengine/core/module"
@@ -30,6 +31,7 @@ func (m *Home) OnPrepare(s api.Service) error {
 func (m *Home) OnStart(ctx context.Context) error {
 	m.Module.OnStart(ctx)
 	// subscribe subject
+	rpc.SetStationProvider(m.Srv, "", &StationServer{})
 	// subscribe subject end
 	return nil
 }
