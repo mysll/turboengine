@@ -2,22 +2,22 @@
 //@create	  	2021-10-09 15:43:46
 //@desc
 
-package station
+package broker
 
 import (
-	"turboengine/apps/station/mod/home"
+	"turboengine/apps/broker/mod/home"
 	coreapi "turboengine/core/api"
 	"turboengine/core/module"
 	"turboengine/core/plugin/storage"
 	"turboengine/core/service"
 )
 
-type Station struct {
+type Broker struct {
 	service.Service
 	home coreapi.Module
 }
 
-func (s *Station) OnPrepare(srv coreapi.Service, args map[string]string) error {
+func (s *Broker) OnPrepare(srv coreapi.Service, args map[string]string) error {
 	s.Service.OnPrepare(srv, args)
 	// use plugin
 	srv.UsePlugin(storage.Name, "mysql", "root:123456@tcp(127.0.0.1:3306)/turbo?charset=utf8mb4&parseTime=True&loc=Local")
@@ -31,14 +31,14 @@ func (s *Station) OnPrepare(srv coreapi.Service, args map[string]string) error {
 	return nil
 }
 
-func (s *Station) OnStart() error {
+func (s *Broker) OnStart() error {
 	return nil
 }
 
-func (s *Station) OnDependReady() {
+func (s *Broker) OnDependReady() {
 	s.Ctx.Service().Ready()
 }
 
-func (s *Station) OnShut() bool {
+func (s *Broker) OnShut() bool {
 	return true // If you want to close manually return false
 }

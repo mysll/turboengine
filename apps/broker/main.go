@@ -2,13 +2,13 @@ package main
 
 import (
 	"flag"
-	"turboengine/apps/station/station"
+	"turboengine/apps/broker/broker"
 	"turboengine/common/log"
 	"turboengine/core/service"
 )
 
 var (
-	config = flag.String("c", "./conf/station.toml", "config path")
+	config = flag.String("c", "./conf/broker.toml", "config path")
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 	if err := cfg.LoadFromToml(*config); err != nil {
 		panic(err)
 	}
-	srv := service.New(new(station.Station), cfg)
+	srv := service.New(new(broker.Broker), cfg)
 	if err := srv.Start(); err != nil {
 		panic(err)
 	}

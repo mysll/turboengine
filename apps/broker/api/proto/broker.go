@@ -2,7 +2,7 @@ package proto
 
 import "turboengine/common/protocol"
 
-type Station struct {
+type Broker struct {
 	Ver string `version:"1.0.0"`
 	XXX interface{}
 	// custom method begin
@@ -14,5 +14,5 @@ type Station struct {
 }
 
 func init() {
-	reg["Station"] = new(Station)
+	reg["Broker"] = new(Broker)
 }

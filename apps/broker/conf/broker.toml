@@ -1,7 +1,7 @@
 # service id
 ID = 1
 # service name
-Name = "Station"
+Name = "Broker"
 # nats agent url
 NatsUrl = "nats://0.0.0.0:4222"
 # if expose is true, it's a outgoing service.

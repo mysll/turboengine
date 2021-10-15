@@ -1,6 +1,6 @@
 .PHONY: all prepare build run gotool install clean help
 
-BINARY_NAME=Station_service
+BINARY_NAME=Broker_service
 ifeq ($(OS),Windows_NT)
 BINARY_EXT=.exe
 ENV=
