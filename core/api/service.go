@@ -52,90 +52,90 @@ type InvokeFn func(uint16, []byte) (*protocol.Message, error)
 type Update func(*utils.Time)
 
 type Service interface {
-	// 服务ID
+	// ID 服务ID
 	ID() uint16
-	// 服务名
+	// Name 服务名
 	Name() string
-	// 服务地址
+	// Mailbox 服务地址
 	Mailbox() protocol.Mailbox
-	// 增加module
+	// AddModule 增加module
 	AddModule(Module)
-	// 启动服务
+	// Start 启动服务
 	Start() error
-	// 关闭服务
+	// Close 关闭服务
 	Close()
-	// 关闭服务(如果选择手动关闭,则调用Shut)
+	// Shut 关闭服务(如果选择手动关闭,则调用Shut)
 	Shut()
-	// 服务已经就绪
+	// Ready 服务已经就绪
 	Ready()
-	// 将fn挂载到主循环
+	// Attach 将fn挂载到主循环
 	Attach(fn Update) uint64
-	// 分离挂载
+	// Detach 分离挂载
 	Detach(id uint64)
-	// 生成guid
+	// GenGUID 生成guid
 	GenGUID() uint64
-	// 发布消息
+	// Pub 发布消息
 	Pub(subject string, data []byte) error
-	// 发布消息并设置超时
+	// PubWithTimeout 发布消息并设置超时
 	PubWithTimeout(subject string, data []byte, timeout time.Duration) (*Call, error)
-	// 异步发布消息并设置超时(不依赖主循环)
+	// AsyncPubWithTimeout 异步发布消息并设置超时(不依赖主循环)
 	AsyncPubWithTimeout(subject string, data []byte, timeout time.Duration) (*Call, error)
-	// 订阅消息,invoke为收到消息时的回调函数
+	// Sub 订阅消息,invoke为收到消息时的回调函数
 	Sub(subject string, invoke InvokeFn) error
-	// 订阅消息
+	// SubNoInvoke 订阅消息
 	SubNoInvoke(subject string) error
-	// 取消订阅
+	// UnSub 取消订阅
 	UnSub(subject string)
-	// 加载插件
+	// UsePlugin 加载插件
 	UsePlugin(name string, args ...any) error
-	// 卸载插件
+	// UnPlugin 卸载插件
 	UnPlugin(name string)
-	// 通过插件名获取插件
+	// Plugin 通过插件名获取插件
 	Plugin(name string) any
-	// 调用插件
+	// CallPlugin 调用插件
 	CallPlugin(plugin string, cmd string, args ...any) (any, error)
-	// 阻塞直到服务结束
+	// Await 阻塞直到服务结束
 	Await()
-	// 通过服务ID获取服务地址
+	// LookupById 通过服务ID获取服务地址
 	LookupById(id uint16) protocol.Mailbox
-	// 通过服务名获取服务列表
+	// LookupByName 通过服务名获取服务列表
 	LookupByName(name string) []protocol.Mailbox
-	// 通过服务名选择一个服务,balance负载均衡策略,如果是LOAD_BALANCE_HASH,则通过hash参数进行散列处理
+	// SelectService 通过服务名选择一个服务,balance负载均衡策略,如果是LOAD_BALANCE_HASH,则通过hash参数进行散列处理
 	SelectService(name string, balance int, hash string) protocol.Mailbox
-	// 设置协议编码器
+	// SetProtoEncoder 设置协议编码器
 	SetProtoEncoder(enc protocol.ProtoEncoder)
-	// 设置协议解码器
+	// SetProtoDecoder 设置协议解码器
 	SetProtoDecoder(dec protocol.ProtoDecoder)
-	// 发送消息到客户端
+	// SendToClient 发送消息到客户端
 	SendToClient(dest protocol.Mailbox, msg *protocol.ProtoMsg) error
-	// 开启socket连接(服务expose打开的情况下,才有用)
+	// OpenTransport 开启socket连接(服务expose打开的情况下,才有用)
 	OpenTransport()
-	// 关闭socket连接
+	// CloseTransport 关闭socket连接
 	CloseTransport()
 }
 
 type ServiceHandler interface {
-	// 初始化回调
+	// OnPrepare 初始化回调
 	OnPrepare(Service, map[string]string) error
-	// 启动回调
+	// OnStart 启动回调
 	OnStart() error
-	// 关闭回调
+	// OnShut 关闭回调
 	OnShut() bool
-	// 依赖的服务都已启动
+	// OnDependReady 依赖的服务都已启动
 	OnDependReady()
-	// 发现新服务
+	// OnServiceAvailable 发现新服务
 	OnServiceAvailable(id uint16)
-	// 服务离线
+	// OnServiceOffline 服务离线
 	OnServiceOffline(id uint16)
-	// 新客户端连接
+	// OnConnected 新客户端连接
 	OnConnected(session protocol.Mailbox)
-	// 客户端断线
+	// OnDisconnected 客户端断线
 	OnDisconnected(session protocol.Mailbox)
-	// 收到客户端消息
+	// OnMessage 收到客户端消息
 	OnMessage(*protocol.ProtoMsg)
 }
 
-// 服务选择器
+// Selector 服务选择器
 type Selector interface {
 	Select(srv Service, service string, args string) protocol.Mailbox
 }
