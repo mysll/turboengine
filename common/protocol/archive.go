@@ -61,7 +61,7 @@ func (ar *StoreArchive) Len() int {
 }
 
 // WriteAt 在指定位置定义数据，覆盖写入，不修改原始长度
-func (ar *StoreArchive) WriteAt(offset int, val interface{}) error {
+func (ar *StoreArchive) WriteAt(offset int, val any) error {
 	if offset >= cap(ar.buf) {
 		return fmt.Errorf("offset out of range")
 	}
@@ -83,7 +83,7 @@ func (ar *StoreArchive) WriteAt(offset int, val interface{}) error {
 }
 
 // Put 写入任意类型数据
-func (ar *StoreArchive) Put(val interface{}) error {
+func (ar *StoreArchive) Put(val any) error {
 	if m, ok := val.(Encoder); ok {
 		return m.MarshalArchive(ar)
 	}
@@ -133,7 +133,7 @@ func (ar *StoreArchive) PutString(val string) error {
 }
 
 // PutObject 写入go对象
-func (ar *StoreArchive) PutObject(obj interface{}) error {
+func (ar *StoreArchive) PutObject(obj any) error {
 	enc := gob.NewEncoder(ar)
 	return enc.Encode(obj)
 }
@@ -191,7 +191,7 @@ func (ar *LoadArchive) Read(p []byte) (n int, err error) {
 }
 
 // Get 读取任意类型的数据
-func (ar *LoadArchive) Get(val interface{}) (err error) {
+func (ar *LoadArchive) Get(val any) (err error) {
 	// dpv := reflect.ValueOf(val)
 	// if dpv.Kind() != reflect.Ptr {
 	// 	return errors.New("destination not a pointer")
@@ -314,7 +314,7 @@ func (ar *LoadArchive) GetString() (val string, err error) {
 }
 
 // GetObject 读取go对象
-func (ar *LoadArchive) GetObject(val interface{}) error {
+func (ar *LoadArchive) GetObject(val any) error {
 	dec := gob.NewDecoder(ar.reader)
 	return dec.Decode(val)
 }

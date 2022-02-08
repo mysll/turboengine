@@ -5,7 +5,7 @@ import (
 )
 
 type item struct {
-	data interface{}
+	data any
 	next *item
 }
 
@@ -37,7 +37,7 @@ func (q *Queue) Empty() bool {
 	return empty
 }
 
-func (q *Queue) Put(items ...interface{}) {
+func (q *Queue) Put(items ...any) {
 	q.Lock()
 	for _, data := range items {
 		q.count++
@@ -56,12 +56,12 @@ func (q *Queue) Put(items ...interface{}) {
 	q.Unlock()
 }
 
-func (q *Queue) Get() ([]interface{}, bool) {
+func (q *Queue) Get() ([]any, bool) {
 	if q.count == 0 {
 		return nil, false
 	}
 
-	var res []interface{}
+	var res []any
 	q.Lock()
 	if q.count > 0 {
 		for q.head != nil {
@@ -78,12 +78,12 @@ func (q *Queue) Get() ([]interface{}, bool) {
 	return res, true
 }
 
-func (q *Queue) GetOne() (interface{}, bool) {
+func (q *Queue) GetOne() (any, bool) {
 	if q.count == 0 {
 		return nil, false
 	}
 
-	var res interface{}
+	var res any
 	q.Lock()
 	if q.head != nil {
 		res = q.head.data

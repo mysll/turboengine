@@ -15,7 +15,7 @@ const (
 	CALL_DEP = 5
 )
 
-var patternMap = map[string]func(map[string]interface{}) string{
+var patternMap = map[string]func(map[string]any) string{
 	"T": longTime,
 	"t": shortTime,
 	"D": longDate,
@@ -33,7 +33,7 @@ var patternMap = map[string]func(map[string]interface{}) string{
 // newPatternRender new pattern render
 func newPatternRender(format string) Render {
 	p := &pattern{
-		bufPool: sync.Pool{New: func() interface{} { return &bytes.Buffer{} }},
+		bufPool: sync.Pool{New: func() any { return &bytes.Buffer{} }},
 	}
 	b := make([]byte, 0, len(format))
 	for i := 0; i < len(format); i++ {
@@ -64,12 +64,12 @@ func newPatternRender(format string) Render {
 }
 
 type pattern struct {
-	funcs   []func(map[string]interface{}) string
+	funcs   []func(map[string]any) string
 	bufPool sync.Pool
 }
 
 // Render implemet Formater
-func (p *pattern) Render(w io.Writer, d map[string]interface{}) error {
+func (p *pattern) Render(w io.Writer, d map[string]any) error {
 	buf := p.bufPool.Get().(*bytes.Buffer)
 	defer func() {
 		buf.Reset()
@@ -84,7 +84,7 @@ func (p *pattern) Render(w io.Writer, d map[string]interface{}) error {
 }
 
 // Render implemet Formater as string
-func (p *pattern) RenderString(d map[string]interface{}) string {
+func (p *pattern) RenderString(d map[string]any) string {
 	// TODO strings.Builder
 	buf := p.bufPool.Get().(*bytes.Buffer)
 	defer func() {
@@ -98,13 +98,13 @@ func (p *pattern) RenderString(d map[string]interface{}) string {
 	return buf.String()
 }
 
-func textFactory(text string) func(map[string]interface{}) string {
-	return func(map[string]interface{}) string {
+func textFactory(text string) func(map[string]any) string {
+	return func(map[string]any) string {
 		return text
 	}
 }
-func keyFactory(key string) func(map[string]interface{}) string {
-	return func(d map[string]interface{}) string {
+func keyFactory(key string) func(map[string]any) string {
+	return func(d map[string]any) string {
 		if v, ok := d[key]; ok {
 			if s, ok := v.(string); ok {
 				return s
@@ -115,33 +115,33 @@ func keyFactory(key string) func(map[string]interface{}) string {
 	}
 }
 
-func longSource(map[string]interface{}) string {
+func longSource(map[string]any) string {
 	if _, file, lineNo, ok := runtime.Caller(CALL_DEP); ok {
 		return fmt.Sprintf("%s:%d", file, lineNo)
 	}
 	return "unknown:0"
 }
 
-func shortSource(map[string]interface{}) string {
+func shortSource(map[string]any) string {
 	if _, file, lineNo, ok := runtime.Caller(CALL_DEP); ok {
 		return fmt.Sprintf("%s:%d", path.Base(file), lineNo)
 	}
 	return "unknown:0"
 }
 
-func longTime(map[string]interface{}) string {
+func longTime(map[string]any) string {
 	return time.Now().Format("15:04:05.000")
 }
 
-func shortTime(map[string]interface{}) string {
+func shortTime(map[string]any) string {
 	return time.Now().Format("15:04")
 }
 
-func longDate(map[string]interface{}) string {
+func longDate(map[string]any) string {
 	return time.Now().Format("2006/01/02")
 }
 
-func shortDate(map[string]interface{}) string {
+func shortDate(map[string]any) string {
 	return time.Now().Format("01/02")
 }
 
@@ -153,7 +153,7 @@ func isInternalKey(k string) bool {
 	return false
 }
 
-func message(d map[string]interface{}) string {
+func message(d map[string]any) string {
 	var m string
 	var s []string
 	for k, v := range d {

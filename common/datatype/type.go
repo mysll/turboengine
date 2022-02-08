@@ -85,7 +85,7 @@ func (v Vec3) Normalize() Vec3 {
 }
 
 // gorm
-func (v *Vec3) Scan(value interface{}) error {
+func (v *Vec3) Scan(value any) error {
 	bytes, ok := value.([]byte)
 	if !ok {
 		return errors.New(fmt.Sprint("Failed to unmarsh Vec3", value))
@@ -156,7 +156,7 @@ func (v Vec2) Normalize() Vec2 {
 }
 
 // gorm
-func (v *Vec2) Scan(value interface{}) error {
+func (v *Vec2) Scan(value any) error {
 	bytes, ok := value.([]byte)
 	if !ok {
 		return errors.New(fmt.Sprint("Failed to unmarsh Vec3", value))

@@ -1,6 +1,6 @@
 package protocol
 
-func PackArgs(args ...interface{}) *Message {
+func PackArgs(args ...any) *Message {
 	ar := NewAutoExtendArchive(128)
 	for _, arg := range args {
 		err := ar.Put(arg)
@@ -12,7 +12,7 @@ func PackArgs(args ...interface{}) *Message {
 	return ar.Message()
 }
 
-func UnPackArgs(msg *Message, args ...interface{}) error {
+func UnPackArgs(msg *Message, args ...any) error {
 	ar := NewLoadArchive(msg.Body)
 	for _, arg := range args {
 		if err := ar.Get(arg); err != nil {

@@ -33,7 +33,7 @@ func (e *JsonEncoder) Encode(p *ProtoMsg) (*Message, error) {
 type JsonDecoder struct {
 }
 
-type Builder func() interface{}
+type Builder func() any
 
 func NewJsonDecoder() *JsonDecoder {
 	j := &JsonDecoder{}

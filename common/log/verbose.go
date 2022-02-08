@@ -54,7 +54,7 @@ func V(v int32) Verbose {
 }
 
 // Info logs a message at the info log level.
-func (v Verbose) Info(format string, args ...interface{}) {
+func (v Verbose) Info(format string, args ...any) {
 	if v {
 		h.Log(context.Background(), _infoLevel, KV(_log, fmt.Sprintf(format, args...)))
 	}
@@ -68,7 +68,7 @@ func (v Verbose) Infov(ctx context.Context, args ...D) {
 }
 
 // Infow logs a message with some additional context. The variadic key-value pairs are treated as they are in With.
-func (v Verbose) Infow(ctx context.Context, args ...interface{}) {
+func (v Verbose) Infow(ctx context.Context, args ...any) {
 	if v {
 		h.Log(ctx, _infoLevel, logw(args)...)
 	}

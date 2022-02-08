@@ -57,7 +57,7 @@ func NewFile(dir string, bufferSize, rotateSize int64, maxLogFile int) *FileHand
 
 // Log loggint to file .
 func (h *FileHandler) Log(ctx context.Context, lv Level, args ...D) {
-	d := make(map[string]interface{}, 10+len(args))
+	d := make(map[string]any, 10+len(args))
 	for _, arg := range args {
 		d[arg.Key] = arg.Value
 	}

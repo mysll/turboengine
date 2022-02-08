@@ -9,7 +9,7 @@ import (
 
 var fm sync.Map
 
-func addExtraField(ctx context.Context, fields map[string]interface{}) {
+func addExtraField(ctx context.Context, fields map[string]any) {
 	fields[_instanceID] = c.Host
 }
 

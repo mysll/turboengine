@@ -18,7 +18,7 @@ func Test_Decode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	AddProto(1, func() interface{} { return &Test{} })
+	AddProto(1, func() any { return &Test{} })
 	dec := NewJsonDecoder()
 	p, err := dec.Decode(msg.Body)
 	if err != nil {

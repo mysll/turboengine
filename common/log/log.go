@@ -42,12 +42,12 @@ type Config struct {
 
 // Render render log output
 type Render interface {
-	Render(io.Writer, map[string]interface{}) error
-	RenderString(map[string]interface{}) string
+	Render(io.Writer, map[string]any) error
+	RenderString(map[string]any) string
 }
 
 // KV return a log kv for logging field.
-func KV(key string, value interface{}) D {
+func KV(key string, value any) D {
 	return D{
 		Key:   key,
 		Value: value,
@@ -58,7 +58,7 @@ func KV(key string, value interface{}) D {
 // type D map[string]interface{}
 type D struct {
 	Key   string
-	Value interface{}
+	Value any
 }
 
 var (
@@ -97,43 +97,43 @@ func Init(conf *Config) {
 }
 
 // Infof logs a message at the info log level.
-func Infof(format string, args ...interface{}) {
+func Infof(format string, args ...any) {
 	h.Log(context.Background(), _infoLevel, KV(_log, fmt.Sprintf(format, args...)))
 }
 
 // Warnf logs a message at the warning log level.
-func Warnf(format string, args ...interface{}) {
+func Warnf(format string, args ...any) {
 	h.Log(context.Background(), _warnLevel, KV(_log, fmt.Sprintf(format, args...)))
 }
 
 // Errorf logs a message at the error log level.
-func Errorf(format string, args ...interface{}) {
+func Errorf(format string, args ...any) {
 	h.Log(context.Background(), _errorLevel, KV(_log, fmt.Sprintf(format, args...)))
 }
 
 // Errorf logs a message at the error log level and panic.
-func Fatalf(format string, args ...interface{}) {
+func Fatalf(format string, args ...any) {
 	h.Log(context.Background(), _errorLevel, KV(_log, fmt.Sprintf(format, args...)))
 	panic(fmt.Sprintf(format, args...))
 }
 
 // Infof logs a message at the info log level.
-func Info(args ...interface{}) {
+func Info(args ...any) {
 	h.Log(context.Background(), _infoLevel, KV(_log, fmt.Sprint(args...)))
 }
 
 // Warnf logs a message at the warning log level.
-func Warn(args ...interface{}) {
+func Warn(args ...any) {
 	h.Log(context.Background(), _warnLevel, KV(_log, fmt.Sprint(args...)))
 }
 
 // Errorf logs a message at the error log level.
-func Error(args ...interface{}) {
+func Error(args ...any) {
 	h.Log(context.Background(), _errorLevel, KV(_log, fmt.Sprint(args...)))
 }
 
 // Errorf logs a message at the error log level and panic.
-func Fatal(args ...interface{}) {
+func Fatal(args ...any) {
 	h.Log(context.Background(), _errorLevel, KV(_log, fmt.Sprint(args...)))
 	panic(fmt.Sprint(args...))
 }
@@ -153,7 +153,7 @@ func Errorv(ctx context.Context, args ...D) {
 	h.Log(ctx, _errorLevel, args...)
 }
 
-func logw(args []interface{}) []D {
+func logw(args []any) []D {
 	if len(args)%2 != 0 {
 		Warnf("log: the variadic must be plural, the last one will ignored")
 	}
@@ -169,17 +169,17 @@ func logw(args []interface{}) []D {
 }
 
 // Infow logs a message with some additional context. The variadic key-value pairs are treated as they are in With.
-func Infow(ctx context.Context, args ...interface{}) {
+func Infow(ctx context.Context, args ...any) {
 	h.Log(ctx, _infoLevel, logw(args)...)
 }
 
 // Warnw logs a message with some additional context. The variadic key-value pairs are treated as they are in With.
-func Warnw(ctx context.Context, args ...interface{}) {
+func Warnw(ctx context.Context, args ...any) {
 	h.Log(ctx, _warnLevel, logw(args)...)
 }
 
 // Errorw logs a message with some additional context. The variadic key-value pairs are treated as they are in With.
-func Errorw(ctx context.Context, args ...interface{}) {
+func Errorw(ctx context.Context, args ...any) {
 	h.Log(ctx, _errorLevel, logw(args)...)
 }
 

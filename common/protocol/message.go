@@ -45,42 +45,42 @@ var messageCache = []msgCacheInfo{
 	{
 		maxbody: 64,
 		pool: &sync.Pool{
-			New: func() interface{} { return newMsg(64) },
+			New: func() any { return newMsg(64) },
 		},
 	}, {
 		maxbody: 128,
 		pool: &sync.Pool{
-			New: func() interface{} { return newMsg(128) },
+			New: func() any { return newMsg(128) },
 		},
 	}, {
 		maxbody: 256,
 		pool: &sync.Pool{
-			New: func() interface{} { return newMsg(256) },
+			New: func() any { return newMsg(256) },
 		},
 	}, {
 		maxbody: 512,
 		pool: &sync.Pool{
-			New: func() interface{} { return newMsg(512) },
+			New: func() any { return newMsg(512) },
 		},
 	}, {
 		maxbody: 1024,
 		pool: &sync.Pool{
-			New: func() interface{} { return newMsg(1024) },
+			New: func() any { return newMsg(1024) },
 		},
 	}, {
 		maxbody: 4096,
 		pool: &sync.Pool{
-			New: func() interface{} { return newMsg(4096) },
+			New: func() any { return newMsg(4096) },
 		},
 	}, {
 		maxbody: 8192,
 		pool: &sync.Pool{
-			New: func() interface{} { return newMsg(8192) },
+			New: func() any { return newMsg(8192) },
 		},
 	}, {
 		maxbody: 65536,
 		pool: &sync.Pool{
-			New: func() interface{} { return newMsg(65536) },
+			New: func() any { return newMsg(65536) },
 		},
 	},
 }

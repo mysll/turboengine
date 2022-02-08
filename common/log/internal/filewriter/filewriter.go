@@ -174,7 +174,7 @@ func New(fpath string, fns ...Option) (*FileWriter, error) {
 		fname:  fname,
 		stdlog: stdlog,
 		ch:     ch,
-		pool:   &sync.Pool{New: func() interface{} { return new(bytes.Buffer) }},
+		pool:   &sync.Pool{New: func() any { return new(bytes.Buffer) }},
 
 		lastSplitNum:     lastSplitNum,
 		lastRotateFormat: lastRotateFormat,

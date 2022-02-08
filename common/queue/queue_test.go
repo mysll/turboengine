@@ -53,7 +53,7 @@ func BenchmarkQueueAll(b *testing.B) {
 }
 
 func BenchmarkChannel(b *testing.B) {
-	ch := make(chan interface{}, 1000)
+	ch := make(chan any, 1000)
 	var wg sync.WaitGroup
 	wg.Add(1)
 	i := 0

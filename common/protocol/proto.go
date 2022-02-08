@@ -4,7 +4,7 @@ type ProtoMsg struct {
 	Id   int32
 	Src  Mailbox
 	Dest Mailbox
-	Data interface{}
+	Data any
 }
 
 type ProtoEncoder interface {

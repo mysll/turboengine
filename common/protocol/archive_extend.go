@@ -14,7 +14,7 @@ func NewAutoExtendArchive(initCap int) *AutoExtendArchive {
 	return a
 }
 
-func (a *AutoExtendArchive) Put(val interface{}) error {
+func (a *AutoExtendArchive) Put(val any) error {
 	err := a.sr.Put(val)
 	for err == io.EOF {
 		msg := NewMessage(cap(a.msg.Body) * 2)

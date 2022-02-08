@@ -27,7 +27,7 @@ func NewStdout() *StdoutHandler {
 
 // Log stdout loging, only for developing env.
 func (h *StdoutHandler) Log(ctx context.Context, lv Level, args ...D) {
-	d := make(map[string]interface{}, 10+len(args))
+	d := make(map[string]any, 10+len(args))
 	for _, arg := range args {
 		d[arg.Key] = arg.Value
 	}
