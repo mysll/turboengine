@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-type OnChange func(self interface{}, index int, val interface{})
+type OnChange func(self any, index int, val any)
 
 type changeEventCallback struct {
 	ptr  uintptr
@@ -82,7 +82,7 @@ func (c *changeEvent) clear(index int) {
 	c.cb[index] = nil
 }
 
-func (c *changeEvent) emit(self interface{}, index int, val interface{}) error {
+func (c *changeEvent) emit(self any, index int, val any) error {
 	if index < 0 || index > len(c.cb) {
 		return fmt.Errorf("index error, get %d", index)
 	}

@@ -6,10 +6,10 @@ import (
 
 func TestNewChangeEvent(t *testing.T) {
 	event := newChangeEvent(1)
-	fc := func(object interface{}, index int, val interface{}) {
+	fc := func(object any, index int, val any) {
 		t.Log(val)
 	}
-	fc1 := func(object interface{}, index int, val interface{}) {
+	fc1 := func(object any, index int, val any) {
 		t.Log(val, ",2")
 	}
 	event.add(0, fc)

@@ -289,7 +289,7 @@ func (o *Object) ClearChange(index int) {
 	}
 }
 
-func (o *Object) onChange(index int, val interface{}) {
+func (o *Object) onChange(index int, val any) {
 	if o.silent {
 		return
 	}

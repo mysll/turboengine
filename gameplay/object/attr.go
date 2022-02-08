@@ -24,14 +24,14 @@ const (
 	TYPE_BYTES   = 8
 )
 
-type changeFn func(int, interface{})
+type changeFn func(int, any)
 
-// 属性接口
+//Attr 属性接口
 type Attr interface {
 	Flag() int
 	SetFlag(f int)
 	ClearFlag(f int)
-	// 是否存在标志位
+	//HasFlag 是否存在标志位
 	HasFlag(flag int) bool
 	Name() string
 	Index() int

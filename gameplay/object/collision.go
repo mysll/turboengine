@@ -5,7 +5,7 @@ import (
 )
 
 type Shape interface {
-	Init(args ...interface{})
+	Init(args ...any)
 	Type() int
 	SetCenter(pos Vec3)
 	Center() Vec3
@@ -36,7 +36,7 @@ type Circle2DShape struct {
 	radius float32
 }
 
-func (s *Circle2DShape) Init(args ...interface{}) {
+func (s *Circle2DShape) Init(args ...any) {
 	switch v := args[0].(type) {
 	case float32:
 		s.radius = v
