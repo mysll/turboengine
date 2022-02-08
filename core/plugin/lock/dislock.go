@@ -65,7 +65,7 @@ type DisLocker struct {
 	shut     bool
 }
 
-func (l *DisLocker) Prepare(srv api.Service, args ...interface{}) {
+func (l *DisLocker) Prepare(srv api.Service, args ...any) {
 	l.srv = srv
 	l.attachId = srv.Attach(l.process)
 	l.client = args[0].(*consulapi.Client)
@@ -123,7 +123,7 @@ func (l *DisLocker) process(*utils.Time) {
 	}
 }
 
-func (l *DisLocker) Handle(cmd string, args ...interface{}) interface{} {
+func (l *DisLocker) Handle(cmd string, args ...any) any {
 	return nil
 }
 

@@ -7,7 +7,7 @@ import (
 	"turboengine/core/plugin"
 )
 
-func (s *service) UsePlugin(name string, args ...interface{}) error {
+func (s *service) UsePlugin(name string, args ...any) error {
 	p := plugin.NewPlugin(name)
 	if p != nil {
 		s.usePlugin(name, p, args...)
@@ -17,7 +17,7 @@ func (s *service) UsePlugin(name string, args ...interface{}) error {
 	return fmt.Errorf("plugin %s not found", name)
 }
 
-func (s *service) usePlugin(name string, p api.Plugin, args ...interface{}) {
+func (s *service) usePlugin(name string, p api.Plugin, args ...any) {
 	if _, ok := s.plugin[name]; ok {
 		return
 	}
@@ -36,14 +36,14 @@ func (s *service) UnPlugin(name string) {
 	}
 }
 
-func (s *service) Plugin(name string) interface{} {
+func (s *service) Plugin(name string) any {
 	if p, ok := s.plugin[name]; ok {
 		return p
 	}
 	return nil
 }
 
-func (s *service) CallPlugin(plugin string, cmd string, args ...interface{}) (interface{}, error) {
+func (s *service) CallPlugin(plugin string, cmd string, args ...any) (any, error) {
 	if p, ok := s.plugin[plugin]; ok {
 		return p.Handle(cmd, args...), nil
 	}

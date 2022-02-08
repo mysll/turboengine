@@ -20,7 +20,7 @@ type FSM struct {
 	id  uint64
 }
 
-func (f *FSM) Prepare(srv api.Service, args ...interface{}) {
+func (f *FSM) Prepare(srv api.Service, args ...any) {
 	f.srv = srv
 	f.id = f.srv.Attach(f.timer)
 }
@@ -33,7 +33,7 @@ func (f *FSM) Run() {
 
 }
 
-func (f *FSM) Handle(cmd string, args ...interface{}) interface{} {
+func (f *FSM) Handle(cmd string, args ...any) any {
 	return nil
 }
 

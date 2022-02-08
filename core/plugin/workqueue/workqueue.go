@@ -27,7 +27,7 @@ type WorkQueue struct {
 	hashmask uint64
 }
 
-func (w *WorkQueue) Prepare(srv api.Service, args ...interface{}) {
+func (w *WorkQueue) Prepare(srv api.Service, args ...any) {
 	w.srv = srv
 	if !utils.IsPowerOfTwo(MAX_GO_ROUTINE) {
 		panic("MAX_GO_ROUTINE must be power of two ")
@@ -56,7 +56,7 @@ func (w *WorkQueue) Shut(api.Service) {
 	w.srv.Detach(w.attachid)
 }
 
-func (w *WorkQueue) Handle(cmd string, args ...interface{}) interface{} {
+func (w *WorkQueue) Handle(cmd string, args ...any) any {
 	return nil
 }
 

@@ -16,7 +16,7 @@ type Configuration struct {
 	client *consulapi.Client
 }
 
-func (c *Configuration) Prepare(srv api.Service, args ...interface{}) {
+func (c *Configuration) Prepare(srv api.Service, args ...any) {
 	c.srv = srv
 	c.client = args[0].(*consulapi.Client)
 }
@@ -28,7 +28,7 @@ func (c *Configuration) Run() {
 func (c *Configuration) Shut(api.Service) {
 }
 
-func (c *Configuration) Handle(cmd string, args ...interface{}) interface{} {
+func (c *Configuration) Handle(cmd string, args ...any) any {
 	return nil
 }
 

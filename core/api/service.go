@@ -26,10 +26,10 @@ const (
 var MAX_SID = 0x3FF
 
 type Plugin interface {
-	Prepare(srv Service, args ...interface{})
+	Prepare(srv Service, args ...any)
 	Run()
 	Shut(Service)
-	Handle(cmd string, args ...interface{}) interface{}
+	Handle(cmd string, args ...any) any
 }
 
 type Locker interface {
@@ -41,7 +41,7 @@ type Call struct {
 	Session  uint64
 	DeadLine time.Time
 	Callback func(*Call)
-	UserData interface{}
+	UserData any
 	Err      error
 	Data     []byte
 	Msg      *protocol.Message
@@ -87,13 +87,13 @@ type Service interface {
 	// 取消订阅
 	UnSub(subject string)
 	// 加载插件
-	UsePlugin(name string, args ...interface{}) error
+	UsePlugin(name string, args ...any) error
 	// 卸载插件
 	UnPlugin(name string)
 	// 通过插件名获取插件
-	Plugin(name string) interface{}
+	Plugin(name string) any
 	// 调用插件
-	CallPlugin(plugin string, cmd string, args ...interface{}) (interface{}, error)
+	CallPlugin(plugin string, cmd string, args ...any) (any, error)
 	// 阻塞直到服务结束
 	Await()
 	// 通过服务ID获取服务地址

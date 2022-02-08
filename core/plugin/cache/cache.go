@@ -25,7 +25,7 @@ type Cache struct {
 	shardMask      uint64
 }
 
-func (c *Cache) Prepare(srv api.Service, args ...interface{}) {
+func (c *Cache) Prepare(srv api.Service, args ...any) {
 	c.srv = srv
 	c.shardCount = 1024
 	if len(args) > 0 {
@@ -53,7 +53,7 @@ func (c *Cache) Shut(api.Service) {
 	c.Clear()
 }
 
-func (c *Cache) Handle(cmd string, args ...interface{}) interface{} {
+func (c *Cache) Handle(cmd string, args ...any) any {
 	return nil
 }
 
@@ -61,13 +61,13 @@ func (c *Cache) getShard(hashkey uint64) *shard {
 	return c.shards[hashkey&c.shardMask]
 }
 
-func (c *Cache) Set(key string, value interface{}) {
+func (c *Cache) Set(key string, value any) {
 	hashkey := sum64(key)
 	shard := c.getShard(hashkey)
 	shard.Set(key, hashkey, value)
 }
 
-func (c *Cache) Get(key string) interface{} {
+func (c *Cache) Get(key string) any {
 	hashkey := sum64(key)
 	shard := c.getShard(hashkey)
 	return shard.Get(key, hashkey)

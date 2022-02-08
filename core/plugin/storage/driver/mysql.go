@@ -35,14 +35,14 @@ func (m *MysqlDao) Find(id uint64, data dao.Persistent) error {
 	return nil
 }
 
-func (m *MysqlDao) FindBy(data dao.Persistent, where string, args ...interface{}) error {
+func (m *MysqlDao) FindBy(data dao.Persistent, where string, args ...any) error {
 	if err := m.db.Where(where, args...).Find(data).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *MysqlDao) FindAll(data interface{}, where string, args ...interface{}) error {
+func (m *MysqlDao) FindAll(data any, where string, args ...any) error {
 	if err := m.db.Where(where, args...).Find(data).Error; err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func (m *MysqlDao) Del(data dao.Persistent) error {
 	return nil
 }
 
-func (m *MysqlDao) DelBy(data dao.Persistent, where string, args ...interface{}) error {
+func (m *MysqlDao) DelBy(data dao.Persistent, where string, args ...any) error {
 	if err := m.db.Where(where, args...).Delete(data).Error; err != nil {
 		return err
 	}

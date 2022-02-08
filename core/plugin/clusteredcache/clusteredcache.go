@@ -41,7 +41,7 @@ type ClusteredCache struct {
 	domainVer  string
 }
 
-func (c *ClusteredCache) Prepare(srv api.Service, args ...interface{}) {
+func (c *ClusteredCache) Prepare(srv api.Service, args ...any) {
 	c.srv = srv
 	if srv.Plugin(election.Name) == nil {
 		srv.UsePlugin(election.Name)
@@ -74,11 +74,11 @@ func (c *ClusteredCache) Shut(srv api.Service) {
 
 }
 
-func (c *ClusteredCache) Handle(cmd string, args ...interface{}) interface{} {
+func (c *ClusteredCache) Handle(cmd string, args ...any) any {
 	return nil
 }
 
-func (c *ClusteredCache) elected(event string, data interface{}) {
+func (c *ClusteredCache) elected(event string, data any) {
 	c.leader = true
 	ver, err := c.cfg.GetKey(c.domainVer)
 	if err != nil {
@@ -95,12 +95,12 @@ func (c *ClusteredCache) elected(event string, data interface{}) {
 	}
 }
 
-func (c *ClusteredCache) follow(event string, data interface{}) {
+func (c *ClusteredCache) follow(event string, data any) {
 	c.leader = false
 	c.leaderInfo = data.(election.LeaderInfo)
 }
 
-func (c *ClusteredCache) Set(key string, value interface{}) error {
+func (c *ClusteredCache) Set(key string, value any) error {
 	oldVer := c.version
 	if c.leader {
 		ar := protocol.NewAutoExtendArchive(32)
@@ -121,7 +121,7 @@ func (c *ClusteredCache) Get(key string) []byte {
 	return c.cache.Get(key)
 }
 
-func (c *ClusteredCache) GetWithValue(key string, value interface{}) error {
+func (c *ClusteredCache) GetWithValue(key string, value any) error {
 	data := c.cache.Get(key)
 	if data == nil {
 		return errors.New("not found")

@@ -255,7 +255,7 @@ func (c *ConnPool) Inmsg() chan *protocol.ProtoMsg {
 	return c.inMsg
 }
 
-func (s *service) onConnEvent(event string, args interface{}) {
+func (s *service) onConnEvent(event string, args any) {
 	mailbox := args.(protocol.Mailbox)
 	switch event {
 	case EVENT_CONNECTED:

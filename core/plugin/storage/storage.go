@@ -25,28 +25,28 @@ type Driver interface {
 	Connect(dsn string) error
 	Create(name string, model dao.Persistent) error
 	Find(id uint64, data dao.Persistent) error
-	FindBy(data dao.Persistent, where string, args ...interface{}) error
-	FindAll(data interface{}, where string, args ...interface{}) error
+	FindBy(data dao.Persistent, where string, args ...any) error
+	FindAll(data any, where string, args ...any) error
 	Save(data dao.Persistent) (uint64, error)
 	Update(data dao.Persistent) error
 	Del(data dao.Persistent) error
-	DelBy(data dao.Persistent, where string, args ...interface{}) error
+	DelBy(data dao.Persistent, where string, args ...any) error
 }
 
-type ResultCallback func(interface{}, error)
+type ResultCallback func(any, error)
 
 type Request struct {
 	op    int
 	id    uint64
 	multi bool
-	data  interface{}
+	data  any
 	where string
-	args  []interface{}
+	args  []any
 	cb    ResultCallback
 }
 
 type Response struct {
-	data interface{}
+	data any
 	err  error
 	cb   ResultCallback
 }
@@ -59,7 +59,7 @@ type Storage struct {
 	driver  Driver
 }
 
-func (s *Storage) Prepare(srv api.Service, args ...interface{}) {
+func (s *Storage) Prepare(srv api.Service, args ...any) {
 	s.srv = srv
 	s.id = s.srv.Attach(s.roundInvoke)
 	s.pending = make(chan *Request, 1024)
@@ -90,7 +90,7 @@ func (s *Storage) Shut(srv api.Service) {
 func (s *Storage) Run() {
 }
 
-func (s *Storage) Handle(cmd string, args ...interface{}) interface{} {
+func (s *Storage) Handle(cmd string, args ...any) any {
 	return nil
 }
 
@@ -123,11 +123,11 @@ func (s *Storage) FindWithCallback(id uint64, data dao.Persistent, cb ResultCall
 	return nil
 }
 
-func (s *Storage) FindBy(data dao.Persistent, where string, args ...interface{}) error {
+func (s *Storage) FindBy(data dao.Persistent, where string, args ...any) error {
 	return s.driver.FindBy(data, where, args...)
 }
 
-func (s *Storage) FindByWithCallback(data dao.Persistent, where string, args []interface{}, cb ResultCallback) error {
+func (s *Storage) FindByWithCallback(data dao.Persistent, where string, args []any, cb ResultCallback) error {
 	if cb == nil {
 		return s.driver.FindBy(data, where, args...)
 	}
@@ -142,11 +142,11 @@ func (s *Storage) FindByWithCallback(data dao.Persistent, where string, args []i
 	return nil
 }
 
-func (s *Storage) FindAll(data interface{}, where string, args ...interface{}) error {
+func (s *Storage) FindAll(data any, where string, args ...any) error {
 	return s.driver.FindAll(data, where, args...)
 }
 
-func (s *Storage) FindAllWithCallback(data interface{}, where string, args []interface{}, cb ResultCallback) error {
+func (s *Storage) FindAllWithCallback(data any, where string, args []any, cb ResultCallback) error {
 	if cb == nil {
 		return s.driver.FindAll(data, where, args...)
 	}
@@ -213,11 +213,11 @@ func (s *Storage) DelWithCallback(data dao.Persistent, cb ResultCallback) error 
 	return nil
 }
 
-func (s *Storage) DelBy(data dao.Persistent, where string, args ...interface{}) error {
+func (s *Storage) DelBy(data dao.Persistent, where string, args ...any) error {
 	return s.driver.DelBy(data, where, args...)
 }
 
-func (s *Storage) DelByWithCallback(data dao.Persistent, where string, args []interface{}, cb ResultCallback) error {
+func (s *Storage) DelByWithCallback(data dao.Persistent, where string, args []any, cb ResultCallback) error {
 	if cb == nil {
 		return s.driver.DelBy(data, where, args...)
 	}

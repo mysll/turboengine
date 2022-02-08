@@ -45,7 +45,7 @@ type Election struct {
 	shut       bool
 }
 
-func (e *Election) Prepare(srv api.Service, args ...interface{}) {
+func (e *Election) Prepare(srv api.Service, args ...any) {
 	e.srv = srv
 	e.attachId = srv.Attach(e.update)
 }
@@ -64,7 +64,7 @@ func (e *Election) Shut(api.Service) {
 	}
 }
 
-func (e *Election) Handle(cmd string, args ...interface{}) interface{} {
+func (e *Election) Handle(cmd string, args ...any) any {
 	return nil
 }
 

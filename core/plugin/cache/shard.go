@@ -12,7 +12,7 @@ var (
 
 type entry struct {
 	key     string
-	value   interface{}
+	value   any
 	hashkey uint64
 	next    *entry
 }
@@ -67,7 +67,7 @@ func (s *shard) Clear() {
 	s.tail = 0
 }
 
-func (s *shard) Set(key string, hashkey uint64, value interface{}) {
+func (s *shard) Set(key string, hashkey uint64, value any) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	e := &entry{
@@ -172,7 +172,7 @@ func (s *shard) trim(left int, right int) {
 	s.trim(left+1, right-1)
 }
 
-func (s *shard) Get(key string, hashkey uint64) interface{} {
+func (s *shard) Get(key string, hashkey uint64) any {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	if index, ok := s.hashmap[hashkey]; ok {

@@ -15,7 +15,7 @@ const (
 
 type EventData struct {
 	Name string
-	Data interface{}
+	Data any
 }
 
 type Event struct {
@@ -27,14 +27,14 @@ type Event struct {
 	serial  uint64
 }
 
-type Callback func(event string, data interface{})
+type Callback func(event string, data any)
 
 type Listener struct {
 	id uint64
 	fn Callback
 }
 
-func (e *Event) Prepare(srv api.Service, args ...interface{}) {
+func (e *Event) Prepare(srv api.Service, args ...any) {
 	e.srv = srv
 	e.id = e.srv.Attach(e.roundInvoke)
 	e.pending = list.New()
@@ -50,7 +50,7 @@ func (e *Event) Run() {
 
 }
 
-func (e *Event) Handle(cmd string, args ...interface{}) interface{} {
+func (e *Event) Handle(cmd string, args ...any) any {
 	defer func() {
 		if x := recover(); x != nil {
 			log.Error(x)
@@ -96,7 +96,7 @@ func (e *Event) RemoveListener(event string, id uint64) {
 }
 
 // sync invoke
-func (e *Event) Emit(event string, data interface{}) {
+func (e *Event) Emit(event string, data any) {
 	evt := &EventData{
 		Name: event,
 		Data: data,
@@ -104,7 +104,7 @@ func (e *Event) Emit(event string, data interface{}) {
 	e.Invoke(evt)
 }
 
-func (e *Event) AsyncEmit(event string, data interface{}) {
+func (e *Event) AsyncEmit(event string, data any) {
 	evt := &EventData{
 		Name: event,
 		Data: data,

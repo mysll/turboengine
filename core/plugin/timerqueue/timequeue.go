@@ -51,7 +51,7 @@ type TimerQueue struct {
 	deleting      map[int64]struct{}
 }
 
-func (tq *TimerQueue) Prepare(srv api.Service, args ...interface{}) {
+func (tq *TimerQueue) Prepare(srv api.Service, args ...any) {
 	tq.srv = srv
 	tq.pendingTimers = list.New()
 	tq.deleting = make(map[int64]struct{})
@@ -80,7 +80,7 @@ func (tq *TimerQueue) Run() {
 	tq.running = true
 }
 
-func (tq *TimerQueue) Handle(cmd string, args ...interface{}) interface{} {
+func (tq *TimerQueue) Handle(cmd string, args ...any) any {
 	switch cmd {
 	case "Schedule":
 		return tq.Schedule(args[0].(int), args[1].(TimerInvoke), args[2].(int))

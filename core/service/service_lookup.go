@@ -303,7 +303,7 @@ L:
 
 }
 
-func (s *service) onServiceChange(event string, id interface{}) {
+func (s *service) onServiceChange(event string, id any) {
 	nid, _ := strconv.Atoi(id.(string))
 	switch event {
 	case EVENT_ADD:
