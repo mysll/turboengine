@@ -47,7 +47,7 @@ type ServiceInfo struct {
 	Time time.Time
 }
 
-func makeSourceFile(tpl string, name, path, file string, data interface{}) {
+func makeSourceFile(tpl string, name, path, file string, data any) {
 	t := template.Must(template.New(name).Funcs(template.FuncMap{
 		"tolower": strings.ToLower,
 	}).Parse(tpl))
@@ -88,7 +88,7 @@ func makeSourceFile(tpl string, name, path, file string, data interface{}) {
 	fmt.Println("File created successfully! location: ", outfile)
 }
 
-func makeFile(tpl string, name, path, file string, data interface{}) {
+func makeFile(tpl string, name, path, file string, data any) {
 	t := template.Must(template.New(name).Funcs(template.FuncMap{
 		"tolower": strings.ToLower,
 	}).Parse(tpl))

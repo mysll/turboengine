@@ -1,3 +1,3 @@
 package proto
 
-var reg = make(map[string]interface{})
+var reg = make(map[string]any)

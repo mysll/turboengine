@@ -1,3 +1,3 @@
 package def
 
-var entities = make(map[string]interface{})
+var entities = make(map[string]any)

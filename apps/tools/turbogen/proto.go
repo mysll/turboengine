@@ -54,7 +54,7 @@ func TypeName(t reflect.Type) (pkg string, typ string) {
 	return
 }
 
-func Generate(s interface{}, pkgpath string, pkg string, path string, service string) {
+func Generate(s any, pkgpath string, pkg string, path string, service string) {
 	ctype := reflect.TypeOf(s)
 	count := ctype.Elem().NumField()
 	desc := RpcDesc{}
@@ -143,7 +143,7 @@ func CreateProto(c *cli.Context) error {
 	var auth string
 	fmt.Scanln(&auth)
 
-	makeSourceFile(tpl_proto, "proto", path, strings.ToLower(name), map[string]interface{}{
+	makeSourceFile(tpl_proto, "proto", path, strings.ToLower(name), map[string]any{
 		"Name": name,
 		"Pkg":  pkg,
 		"Tag":  "`version:\"1.0.0\"`",

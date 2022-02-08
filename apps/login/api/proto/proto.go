@@ -4,4 +4,4 @@ const (
 	service = "Login"
 )
 
-var reg = make(map[string]interface{})
+var reg = make(map[string]any)

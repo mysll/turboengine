@@ -11,5 +11,5 @@ type LoginResult struct {
 }
 
 func init() {
-	protocol.AddProto(LOGIN_RESULT, func() interface{} { return &LoginResult{} })
+	protocol.AddProto(LOGIN_RESULT, func() any { return &LoginResult{} })
 }

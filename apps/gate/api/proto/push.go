@@ -4,7 +4,7 @@ import "turboengine/common/protocol"
 
 type Push struct {
 	Ver string `version:"1.0.0"`
-	XXX interface{}
+	XXX any
 	// custom method begin
 	PushToUser func(dest protocol.Mailbox, message []byte) error
 	// custom method end

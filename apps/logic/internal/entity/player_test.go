@@ -18,6 +18,6 @@ func TestNewPlayer(t *testing.T) {
 	fmt.Println(player.Dirty(), player.PublicDirty(), player.PrivateDirty())
 }
 
-func OnNameChange(self interface{}, index int, val interface{}) {
+func OnNameChange(self any, index int, val any) {
 	fmt.Printf("old:%v, new:%v\n", val, self.(*Player).Name())
 }

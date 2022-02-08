@@ -87,7 +87,7 @@ func getTypeCreate(typ string) string {
 //go:embed object.tpl
 var objectWarp string
 
-func ObjectWrap(s interface{}, pkgpath string, pkg string, path string) {
+func ObjectWrap(s any, pkgpath string, pkg string, path string) {
 	ctype := reflect.TypeOf(s)
 	count := ctype.Elem().NumField()
 	desc := ObjectDesc{}
@@ -171,7 +171,7 @@ func CreateEntity(c *cli.Context) error {
 	var name string
 	fmt.Scanln(&name)
 
-	makeSourceFile(entityDesc, "def", path, strings.ToLower(name), map[string]interface{}{
+	makeSourceFile(entityDesc, "def", path, strings.ToLower(name), map[string]any{
 		"Name": name,
 		"Pkg":  pkg,
 	})

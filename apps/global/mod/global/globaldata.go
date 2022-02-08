@@ -60,11 +60,11 @@ func (m *GlobalData) reqLeader() {
 	m.election.Announce("shared/leader")
 }
 
-func (m *GlobalData) elected(event string, data interface{}) {
+func (m *GlobalData) elected(event string, data any) {
 	log.Info("leader ", data.(string))
 }
 
-func (m *GlobalData) follow(event string, data interface{}) {
+func (m *GlobalData) follow(event string, data any) {
 	log.Info("follow ", data.(election.LeaderInfo).Job)
 
 }
