@@ -18,14 +18,14 @@ import (
 var service_tpl string
 
 var server_rpc = `package proto
-var reg = make(map[string]interface{})
+var reg = make(map[string]any)
 `
 
 //go:embed proto_test.tpl
 var server_rpc_test string
 
 var server_entity = `package def
-var entities = make(map[string]interface{})
+var entities = make(map[string]any)
 `
 
 //go:embed entity_test.tpl
